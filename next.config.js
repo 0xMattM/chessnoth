@@ -7,10 +7,7 @@ const nextConfig = {
   experimental: {
     esmExternals: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-    dirs: [], // No ejecutar ESLint en ningún directorio
-  },
+  // ESLint removido completamente del proyecto
   typescript: {
     // Allow production builds to complete even with type errors
     ignoreBuildErrors: true,
