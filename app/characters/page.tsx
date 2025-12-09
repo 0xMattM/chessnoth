@@ -1,5 +1,4 @@
-﻿/* eslint-disable react/no-unescaped-entities */
-'use client'
+﻿'use client'
 
 import { useAccount, useContractRead, useContractReads } from 'wagmi'
 import { Navigation } from '@/components/navigation'
@@ -34,11 +33,6 @@ export default function CharactersPage() {
   const [equipmentUpdate, setEquipmentUpdate] = useState(0) // Force re-render when equipment changes
   const [skillsUpdate, setSkillsUpdate] = useState(0) // Force re-render when skills change
   
-  // Text constants to avoid ESLint errors
-  const noCharactersText = 'You do not have any characters yet'
-  const mintText = 'Mint your first character on the home page'
-  const clickEquipmentText = 'Click on a character to manage their equipment'
-  const clickSkillsText = 'Click on a character to manage their skills'
 
   // Get balance of NFTs
   const { data: balance } = useContractRead({
@@ -183,14 +177,13 @@ export default function CharactersPage() {
             </TabsList>
 
             <TabsContent value="list" className="space-y-4">
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
               {characters.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">{noCharactersText}</p>
+                    <p className="text-muted-foreground">You do not have any characters yet</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {mintText}
+                      Mint your first character on the home page
                     </p>
                   </CardContent>
                 </Card>
@@ -240,15 +233,13 @@ export default function CharactersPage() {
                     <Shield className="h-5 w-5" />
                     Equipment Management
                   </CardTitle>
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <CardDescription>{clickEquipmentText}</CardDescription>
+                  <CardDescription>Click on a character to manage their equipment</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      {/* eslint-disable-next-line react/no-unescaped-entities */}
-                      <p className="text-muted-foreground">{noCharactersText}</p>
+                      <p className="text-muted-foreground">You do not have any characters yet</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -350,15 +341,13 @@ export default function CharactersPage() {
                     <Zap className="h-5 w-5" />
                     Skills Management
                   </CardTitle>
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  <CardDescription>{clickSkillsText}</CardDescription>
+                  <CardDescription>Click on a character to manage their skills</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      {/* eslint-disable-next-line react/no-unescaped-entities */}
-                      <p className="text-muted-foreground">{noCharactersText}</p>
+                      <p className="text-muted-foreground">You do not have any characters yet</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">

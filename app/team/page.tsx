@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 'use client'
 
 import { useAccount, useContractRead, useContractReads } from 'wagmi'
@@ -40,11 +39,6 @@ export default function TeamPage() {
   const [equipSkillsOpen, setEquipSkillsOpen] = useState(false)
   const { toast } = useToast()
   
-  // Text constants to avoid ESLint errors
-  const noCharactersText = 'You do not have any characters yet'
-  const noSkillsText = 'This character has not learned any skills yet. Learn skills in the Skills page.'
-  const mintText = 'Mint your first character on the home page'
-  const clickToAddText = 'Click to add to your team'
 
   // Load team from localStorage
   useEffect(() => {
@@ -307,20 +301,19 @@ export default function TeamPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Available Characters</CardTitle>
-                {/* eslint-disable-next-line react/no-unescaped-entities */}
                 <CardDescription>
                   {characters.length === 0
-                    ? noCharactersText
-                    : clickToAddText}
+                    ? 'You do not have any characters yet'
+                    : 'Click to add to your team'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {characters.length === 0 ? (
                   <div className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">{noCharactersText}</p>
+                    <p className="text-muted-foreground">You do not have any characters yet</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {mintText}
+                      Mint your first character on the home page
                     </p>
                   </div>
                 ) : (
@@ -529,12 +522,11 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             )}
           </div>
           
-          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <div>
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {noSkillsText}
+                This character has not learned any skills yet. Learn skills in the Skills page.
               </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">

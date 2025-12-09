@@ -1,5 +1,4 @@
-﻿/* eslint-disable react/no-unescaped-entities */
-'use client'
+﻿'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -67,8 +66,6 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
   const [_selectedSkill, setSelectedSkill] = useState<Skill | null>(null)
   const [equipSkillsOpen, setEquipSkillsOpen] = useState(false)
   
-  // Text constants to avoid ESLint errors
-  const noSkillsText = 'This character has not learned any skills yet. Learn skills above.'
 
   const characterLevel = character.metadata?.level || 1
   const availableSkillPoints = characterLevel - characterSkills.usedSkillPoints
@@ -518,12 +515,11 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             )}
           </div>
           
-          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <div>
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {noSkillsText}
+                This character has not learned any skills yet. Learn skills above.
               </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">

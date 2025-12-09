@@ -1,4 +1,3 @@
-/* eslint-disable no-case-declarations */
 'use client'
 
 import { Navigation } from '@/components/navigation'
@@ -1299,11 +1298,11 @@ export default function CombatPage() {
           }
           break
         }
-        // eslint-disable-next-line no-case-declarations
-        case 'w':
+        case 'w': {
           event.preventDefault()
           handleAction('skill')
           break
+        }
         case '1': {
           event.preventDefault()
           handleAction('skill', 0)
