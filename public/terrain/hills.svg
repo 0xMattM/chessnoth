@@ -1,0 +1,20 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hillsPattern" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+      <rect width="12" height="12" fill="#f59e0b"/>
+      <circle cx="3" cy="3" r="1" fill="#fbbf24" opacity="0.4"/>
+      <circle cx="9" cy="7" r="0.8" fill="#fcd34d" opacity="0.3"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="64" fill="url(#hillsPattern)"/>
+  <!-- Hills -->
+  <ellipse cx="20" cy="50" rx="15" ry="10" fill="#d97706" opacity="0.7"/>
+  <ellipse cx="44" cy="52" rx="12" ry="8" fill="#f59e0b" opacity="0.6"/>
+  <ellipse cx="32" cy="48" rx="10" ry="6" fill="#fbbf24" opacity="0.5"/>
+  <!-- Grass on hills -->
+  <path d="M 15 45 L 15 50" stroke="#16a34a" stroke-width="1" opacity="0.5"/>
+  <path d="M 25 43 L 25 48" stroke="#15803d" stroke-width="1" opacity="0.5"/>
+  <path d="M 35 44 L 35 49" stroke="#16a34a" stroke-width="1" opacity="0.5"/>
+  <path d="M 45 45 L 45 50" stroke="#15803d" stroke-width="1" opacity="0.5"/>
+</svg>
+

@@ -1,0 +1,180 @@
+[
+  {
+    "id": "heal",
+    "name": "Heal",
+    "description": "Restores 50% of MAG as HP, range 3",
+    "classId": "healer",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 10,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "healing",
+    "damageMultiplier": 0.5,
+    "requiresTarget": true
+  },
+  {
+    "id": "cure",
+    "name": "Cure",
+    "description": "Removes all debuffs from target, range 3",
+    "classId": "healer",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 8,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "requiresTarget": true
+  },
+  {
+    "id": "regeneration",
+    "name": "Regeneration",
+    "description": "Restores 5% max HP per turn for 5 turns",
+    "classId": "healer",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 12,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "regen",
+        "value": 0.05,
+        "duration": 5
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "group_heal",
+    "name": "Group Heal",
+    "description": "Heals all allies for 0.8x heal amount",
+    "classId": "healer",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 20,
+    "range": 0,
+    "aoeType": "all_allies",
+    "damageType": "healing",
+    "damageMultiplier": 0.4,
+    "requiresTarget": false
+  },
+  {
+    "id": "shield",
+    "name": "Shield",
+    "description": "Absorbs up to 50 damage",
+    "classId": "healer",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 15,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "shield",
+        "value": 50,
+        "duration": 999
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "revive",
+    "name": "Revive",
+    "description": "Revives defeated ally at 25% HP",
+    "classId": "healer",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 30,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "healing",
+    "damageMultiplier": 0.25,
+    "requiresTarget": true
+  },
+  {
+    "id": "blessing",
+    "name": "Blessing",
+    "description": "Increases all stats by 20% for 3 turns",
+    "classId": "healer",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 25,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "all",
+        "value": 0.2,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "purify",
+    "name": "Purify",
+    "description": "Removes all debuffs from all allies",
+    "classId": "healer",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 22,
+    "range": 0,
+    "aoeType": "all_allies",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "requiresTarget": false
+  },
+  {
+    "id": "divine_protection",
+    "name": "Divine Protection",
+    "description": "Increases DEF and RES by 50% for all allies for 3 turns",
+    "classId": "healer",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 35,
+    "range": 0,
+    "aoeType": "all_allies",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "def",
+        "value": 0.5,
+        "duration": 3
+      },
+      {
+        "type": "buff",
+        "stat": "res",
+        "value": 0.5,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "resurrection",
+    "name": "Resurrection",
+    "description": "Revives all defeated allies at 50% HP",
+    "classId": "healer",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 50,
+    "range": 0,
+    "aoeType": "all_allies",
+    "damageType": "healing",
+    "damageMultiplier": 0.5,
+    "requiresTarget": false
+  }
+]

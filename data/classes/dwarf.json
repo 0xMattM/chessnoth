@@ -1,0 +1,33 @@
+{
+  "id": "dwarf",
+  "name": "Dwarf",
+  "baseStats": {
+    "hp": 110,
+    "mana": 25,
+    "atk": 16,
+    "mag": 2,
+    "def": 15,
+    "res": 8,
+    "spd": 6,
+    "eva": 1,
+    "crit": 6
+  },
+  "growthRates": {
+    "hp": 3.5,
+    "mana": 0.8,
+    "atk": 1.1,
+    "mag": 0.05,
+    "def": 1.0,
+    "res": 0.3,
+    "spd": 0.2,
+    "eva": 0.05,
+    "crit": 0.08
+  },
+  "allowedWeapons": ["axe", "hammer", "mace"],
+  "allowedArmor": ["heavy_armor"],
+  "terrainBonus": {
+    "terrain": "mountain",
+    "bonus": "def",
+    "value": 0.25
+  }
+}

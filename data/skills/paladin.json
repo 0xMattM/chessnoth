@@ -1,0 +1,171 @@
+[
+  {
+    "id": "holy_strike",
+    "name": "Holy Strike",
+    "description": "Deals 1.1x physical damage",
+    "classId": "paladin",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 5,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.1,
+    "requiresTarget": true
+  },
+  {
+    "id": "heal",
+    "name": "Heal",
+    "description": "Restores 30% of MAG as HP, range 3",
+    "classId": "paladin",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 10,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "healing",
+    "damageMultiplier": 0.3,
+    "requiresTarget": true
+  },
+  {
+    "id": "divine_shield",
+    "name": "Divine Shield",
+    "description": "Increases DEF and RES by 40% for 3 turns",
+    "classId": "paladin",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 15,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "def",
+        "value": 0.4,
+        "duration": 3
+      },
+      {
+        "type": "buff",
+        "stat": "res",
+        "value": 0.4,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "smite",
+    "name": "Smite",
+    "description": "Deals 1.4x magic damage, range 2",
+    "classId": "paladin",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 18,
+    "range": 2,
+    "aoeType": "single",
+    "damageType": "magical",
+    "damageMultiplier": 1.4,
+    "requiresTarget": true
+  },
+  {
+    "id": "lay_on_hands",
+    "name": "Lay on Hands",
+    "description": "Fully heals target ally, range 2",
+    "classId": "paladin",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 25,
+    "range": 2,
+    "aoeType": "single",
+    "damageType": "healing",
+    "damageMultiplier": 1.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "aura_of_protection",
+    "name": "Aura of Protection",
+    "description": "Increases DEF and RES by 20% for all allies for 4 turns",
+    "classId": "paladin",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 30,
+    "range": 0,
+    "aoeType": "all_allies",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "def",
+        "value": 0.2,
+        "duration": 4
+      },
+      {
+        "type": "buff",
+        "stat": "res",
+        "value": 0.2,
+        "duration": 4
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "holy_light",
+    "name": "Holy Light",
+    "description": "Heals all allies for 0.6x heal amount",
+    "classId": "paladin",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 28,
+    "range": 0,
+    "aoeType": "all_allies",
+    "damageType": "healing",
+    "damageMultiplier": 0.3,
+    "requiresTarget": false
+  },
+  {
+    "id": "judgment",
+    "name": "Judgment",
+    "description": "Deals 1.8x magic damage, range 3",
+    "classId": "paladin",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 32,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "magical",
+    "damageMultiplier": 1.8,
+    "requiresTarget": true
+  },
+  {
+    "id": "divine_wrath",
+    "name": "Divine Wrath",
+    "description": "AoE attack dealing 1.5x magic damage in radius 1",
+    "classId": "paladin",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 35,
+    "range": 2,
+    "aoeType": "radius",
+    "aoeRadius": 1,
+    "damageType": "magical",
+    "damageMultiplier": 1.5,
+    "requiresTarget": false
+  },
+  {
+    "id": "resurrection",
+    "name": "Resurrection",
+    "description": "Revives ally at 75% HP",
+    "classId": "paladin",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 50,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "healing",
+    "damageMultiplier": 0.75,
+    "requiresTarget": true
+  }
+]

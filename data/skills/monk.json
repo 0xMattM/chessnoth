@@ -1,0 +1,174 @@
+[
+  {
+    "id": "punch",
+    "name": "Punch",
+    "description": "Basic attack dealing 1.0x physical damage",
+    "classId": "monk",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 0,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "ki_strike",
+    "name": "Ki Strike",
+    "description": "Deals 1.2x physical damage",
+    "classId": "monk",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 8,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.2,
+    "requiresTarget": true
+  },
+  {
+    "id": "meditate",
+    "name": "Meditate",
+    "description": "Restores 30% mana and increases all stats by 10% for 2 turns",
+    "classId": "monk",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 10,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "all",
+        "value": 0.1,
+        "duration": 2
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "flurry",
+    "name": "Flurry",
+    "description": "Performs 3 attacks, each dealing 0.8x physical damage",
+    "classId": "monk",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 15,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 0.8,
+    "requiresTarget": true
+  },
+  {
+    "id": "dodge",
+    "name": "Dodge",
+    "description": "Increases EVA by 30% for 3 turns",
+    "classId": "monk",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 12,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "eva",
+        "value": 0.3,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "pressure_point",
+    "name": "Pressure Point",
+    "description": "Deals 1.3x damage with chance to stun",
+    "classId": "monk",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 18,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.3,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "stun",
+        "duration": 1
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "chi_blast",
+    "name": "Chi Blast",
+    "description": "Ranged attack dealing 1.4x magic damage, range 3",
+    "classId": "monk",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 20,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "magical",
+    "damageMultiplier": 1.4,
+    "requiresTarget": true
+  },
+  {
+    "id": "whirlwind_kick",
+    "name": "Whirlwind Kick",
+    "description": "AoE attack dealing 1.2x physical damage in radius 1",
+    "classId": "monk",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 22,
+    "range": 1,
+    "aoeType": "radius",
+    "aoeRadius": 1,
+    "damageType": "physical",
+    "damageMultiplier": 1.2,
+    "requiresTarget": false
+  },
+  {
+    "id": "enlightenment",
+    "name": "Enlightenment",
+    "description": "Increases all stats by 30% for 4 turns",
+    "classId": "monk",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 30,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "all",
+        "value": 0.3,
+        "duration": 4
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "ultimate_strike",
+    "name": "Ultimate Strike",
+    "description": "Deals 3.0x physical damage",
+    "classId": "monk",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 40,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 3.0,
+    "requiresTarget": true
+  }
+]

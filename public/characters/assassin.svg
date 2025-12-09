@@ -1,0 +1,25 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Body -->
+  <rect x="24" y="35" width="16" height="20" fill="#1f2937" rx="2"/>
+  <!-- Head -->
+  <circle cx="32" cy="20" r="9" fill="#fbbf24"/>
+  <!-- Mask -->
+  <path d="M 24 20 Q 32 15 40 20 L 38 28 Q 32 24 26 28 Z" fill="#111827"/>
+  <!-- Eyes -->
+  <circle cx="29" cy="22" r="1.5" fill="#dc2626"/>
+  <circle cx="35" cy="22" r="1.5" fill="#dc2626"/>
+  <!-- Dagger -->
+  <rect x="42" y="30" width="2" height="18" fill="#9ca3af"/>
+  <polygon points="42,30 44,30 43,25" fill="#dc2626"/>
+  <!-- Cloak -->
+  <path d="M 20 35 L 32 32 L 44 35 L 44 55 L 20 55 Z" fill="#111827"/>
+  <!-- Belt -->
+  <rect x="26" y="48" width="12" height="2" fill="#dc2626"/>
+  <!-- Legs -->
+  <rect x="26" y="55" width="5" height="8" fill="#1f2937"/>
+  <rect x="33" y="55" width="5" height="8" fill="#1f2937"/>
+  <!-- Boots -->
+  <rect x="25" y="63" width="7" height="1" fill="#111827"/>
+  <rect x="32" y="63" width="7" height="1" fill="#111827"/>
+</svg>
+

@@ -1,0 +1,30 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Body -->
+  <rect x="24" y="35" width="16" height="20" fill="#16a34a" rx="2"/>
+  <!-- Head -->
+  <circle cx="32" cy="20" r="9" fill="#fbbf24"/>
+  <!-- Hood -->
+  <path d="M 20 18 Q 32 12 44 18 L 42 28 Q 32 22 22 28 Z" fill="#166534"/>
+  <!-- Bow -->
+  <path d="M 18 35 Q 18 45 28 45" stroke="#78350f" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <line x1="18" y1="35" x2="28" y2="45" stroke="#dc2626" stroke-width="1"/>
+  <!-- Arrow -->
+  <line x1="20" y1="38" x2="26" y2="42" stroke="#9ca3af" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+  <defs>
+    <marker id="arrowhead" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto">
+      <polygon points="0 0, 4 2, 0 4" fill="#9ca3af"/>
+    </marker>
+  </defs>
+  <!-- Quiver -->
+  <path d="M 46 32 Q 50 32 50 50 Q 50 55 46 55 Q 46 50 46 32" fill="#1f2937"/>
+  <line x1="48" y1="35" x2="48" y2="52" stroke="#374151" stroke-width="1"/>
+  <!-- Cloak -->
+  <path d="M 24 38 L 32 35 L 40 38 L 40 55 L 24 55 Z" fill="#15803d"/>
+  <!-- Legs -->
+  <rect x="26" y="55" width="5" height="8" fill="#1f2937"/>
+  <rect x="33" y="55" width="5" height="8" fill="#1f2937"/>
+  <!-- Boots -->
+  <rect x="25" y="63" width="7" height="1" fill="#111827"/>
+  <rect x="32" y="63" width="7" height="1" fill="#111827"/>
+</svg>
+

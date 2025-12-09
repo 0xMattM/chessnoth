@@ -1,0 +1,222 @@
+[
+  {
+    "id": "strength_up",
+    "type": "strength_up",
+    "category": "buff",
+    "name": "Strength Up",
+    "description": "Increases ATK by 20%",
+    "duration": 3,
+    "stackable": true,
+    "maxStacks": 3,
+    "statModifiers": {
+      "atk": 0.2
+    }
+  },
+  {
+    "id": "defense_up",
+    "type": "defense_up",
+    "category": "buff",
+    "name": "Defense Up",
+    "description": "Increases DEF by 20%",
+    "duration": 3,
+    "stackable": true,
+    "maxStacks": 3,
+    "statModifiers": {
+      "def": 0.2
+    }
+  },
+  {
+    "id": "speed_up",
+    "type": "speed_up",
+    "category": "buff",
+    "name": "Speed Up",
+    "description": "Increases SPD by 20%",
+    "duration": 3,
+    "stackable": true,
+    "maxStacks": 3,
+    "statModifiers": {
+      "spd": 0.2
+    }
+  },
+  {
+    "id": "evasion_up",
+    "type": "evasion_up",
+    "category": "buff",
+    "name": "Evasion Up",
+    "description": "Increases EVA by 15%",
+    "duration": 3,
+    "stackable": false,
+    "statModifiers": {
+      "eva": 0.15
+    }
+  },
+  {
+    "id": "critical_up",
+    "type": "critical_up",
+    "category": "buff",
+    "name": "Critical Up",
+    "description": "Increases CRIT by 10%",
+    "duration": 3,
+    "stackable": false,
+    "statModifiers": {
+      "crit": 0.1
+    }
+  },
+  {
+    "id": "regeneration",
+    "type": "regeneration",
+    "category": "buff",
+    "name": "Regeneration",
+    "description": "Restores 5% max HP per turn",
+    "duration": 5,
+    "stackable": false
+  },
+  {
+    "id": "shield",
+    "type": "shield",
+    "category": "buff",
+    "name": "Shield",
+    "description": "Absorbs up to 50 damage",
+    "duration": 999,
+    "stackable": false
+  },
+  {
+    "id": "weakness",
+    "type": "weakness",
+    "category": "debuff",
+    "name": "Weakness",
+    "description": "Reduces ATK by 20%",
+    "duration": 3,
+    "stackable": true,
+    "maxStacks": 3,
+    "statModifiers": {
+      "atk": -0.2
+    }
+  },
+  {
+    "id": "vulnerability",
+    "type": "vulnerability",
+    "category": "debuff",
+    "name": "Vulnerability",
+    "description": "Reduces DEF by 20%",
+    "duration": 3,
+    "stackable": true,
+    "maxStacks": 3,
+    "statModifiers": {
+      "def": -0.2
+    }
+  },
+  {
+    "id": "slow",
+    "type": "slow",
+    "category": "debuff",
+    "name": "Slow",
+    "description": "Reduces SPD by 20%",
+    "duration": 3,
+    "stackable": true,
+    "maxStacks": 3,
+    "statModifiers": {
+      "spd": -0.2
+    }
+  },
+  {
+    "id": "blind",
+    "type": "blind",
+    "category": "debuff",
+    "name": "Blind",
+    "description": "Reduces accuracy and EVA by 10%",
+    "duration": 2,
+    "stackable": false,
+    "statModifiers": {
+      "eva": -0.1
+    }
+  },
+  {
+    "id": "poison",
+    "type": "poison",
+    "category": "debuff",
+    "name": "Poison",
+    "description": "Deals 5% max HP damage per turn",
+    "duration": 5,
+    "stackable": false,
+    "dotPercent": 0.05
+  },
+  {
+    "id": "burn",
+    "type": "burn",
+    "category": "debuff",
+    "name": "Burn",
+    "description": "Deals 3% max HP damage per turn",
+    "duration": 4,
+    "stackable": false,
+    "dotPercent": 0.03
+  },
+  {
+    "id": "freeze",
+    "type": "freeze",
+    "category": "status",
+    "name": "Freeze",
+    "description": "Reduces movement and skips 1 turn",
+    "duration": 2,
+    "stackable": false,
+    "specialEffect": "freeze"
+  },
+  {
+    "id": "stun",
+    "type": "stun",
+    "category": "status",
+    "name": "Stun",
+    "description": "Skips current turn",
+    "duration": 1,
+    "stackable": false,
+    "specialEffect": "stun"
+  },
+  {
+    "id": "silence",
+    "type": "silence",
+    "category": "status",
+    "name": "Silence",
+    "description": "Cannot use skills",
+    "duration": 3,
+    "stackable": false,
+    "specialEffect": "silence"
+  },
+  {
+    "id": "fear",
+    "type": "fear",
+    "category": "status",
+    "name": "Fear",
+    "description": "Cannot act",
+    "duration": 1,
+    "stackable": false,
+    "specialEffect": "fear"
+  },
+  {
+    "id": "bleed",
+    "type": "bleed",
+    "category": "debuff",
+    "name": "Bleed",
+    "description": "Deals 3% max HP damage per turn",
+    "duration": 3,
+    "stackable": false,
+    "dotPercent": 0.03
+  },
+  {
+    "id": "curse",
+    "type": "curse",
+    "category": "debuff",
+    "name": "Curse",
+    "description": "Reduces all stats by 20%",
+    "duration": 3,
+    "stackable": false,
+    "statModifiers": {
+      "atk": -0.2,
+      "def": -0.2,
+      "mag": -0.2,
+      "res": -0.2,
+      "spd": -0.2,
+      "eva": -0.2,
+      "crit": -0.2
+    }
+  }
+]

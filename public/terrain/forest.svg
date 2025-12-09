@@ -1,0 +1,20 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="forestPattern" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+      <rect width="8" height="8" fill="#166534"/>
+      <circle cx="2" cy="2" r="1" fill="#22c55e" opacity="0.6"/>
+      <circle cx="6" cy="3" r="0.8" fill="#16a34a" opacity="0.5"/>
+      <circle cx="4" cy="6" r="1.2" fill="#15803d" opacity="0.7"/>
+    </pattern>
+  </defs>
+  <rect width="64" height="64" fill="url(#forestPattern)"/>
+  <!-- Tree trunks -->
+  <rect x="20" y="45" width="3" height="15" fill="#78350f"/>
+  <rect x="41" y="48" width="3" height="12" fill="#78350f"/>
+  <!-- Tree tops -->
+  <circle cx="21.5" cy="40" r="8" fill="#166534"/>
+  <circle cx="42.5" cy="43" r="7" fill="#15803d"/>
+  <circle cx="21.5" cy="40" r="5" fill="#22c55e"/>
+  <circle cx="42.5" cy="43" r="4" fill="#16a34a"/>
+</svg>
+

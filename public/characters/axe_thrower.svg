@@ -1,0 +1,27 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Body -->
+  <rect x="24" y="35" width="16" height="20" fill="#16a34a" rx="2"/>
+  <!-- Head -->
+  <circle cx="32" cy="20" r="9" fill="#fbbf24"/>
+  <!-- Helmet -->
+  <path d="M 22 18 Q 32 12 42 18 L 40 28 Q 32 22 22 28 Z" fill="#166534"/>
+  <!-- Throwing axe -->
+  <path d="M 18 32 L 24 38 L 22 40 L 16 34 Z" fill="#dc2626"/>
+  <rect x="20" y="36" width="2" height="4" fill="#78350f"/>
+  <!-- Axe in hand -->
+  <path d="M 42 35 L 48 41 L 46 43 L 40 37 Z" fill="#dc2626"/>
+  <rect x="44" y="39" width="2" height="4" fill="#78350f"/>
+  <!-- Belt with axes -->
+  <rect x="26" y="48" width="12" height="2" fill="#78350f"/>
+  <circle cx="28" cy="49" r="1.5" fill="#dc2626"/>
+  <circle cx="36" cy="49" r="1.5" fill="#dc2626"/>
+  <!-- Cloak -->
+  <path d="M 24 38 L 32 35 L 40 38 L 40 55 L 24 55 Z" fill="#15803d"/>
+  <!-- Legs -->
+  <rect x="26" y="55" width="5" height="8" fill="#1f2937"/>
+  <rect x="33" y="55" width="5" height="8" fill="#1f2937"/>
+  <!-- Boots -->
+  <rect x="25" y="63" width="7" height="1" fill="#111827"/>
+  <rect x="32" y="63" width="7" height="1" fill="#111827"/>
+</svg>
+

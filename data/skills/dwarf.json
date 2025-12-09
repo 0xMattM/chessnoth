@@ -1,0 +1,196 @@
+[
+  {
+    "id": "hammer_strike",
+    "name": "Hammer Strike",
+    "description": "Basic attack dealing 1.1x physical damage",
+    "classId": "dwarf",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 0,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.1,
+    "requiresTarget": true
+  },
+  {
+    "id": "fortify",
+    "name": "Fortify",
+    "description": "Increases DEF by 40% for 3 turns",
+    "classId": "dwarf",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 12,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "def",
+        "value": 0.4,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "earthquake",
+    "name": "Earthquake",
+    "description": "AoE attack dealing 1.0x physical damage in radius 1",
+    "classId": "dwarf",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 15,
+    "range": 1,
+    "aoeType": "radius",
+    "aoeRadius": 1,
+    "damageType": "physical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": false
+  },
+  {
+    "id": "stone_skin",
+    "name": "Stone Skin",
+    "description": "Increases DEF by 50% and decreases SPD by 20% for 4 turns",
+    "classId": "dwarf",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 18,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "def",
+        "value": 0.5,
+        "duration": 4
+      },
+      {
+        "type": "debuff",
+        "stat": "spd",
+        "value": -0.2,
+        "duration": 4
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "mountain_charge",
+    "name": "Mountain Charge",
+    "description": "Move and attack, dealing 1.3x physical damage",
+    "classId": "dwarf",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 16,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.3,
+    "requiresTarget": true
+  },
+  {
+    "id": "unbreakable",
+    "name": "Unbreakable",
+    "description": "Immune to all debuffs for 3 turns",
+    "classId": "dwarf",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 22,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "immune_debuff",
+        "value": 1,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "boulder_toss",
+    "name": "Boulder Toss",
+    "description": "Ranged attack dealing 1.4x physical damage, range 3",
+    "classId": "dwarf",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 20,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.4,
+    "requiresTarget": true
+  },
+  {
+    "id": "guardian_stance",
+    "name": "Guardian Stance",
+    "description": "Increases DEF by 30% and protects adjacent allies",
+    "classId": "dwarf",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 25,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "def",
+        "value": 0.3,
+        "duration": 999
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "mountains_wrath",
+    "name": "Mountain's Wrath",
+    "description": "AoE attack dealing 1.5x physical damage in radius 2",
+    "classId": "dwarf",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 30,
+    "range": 1,
+    "aoeType": "radius",
+    "aoeRadius": 2,
+    "damageType": "physical",
+    "damageMultiplier": 1.5,
+    "requiresTarget": false
+  },
+  {
+    "id": "titan_form",
+    "name": "Titan Form",
+    "description": "Increases DEF by 100% and HP by 50% for 5 turns",
+    "classId": "dwarf",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 40,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "def",
+        "value": 1.0,
+        "duration": 5
+      },
+      {
+        "type": "buff",
+        "stat": "hp",
+        "value": 0.5,
+        "duration": 5
+      }
+    ],
+    "requiresTarget": false
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "id": "monk",
+  "name": "Monk",
+  "baseStats": {
+    "hp": 95,
+    "mana": 40,
+    "atk": 14,
+    "mag": 8,
+    "def": 8,
+    "res": 9,
+    "spd": 13,
+    "eva": 6,
+    "crit": 10
+  },
+  "growthRates": {
+    "hp": 3,
+    "mana": 1.5,
+    "atk": 1.0,
+    "mag": 0.5,
+    "def": 0.5,
+    "res": 0.6,
+    "spd": 0.7,
+    "eva": 0.4,
+    "crit": 0.12
+  },
+  "allowedWeapons": ["fist", "claw", "staff"],
+  "allowedArmor": ["light_armor", "robe"],
+  "terrainBonus": null
+}

@@ -1,0 +1,29 @@
+{
+  "id": "paladin",
+  "name": "Paladin",
+  "baseStats": {
+    "hp": 105,
+    "mana": 45,
+    "atk": 14,
+    "mag": 12,
+    "def": 13,
+    "res": 11,
+    "spd": 9,
+    "eva": 3,
+    "crit": 7
+  },
+  "growthRates": {
+    "hp": 3.2,
+    "mana": 1.8,
+    "atk": 1.1,
+    "mag": 0.8,
+    "def": 0.9,
+    "res": 0.7,
+    "spd": 0.3,
+    "eva": 0.15,
+    "crit": 0.1
+  },
+  "allowedWeapons": ["sword", "mace"],
+  "allowedArmor": ["heavy_armor"],
+  "terrainBonus": null
+}

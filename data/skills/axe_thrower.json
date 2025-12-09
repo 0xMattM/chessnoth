@@ -1,0 +1,178 @@
+[
+  {
+    "id": "throw_axe",
+    "name": "Throw Axe",
+    "description": "Basic ranged attack dealing 1.0x physical damage, range 3",
+    "classId": "axe_thrower",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 0,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "double_throw",
+    "name": "Double Throw",
+    "description": "Throws 2 axes, each dealing 0.9x physical damage, range 3",
+    "classId": "axe_thrower",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 10,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 0.9,
+    "requiresTarget": true
+  },
+  {
+    "id": "berserker_rage",
+    "name": "Berserker Rage",
+    "description": "Increases ATK by 30% and decreases DEF by 10% for 3 turns",
+    "classId": "axe_thrower",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 12,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "atk",
+        "value": 0.3,
+        "duration": 3
+      },
+      {
+        "type": "debuff",
+        "stat": "def",
+        "value": -0.1,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "spinning_axe",
+    "name": "Spinning Axe",
+    "description": "AoE attack dealing 1.1x physical damage in radius 1",
+    "classId": "axe_thrower",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 15,
+    "range": 1,
+    "aoeType": "radius",
+    "aoeRadius": 1,
+    "damageType": "physical",
+    "damageMultiplier": 1.1,
+    "requiresTarget": false
+  },
+  {
+    "id": "precise_throw",
+    "name": "Precise Throw",
+    "description": "Deals 1.6x damage with +30% CRIT, range 4",
+    "classId": "axe_thrower",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 18,
+    "range": 4,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.6,
+    "requiresTarget": true
+  },
+  {
+    "id": "axe_storm",
+    "name": "Axe Storm",
+    "description": "Throws 4 axes, each dealing 0.8x physical damage, range 3",
+    "classId": "axe_thrower",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 22,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 0.8,
+    "requiresTarget": true
+  },
+  {
+    "id": "bleeding_strike",
+    "name": "Bleeding Strike",
+    "description": "Deals 1.3x damage and applies bleed (3% HP/turn) for 3 turns",
+    "classId": "axe_thrower",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 20,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.3,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "bleed",
+        "duration": 3
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "returning_axe",
+    "name": "Returning Axe",
+    "description": "Deals 1.4x damage and hits twice, range 3",
+    "classId": "axe_thrower",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 25,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.4,
+    "requiresTarget": true
+  },
+  {
+    "id": "fury",
+    "name": "Fury",
+    "description": "Increases ATK by 50% and CRIT by 20% for 4 turns",
+    "classId": "axe_thrower",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 30,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "atk",
+        "value": 0.5,
+        "duration": 4
+      },
+      {
+        "type": "buff",
+        "stat": "crit",
+        "value": 0.2,
+        "duration": 4
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "avalanche",
+    "name": "Avalanche",
+    "description": "Line attack dealing 1.8x physical damage to all targets in line",
+    "classId": "axe_thrower",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 35,
+    "range": 4,
+    "aoeType": "line",
+    "damageType": "physical",
+    "damageMultiplier": 1.8,
+    "requiresTarget": true
+  }
+]

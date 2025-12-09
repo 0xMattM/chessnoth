@@ -1,0 +1,29 @@
+{
+  "id": "dark_mage",
+  "name": "Dark Mage",
+  "baseStats": {
+    "hp": 65,
+    "mana": 65,
+    "atk": 4,
+    "mag": 22,
+    "def": 3,
+    "res": 14,
+    "spd": 11,
+    "eva": 2,
+    "crit": 10
+  },
+  "growthRates": {
+    "hp": 1.8,
+    "mana": 2.8,
+    "atk": 0.2,
+    "mag": 1.6,
+    "def": 0.15,
+    "res": 0.9,
+    "spd": 0.5,
+    "eva": 0.15,
+    "crit": 0.15
+  },
+  "allowedWeapons": ["dark_staff", "cursed_wand"],
+  "allowedArmor": ["dark_robe"],
+  "terrainBonus": null
+}

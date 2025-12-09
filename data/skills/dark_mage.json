@@ -1,0 +1,180 @@
+[
+  {
+    "id": "dark_bolt",
+    "name": "Dark Bolt",
+    "description": "Deals 1.2x magic damage, range 3",
+    "classId": "dark_mage",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 8,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "magical",
+    "damageMultiplier": 1.2,
+    "requiresTarget": true
+  },
+  {
+    "id": "curse",
+    "name": "Curse",
+    "description": "Reduces all stats by 20% for 3 turns",
+    "classId": "dark_mage",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 10,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "debuff",
+        "stat": "all",
+        "value": -0.2,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "life_drain",
+    "name": "Life Drain",
+    "description": "Deals 1.0x magic damage and heals for 50% of damage dealt",
+    "classId": "dark_mage",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 12,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "magical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "poison_cloud",
+    "name": "Poison Cloud",
+    "description": "AoE attack applying poison for 5 turns in radius 1",
+    "classId": "dark_mage",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 15,
+    "range": 3,
+    "aoeType": "radius",
+    "aoeRadius": 1,
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "poison",
+        "duration": 5
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "fear",
+    "name": "Fear",
+    "description": "Target cannot act for 1 turn",
+    "classId": "dark_mage",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 18,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "fear",
+        "duration": 1
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "necromancy",
+    "name": "Necromancy",
+    "description": "Summons a weak skeleton ally",
+    "classId": "dark_mage",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 25,
+    "range": 2,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "requiresTarget": false
+  },
+  {
+    "id": "dark_ritual",
+    "name": "Dark Ritual",
+    "description": "Sacrifices 20% HP to increase MAG by 50% for 4 turns",
+    "classId": "dark_mage",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 20,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "mag",
+        "value": 0.5,
+        "duration": 4
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "death_ray",
+    "name": "Death Ray",
+    "description": "Line attack dealing 2.0x magic damage",
+    "classId": "dark_mage",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 30,
+    "range": 4,
+    "aoeType": "line",
+    "damageType": "magical",
+    "damageMultiplier": 2.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "soul_bind",
+    "name": "Soul Bind",
+    "description": "Links to enemy, sharing damage for 3 turns",
+    "classId": "dark_mage",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 28,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "soul_bind",
+        "duration": 3
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "armageddon",
+    "name": "Armageddon",
+    "description": "AoE attack dealing 2.5x magic damage to all enemies",
+    "classId": "dark_mage",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 60,
+    "range": 0,
+    "aoeType": "all_enemies",
+    "damageType": "magical",
+    "damageMultiplier": 2.5,
+    "requiresTarget": false
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "id": "mage",
+  "name": "Mage",
+  "baseStats": {
+    "hp": 70,
+    "mana": 60,
+    "atk": 5,
+    "mag": 20,
+    "def": 4,
+    "res": 12,
+    "spd": 10,
+    "eva": 3,
+    "crit": 8
+  },
+  "growthRates": {
+    "hp": 2,
+    "mana": 2.5,
+    "atk": 0.3,
+    "mag": 1.5,
+    "def": 0.2,
+    "res": 0.8,
+    "spd": 0.4,
+    "eva": 0.2,
+    "crit": 0.1
+  },
+  "allowedWeapons": ["staff", "wand"],
+  "allowedArmor": ["robe"],
+  "terrainBonus": null
+}

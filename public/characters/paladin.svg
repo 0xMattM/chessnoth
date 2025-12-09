@@ -1,0 +1,29 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Body -->
+  <rect x="22" y="35" width="20" height="22" fill="#fbbf24" rx="2"/>
+  <!-- Head -->
+  <circle cx="32" cy="20" r="10" fill="#fbbf24"/>
+  <!-- Helmet -->
+  <path d="M 20 18 Q 32 10 44 18 L 42 28 Q 32 22 22 28 Z" fill="#fbbf24"/>
+  <rect x="30" y="12" width="4" height="10" fill="#dc2626"/>
+  <!-- Cross on helmet -->
+  <line x1="32" y1="15" x2="32" y2="20" stroke="#dc2626" stroke-width="1.5"/>
+  <line x1="30" y1="17.5" x2="34" y2="17.5" stroke="#dc2626" stroke-width="1.5"/>
+  <!-- Armor -->
+  <rect x="24" y="38" width="16" height="17" fill="#fbbf24"/>
+  <line x1="32" y1="38" x2="32" y2="55" stroke="#dc2626" stroke-width="1"/>
+  <!-- Shield -->
+  <path d="M 16 40 Q 16 46 20 50 Q 20 54 20 58 L 20 50 Q 20 46 16 40" fill="#dc2626"/>
+  <line x1="18" y1="45" x2="18" y2="55" stroke="#fbbf24" stroke-width="1"/>
+  <line x1="18" y1="50" x2="20" y2="50" stroke="#fbbf24" stroke-width="1"/>
+  <!-- Sword -->
+  <rect x="44" y="32" width="3" height="22" fill="#9ca3af"/>
+  <polygon points="44,32 47,32 45.5,26" fill="#dc2626"/>
+  <!-- Legs -->
+  <rect x="24" y="57" width="6" height="7" fill="#1f2937"/>
+  <rect x="34" y="57" width="6" height="7" fill="#1f2937"/>
+  <!-- Boots -->
+  <rect x="23" y="64" width="8" height="1" fill="#111827"/>
+  <rect x="33" y="64" width="8" height="1" fill="#111827"/>
+</svg>
+

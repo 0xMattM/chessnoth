@@ -1,0 +1,173 @@
+[
+  {
+    "id": "quick_shot",
+    "name": "Quick Shot",
+    "description": "Basic ranged attack, deals 1.0x physical damage, range 4",
+    "classId": "archer",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 0,
+    "range": 4,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "multi_shot",
+    "name": "Multi Shot",
+    "description": "Fires 3 arrows, each dealing 0.8x physical damage, range 4",
+    "classId": "archer",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 12,
+    "range": 4,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 0.8,
+    "requiresTarget": true
+  },
+  {
+    "id": "aim",
+    "name": "Aim",
+    "description": "Next attack gains +50% CRIT chance",
+    "classId": "archer",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 10,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "crit",
+        "value": 0.5,
+        "duration": 1
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "barrage",
+    "name": "Barrage",
+    "description": "Fires 5 arrows, each dealing 0.7x physical damage, range 4",
+    "classId": "archer",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 20,
+    "range": 4,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 0.7,
+    "requiresTarget": true
+  },
+  {
+    "id": "snipe",
+    "name": "Snipe",
+    "description": "Powerful long-range attack, deals 2.0x physical damage, range 5",
+    "classId": "archer",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 15,
+    "range": 5,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 2.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "headshot",
+    "name": "Headshot",
+    "description": "Deals 1.5x damage with 50% chance to stun",
+    "classId": "archer",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 18,
+    "range": 4,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.5,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "stun",
+        "duration": 1
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "poison_arrow",
+    "name": "Poison Arrow",
+    "description": "Deals 1.2x damage and applies poison for 5 turns",
+    "classId": "archer",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 22,
+    "range": 4,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.2,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "poison",
+        "duration": 5
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "piercing_shot",
+    "name": "Piercing Shot",
+    "description": "Line attack dealing 1.3x physical damage to all targets in line",
+    "classId": "archer",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 25,
+    "range": 4,
+    "aoeType": "line",
+    "damageType": "physical",
+    "damageMultiplier": 1.3,
+    "requiresTarget": true
+  },
+  {
+    "id": "eagle_eye",
+    "name": "Eagle Eye",
+    "description": "Increases CRIT by 30% and range by 2 for 4 turns",
+    "classId": "archer",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 30,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "crit",
+        "value": 0.3,
+        "duration": 4
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "rain_of_arrows",
+    "name": "Rain of Arrows",
+    "description": "AoE attack dealing 1.0x physical damage to all targets in radius 2",
+    "classId": "archer",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 40,
+    "range": 4,
+    "aoeType": "radius",
+    "aoeRadius": 2,
+    "damageType": "physical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": false
+  }
+]

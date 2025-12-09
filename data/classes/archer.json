@@ -1,0 +1,33 @@
+{
+  "id": "archer",
+  "name": "Archer",
+  "baseStats": {
+    "hp": 80,
+    "mana": 35,
+    "atk": 15,
+    "mag": 4,
+    "def": 6,
+    "res": 6,
+    "spd": 14,
+    "eva": 8,
+    "crit": 12
+  },
+  "growthRates": {
+    "hp": 2.5,
+    "mana": 1.2,
+    "atk": 1.0,
+    "mag": 0.2,
+    "def": 0.3,
+    "res": 0.4,
+    "spd": 0.6,
+    "eva": 0.3,
+    "crit": 0.2
+  },
+  "allowedWeapons": ["bow", "crossbow"],
+  "allowedArmor": ["light_armor"],
+  "terrainBonus": {
+    "terrain": "forest",
+    "bonus": "eva",
+    "value": 0.2
+  }
+}

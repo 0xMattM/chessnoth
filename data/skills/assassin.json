@@ -1,0 +1,179 @@
+[
+  {
+    "id": "stab",
+    "name": "Stab",
+    "description": "Basic attack dealing 1.0x physical damage with +10% CRIT",
+    "classId": "assassin",
+    "levelReq": 1,
+    "spCost": 1,
+    "manaCost": 0,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "backstab",
+    "name": "Backstab",
+    "description": "Deals 1.5x damage if attacking from behind enemy",
+    "classId": "assassin",
+    "levelReq": 3,
+    "spCost": 1,
+    "manaCost": 10,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.5,
+    "requiresTarget": true
+  },
+  {
+    "id": "poison_blade",
+    "name": "Poison Blade",
+    "description": "Deals 1.1x damage and applies poison for 3 turns",
+    "classId": "assassin",
+    "levelReq": 5,
+    "spCost": 1,
+    "manaCost": 12,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.1,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "poison",
+        "duration": 3
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "stealth",
+    "name": "Stealth",
+    "description": "Increases EVA by 50% and next attack gains +100% CRIT for 2 turns",
+    "classId": "assassin",
+    "levelReq": 7,
+    "spCost": 2,
+    "manaCost": 15,
+    "range": 0,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "eva",
+        "value": 0.5,
+        "duration": 2
+      },
+      {
+        "type": "buff",
+        "stat": "crit",
+        "value": 1.0,
+        "duration": 1
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "dual_strike",
+    "name": "Dual Strike",
+    "description": "Performs 2 attacks, each dealing 1.0x physical damage",
+    "classId": "assassin",
+    "levelReq": 10,
+    "spCost": 2,
+    "manaCost": 18,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.0,
+    "requiresTarget": true
+  },
+  {
+    "id": "shadow_step",
+    "name": "Shadow Step",
+    "description": "Teleports behind enemy and deals 1.2x damage",
+    "classId": "assassin",
+    "levelReq": 15,
+    "spCost": 2,
+    "manaCost": 20,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 1.2,
+    "requiresTarget": true
+  },
+  {
+    "id": "assassinate",
+    "name": "Assassinate",
+    "description": "Deals 2.5x damage with 50% CRIT chance",
+    "classId": "assassin",
+    "levelReq": 20,
+    "spCost": 3,
+    "manaCost": 25,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 2.5,
+    "requiresTarget": true
+  },
+  {
+    "id": "smoke_bomb",
+    "name": "Smoke Bomb",
+    "description": "AoE blind effect and increases self EVA by 30%",
+    "classId": "assassin",
+    "levelReq": 25,
+    "spCost": 3,
+    "manaCost": 22,
+    "range": 1,
+    "aoeType": "radius",
+    "aoeRadius": 1,
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "blind",
+        "duration": 2
+      }
+    ],
+    "requiresTarget": false
+  },
+  {
+    "id": "death_mark",
+    "name": "Death Mark",
+    "description": "Marks target, increasing damage taken by 50% for 3 turns",
+    "classId": "assassin",
+    "levelReq": 30,
+    "spCost": 3,
+    "manaCost": 28,
+    "range": 3,
+    "aoeType": "single",
+    "damageType": "none",
+    "damageMultiplier": 0,
+    "effects": [
+      {
+        "type": "debuff",
+        "stat": "def",
+        "value": -0.5,
+        "duration": 3
+      }
+    ],
+    "requiresTarget": true
+  },
+  {
+    "id": "execute",
+    "name": "Execute",
+    "description": "Deals 4.0x damage if target has less than 30% HP",
+    "classId": "assassin",
+    "levelReq": 40,
+    "spCost": 3,
+    "manaCost": 35,
+    "range": 1,
+    "aoeType": "single",
+    "damageType": "physical",
+    "damageMultiplier": 4.0,
+    "requiresTarget": true
+  }
+]

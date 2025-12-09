@@ -1,0 +1,29 @@
+{
+  "id": "axe_thrower",
+  "name": "Axe Thrower",
+  "baseStats": {
+    "hp": 90,
+    "mana": 28,
+    "atk": 16,
+    "mag": 3,
+    "def": 7,
+    "res": 5,
+    "spd": 12,
+    "eva": 5,
+    "crit": 10
+  },
+  "growthRates": {
+    "hp": 2.8,
+    "mana": 1.0,
+    "atk": 1.2,
+    "mag": 0.1,
+    "def": 0.4,
+    "res": 0.25,
+    "spd": 0.5,
+    "eva": 0.25,
+    "crit": 0.18
+  },
+  "allowedWeapons": ["axe", "throwing_axe"],
+  "allowedArmor": ["medium_armor"],
+  "terrainBonus": null
+}

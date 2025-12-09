@@ -1,0 +1,157 @@
+[
+  {
+    "id": "health_potion",
+    "name": "Health Potion",
+    "description": "Restores 50 HP",
+    "type": "consumable",
+    "rarity": "common",
+    "stackable": true,
+    "maxStack": 99,
+    "value": 10,
+    "effects": [
+      {
+        "type": "heal",
+        "value": 50
+      }
+    ],
+    "cooldown": 0
+  },
+  {
+    "id": "mana_potion",
+    "name": "Mana Potion",
+    "description": "Restores 30 Mana",
+    "type": "consumable",
+    "rarity": "common",
+    "stackable": true,
+    "maxStack": 99,
+    "value": 10,
+    "effects": [
+      {
+        "type": "mana",
+        "value": 30
+      }
+    ],
+    "cooldown": 0
+  },
+  {
+    "id": "iron_sword",
+    "name": "Iron Sword",
+    "description": "A basic iron sword",
+    "type": "weapon",
+    "rarity": "common",
+    "stackable": false,
+    "value": 50,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 5
+    },
+    "allowedClasses": ["warrior", "paladin"]
+  },
+  {
+ "id": "steel_sword",
+    "name": "Steel Sword",
+    "description": "A sturdy steel sword",
+    "type": "weapon",
+    "rarity": "uncommon",
+    "stackable": false,
+    "value": 150,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 10,
+      "crit": 2
+    },
+    "allowedClasses": ["warrior", "paladin"]
+  },
+  {
+    "id": "leather_armor",
+    "name": "Leather Armor",
+    "description": "Basic leather protection",
+    "type": "armor",
+    "rarity": "common",
+    "stackable": false,
+    "value": 40,
+    "equipmentSlot": "armor",
+    "statBonuses": {
+      "def": 3,
+      "hp": 10
+    },
+    "allowedClasses": ["warrior", "archer", "assassin", "monk", "paladin", "axe_thrower"]
+  },
+  {
+    "id": "chain_mail",
+    "name": "Chain Mail",
+    "description": "Interlocking metal rings provide good protection",
+    "type": "armor",
+    "rarity": "uncommon",
+    "stackable": false,
+    "value": 120,
+    "equipmentSlot": "armor",
+    "statBonuses": {
+      "def": 6,
+      "hp": 20,
+      "res": 2
+    },
+    "allowedClasses": ["warrior", "paladin", "dwarf"]
+  },
+  {
+    "id": "wooden_staff",
+    "name": "Wooden Staff",
+    "description": "A simple wooden staff",
+    "type": "weapon",
+    "rarity": "common",
+    "stackable": false,
+    "value": 30,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "mag": 5
+    },
+    "allowedClasses": ["mage", "healer", "dark_mage"]
+  },
+  {
+    "id": "apprentice_robe",
+    "name": "Apprentice Robe",
+    "description": "Basic robe for magic users",
+    "type": "armor",
+    "rarity": "common",
+    "stackable": false,
+    "value": 35,
+    "equipmentSlot": "armor",
+    "statBonuses": {
+      "res": 3,
+      "mana": 10
+    },
+    "allowedClasses": ["mage", "healer", "dark_mage", "monk"]
+  },
+  {
+    "id": "hunting_bow",
+    "name": "Hunting Bow",
+    "description": "A reliable bow for ranged combat",
+    "type": "weapon",
+    "rarity": "common",
+    "stackable": false,
+    "value": 45,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 4,
+      "spd": 2
+    },
+    "allowedClasses": ["archer"]
+  },
+  {
+    "id": "antidote",
+    "name": "Antidote",
+    "description": "Cures poison status",
+    "type": "consumable",
+    "rarity": "common",
+    "stackable": true,
+    "maxStack": 99,
+    "value": 15,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "cure_poison"
+      }
+    ],
+    "cooldown": 0
+  }
+]

@@ -1,0 +1,27 @@
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Body (shorter) -->
+  <rect x="24" y="40" width="16" height="18" fill="#4b5563" rx="2"/>
+  <!-- Head (larger) -->
+  <circle cx="32" cy="22" r="11" fill="#fbbf24"/>
+  <!-- Beard -->
+  <path d="M 24 28 Q 32 35 40 28 L 38 38 Q 32 32 26 38 Z" fill="#78350f"/>
+  <!-- Helmet -->
+  <path d="M 20 20 Q 32 12 44 20 L 42 28 Q 32 22 22 28 Z" fill="#6b7280"/>
+  <rect x="30" y="15" width="4" height="8" fill="#374151"/>
+  <!-- Axe -->
+  <rect x="42" y="35" width="3" height="15" fill="#78350f"/>
+  <rect x="40" y="35" width="8" height="4" fill="#dc2626"/>
+  <!-- Shield -->
+  <rect x="18" y="42" width="6" height="10" fill="#dc2626" rx="1"/>
+  <circle cx="21" cy="47" r="2" fill="#fbbf24"/>
+  <!-- Armor -->
+  <rect x="26" y="43" width="12" height="13" fill="#374151"/>
+  <line x1="32" y1="43" x2="32" y2="56" stroke="#1f2937" stroke-width="1"/>
+  <!-- Legs -->
+  <rect x="26" y="58" width="5" height="6" fill="#1f2937"/>
+  <rect x="33" y="58" width="5" height="6" fill="#1f2937"/>
+  <!-- Boots -->
+  <rect x="25" y="64" width="7" height="1" fill="#111827"/>
+  <rect x="32" y="64" width="7" height="1" fill="#111827"/>
+</svg>
+
