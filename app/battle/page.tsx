@@ -59,7 +59,7 @@ export default function BattlePage() {
   // Prepare contracts for batch reading token IDs
   const tokenIndexContracts =
     address && balanceValue && balanceValue > 0n
-      ? Array.from({ length: Number(balanceValue) }, (_, i) => ({
+      ? Array.from({ length: Number(balanceValue) }, (_, _i) => ({
           address: CHARACTER_NFT_ADDRESS,
           abi: CHARACTER_NFT_ABI,
           functionName: 'tokenOfOwnerByIndex' as const,
