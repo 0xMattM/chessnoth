@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "NEXT_PRIVATE_SKIP_ESLINT=1 NEXT_PRIVATE_SKIP_TYPE_CHECK=1 next build",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
