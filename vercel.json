@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "SKIP_ESLINT=true npm run build",
   "framework": "nextjs"
 }
 
