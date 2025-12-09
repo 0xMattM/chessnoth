@@ -14,6 +14,23 @@ const nextConfig = {
     // Type errors should be fixed but won't block deployment
     ignoreBuildErrors: true,
   },
+  webpack: (config, { isServer }) => {
+    // Ignore optional dependencies that are not needed in the browser
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        'pino-pretty': false,
+      }
+    }
+    
+    // Ignore pino-pretty module resolution warnings
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'pino-pretty': false,
+    }
+    
+    return config
+  },
 }
 
 module.exports = nextConfig
