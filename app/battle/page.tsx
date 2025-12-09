@@ -7,10 +7,12 @@ import { Crown, Lock, Users, AlertCircle } from 'lucide-react'
 import { useAccount, useContractReads } from 'wagmi'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
 import { getTeam } from '@/lib/team'
-import { loadBattleTeam, isTeamReady, isStageUnlocked } from '@/lib/battle'
+import { loadBattleTeam, isTeamReady, isStageUnlocked, isBossStage } from '@/lib/battle'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ERROR_MESSAGES } from '@/lib/constants'
+import { useToast } from '@/hooks/use-toast'
+import { Zap } from 'lucide-react'
 
 interface Character {
   tokenId: bigint
@@ -58,7 +60,7 @@ export default function BattlePage() {
   // Prepare contracts for batch reading token IDs
   const tokenIndexContracts =
     address && balanceValue && balanceValue > 0n
-      ? Array.from({ length: Number(balanceValue) }, (_, _i) => ({
+      ? Array.from({ length: Number(balanceValue) }, (_, i) => ({
           address: CHARACTER_NFT_ADDRESS,
           abi: CHARACTER_NFT_ABI,
           functionName: 'tokenOfOwnerByIndex' as const,

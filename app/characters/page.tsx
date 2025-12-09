@@ -11,7 +11,7 @@ import { CharacterSkills } from '@/components/character-skills'
 import { isInTeam } from '@/lib/team'
 import { getCharacterEquipment } from '@/lib/equipment'
 import { getCharacterSkills } from '@/lib/skills'
-import { Users, Shield, CheckCircle2 } from 'lucide-react'
+import { Users, Shield, CheckCircle2, Zap } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface Character {

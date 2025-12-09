@@ -265,7 +265,7 @@ export default function TeamPage() {
                           </div>
                           <h3 className="font-semibold">{character.metadata?.name || `Character #${character.tokenId}`}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {character.metadata?.class} • Level {character.metadata?.level || 1}
+                            {character.metadata?.class} ï¿½ Level {character.metadata?.level || 1}
                           </p>
                           <Button
                             variant="outline"
@@ -357,7 +357,7 @@ export default function TeamPage() {
                                 {character.metadata?.name || `Character #${character.tokenId}`}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                {character.metadata?.class} • Level {character.metadata?.level || 1}
+                                {character.metadata?.class} ï¿½ Level {character.metadata?.level || 1}
                               </p>
                             </div>
                             {inTeam ? (
