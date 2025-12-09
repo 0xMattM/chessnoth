@@ -1,5 +1,6 @@
 {
   "extends": [
+    "next/core-web-vitals",
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended"
   ],
@@ -30,6 +31,7 @@
     "no-var": "error",
     "object-shorthand": "warn",
     "prefer-arrow-callback": "warn",
+    "react/no-unescaped-entities": "off",
     "no-case-declarations": "off"
   },
   "ignorePatterns": ["node_modules/", ".next/", "out/", "dist/", "build/"]
