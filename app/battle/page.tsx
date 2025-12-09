@@ -7,11 +7,10 @@ import { Crown, Lock, Users, AlertCircle } from 'lucide-react'
 import { useAccount, useContractReads } from 'wagmi'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
 import { getTeam } from '@/lib/team'
-import { loadBattleTeam, isTeamReady, isStageUnlocked, isBossStage } from '@/lib/battle'
+import { loadBattleTeam, isTeamReady, isStageUnlocked } from '@/lib/battle'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ERROR_MESSAGES } from '@/lib/constants'
-import { useToast } from '@/hooks/use-toast'
 
 interface Character {
   tokenId: bigint

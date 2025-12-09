@@ -1,18 +1,18 @@
-﻿&apos;use client&apos;
+﻿'use client'
 
-import { useAccount, useContractRead, useContractReads } from &apos;wagmi&apos;
-import { Navigation } from &apos;@/components/navigation&apos;
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from &apos;@/components/ui/card&apos;
-import { Tabs, TabsContent, TabsList, TabsTrigger } from &apos;@/components/ui/tabs&apos;
-import { Button } from &apos;@/components/ui/button&apos;
-import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from &apos;@/lib/contract&apos;
-import { CharacterInventory } from &apos;@/components/character-inventory&apos;
-import { CharacterSkills } from &apos;@/components/character-skills&apos;
-import { isInTeam } from &apos;@/lib/team&apos;
-import { getCharacterEquipment } from &apos;@/lib/equipment&apos;
-import { getCharacterSkills } from &apos;@/lib/skills&apos;
-import { Users, Shield, CheckCircle2, Zap } from &apos;lucide-react&apos;
-import { useState, useEffect } from &apos;react&apos;
+import { useAccount, useContractRead, useContractReads } from 'wagmi'
+import { Navigation } from '@/components/navigation'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
+import { CharacterInventory } from '@/components/character-inventory'
+import { CharacterSkills } from '@/components/character-skills'
+import { isInTeam } from '@/lib/team'
+import { getCharacterEquipment } from '@/lib/equipment'
+import { getCharacterSkills } from '@/lib/skills'
+import { Users, Shield, CheckCircle2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 interface Character {
   tokenId: bigint
@@ -180,7 +180,6 @@ export default function CharactersPage() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    {/* eslint-disable-next-line react/no-unescaped-entities */}
                     <p className="text-muted-foreground">You do not have any characters yet</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Mint your first character on the home page
@@ -239,7 +238,6 @@ export default function CharactersPage() {
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      {/* eslint-disable-next-line react/no-unescaped-entities */}
                       <p className="text-muted-foreground">You do not have any characters yet</p>
                     </div>
                   ) : (
@@ -348,7 +346,6 @@ export default function CharactersPage() {
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      {/* eslint-disable-next-line react/no-unescaped-entities */}
                       <p className="text-muted-foreground">You do not have any characters yet</p>
                     </div>
                   ) : (
