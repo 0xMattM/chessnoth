@@ -1299,10 +1299,11 @@ export default function CombatPage() {
           }
           break
         }
-        case 'w':
+        case 'w': {
           event.preventDefault()
           handleAction('skill')
           break
+        }
         case '1': {
           event.preventDefault()
           handleAction('skill', 0)

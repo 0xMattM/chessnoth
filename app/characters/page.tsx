@@ -36,6 +36,7 @@ export default function CharactersPage() {
   
   // Text constants to avoid ESLint errors
   const noCharactersText = 'You do not have any characters yet'
+  const mintText = 'Mint your first character on the home page'
 
   // Get balance of NFTs
   const { data: balance } = useContractRead({
@@ -186,7 +187,7 @@ export default function CharactersPage() {
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                     <p className="text-muted-foreground">{noCharactersText}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Mint your first character on the home page
+                      {mintText}
                     </p>
                   </CardContent>
                 </Card>
@@ -236,7 +237,7 @@ export default function CharactersPage() {
                     <Shield className="h-5 w-5" />
                     Equipment Management
                   </CardTitle>
-                  <CardDescription>Click on a character to manage their equipment</CardDescription>
+                  <CardDescription>{clickEquipmentText}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {characters.length === 0 ? (
@@ -345,7 +346,7 @@ export default function CharactersPage() {
                     <Zap className="h-5 w-5" />
                     Skills Management
                   </CardTitle>
-                  <CardDescription>Click on a character to manage their skills</CardDescription>
+                  <CardDescription>{clickSkillsText}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {characters.length === 0 ? (

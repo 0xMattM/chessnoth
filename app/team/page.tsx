@@ -43,6 +43,8 @@ export default function TeamPage() {
   // Text constants to avoid ESLint errors
   const noCharactersText = 'You do not have any characters yet'
   const noSkillsText = 'This character has not learned any skills yet. Learn skills in the Skills page.'
+  const mintText = 'Mint your first character on the home page'
+  const clickToAddText = 'Click to add to your team'
 
   // Load team from localStorage
   useEffect(() => {
@@ -308,7 +310,7 @@ export default function TeamPage() {
                 <CardDescription>
                   {characters.length === 0
                     ? noCharactersText
-                    : 'Click to add to your team'}
+                    : clickToAddText}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -317,7 +319,7 @@ export default function TeamPage() {
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                     <p className="text-muted-foreground">{noCharactersText}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      Mint your first character on the home page
+                      {mintText}
                     </p>
                   </div>
                 ) : (
