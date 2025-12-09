@@ -44,7 +44,7 @@ export default function CharactersPage() {
   const { data: balance } = useContractRead({
     address: CHARACTER_NFT_ADDRESS,
     abi: CHARACTER_NFT_ABI,
-    functionName: &apos;balanceOf&apos;,
+    functionName: 'balanceOf',
     args: address ? [address] : undefined,
     enabled: !!address && isConnected,
   })
@@ -55,7 +55,7 @@ export default function CharactersPage() {
       ? Array.from({ length: Number(balance) }, (_, i) => ({
           address: CHARACTER_NFT_ADDRESS,
           abi: CHARACTER_NFT_ABI,
-          functionName: &apos;tokenOfOwnerByIndex&apos; as const,
+          functionName: 'tokenOfOwnerByIndex' as const,
           args: [address, BigInt(i)],
         }))
       : []
@@ -69,26 +69,26 @@ export default function CharactersPage() {
   const tokenDataContracts =
     tokenIdsData && tokenIdsData.length > 0
       ? tokenIdsData
-          .filter((result) => result?.status === &apos;success&apos; && result?.result)
+          .filter((result) => result?.status === 'success' && result?.result)
           .flatMap((result) => {
             const tokenId = result.result as bigint
             return [
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: &apos;tokenURI&apos; as const,
+                functionName: 'tokenURI' as const,
                 args: [tokenId],
               },
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: &apos;getClass&apos; as const,
+                functionName: 'getClass' as const,
                 args: [tokenId],
               },
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: &apos;getLevel&apos; as const,
+                functionName: 'getLevel' as const,
                 args: [tokenId],
               },
             ]
@@ -109,7 +109,7 @@ export default function CharactersPage() {
 
     const validTokenIds = tokenIdsData
       .map((result, index) => {
-        if (result?.status === &apos;success&apos; && result?.result) {
+        if (result?.status === 'success' && result?.result) {
           return { tokenId: result.result as bigint, index }
         }
         return null
@@ -131,17 +131,17 @@ export default function CharactersPage() {
       const classResult = tokenDataResults[classIndex]
       const levelResult = tokenDataResults[levelIndex]
 
-      const uri = uriResult?.status === &apos;success&apos; ? (uriResult.result as string) : &apos;&apos;
+      const uri = uriResult?.status === 'success' ? (uriResult.result as string) : ''
       const characterClass =
-        classResult?.status === &apos;success&apos; ? (classResult.result as string) : &apos;warrior&apos;
+        classResult?.status === 'success' ? (classResult.result as string) : 'warrior'
       const level =
-        levelResult?.status === &apos;success&apos; ? Number(levelResult.result as bigint) : 1
+        levelResult?.status === 'success' ? Number(levelResult.result as bigint) : 1
 
       // Format class name (capitalize first letter, handle underscores)
       const formattedClass = characterClass
-        .split(&apos;_&apos;)
+        .split('_')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(&apos; &apos;)
+        .join(' ')
 
       return {
         tokenId,
@@ -183,6 +183,7 @@ export default function CharactersPage() {
             </TabsList>
 
             <TabsContent value="list" className="space-y-4">
+              {/* eslint-disable-next-line react/no-unescaped-entities */}
               {characters.length === 0 ? (
                 <Card>
                   <CardContent className="py-12 text-center">
@@ -239,6 +240,7 @@ export default function CharactersPage() {
                     <Shield className="h-5 w-5" />
                     Equipment Management
                   </CardTitle>
+                  {/* eslint-disable-next-line react/no-unescaped-entities */}
                   <CardDescription>{clickEquipmentText}</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -297,7 +299,7 @@ export default function CharactersPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="p-4">{character.metadata?.class || &apos;Unknown&apos;}</td>
+                                <td className="p-4">{character.metadata?.class || 'Unknown'}</td>
                                 <td className="p-4">
                                   <span className="font-semibold">Lv. {character.metadata?.level || 1}</span>
                                 </td>
@@ -348,6 +350,7 @@ export default function CharactersPage() {
                     <Zap className="h-5 w-5" />
                     Skills Management
                   </CardTitle>
+                  {/* eslint-disable-next-line react/no-unescaped-entities */}
                   <CardDescription>{clickSkillsText}</CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -406,7 +409,7 @@ export default function CharactersPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="p-4">{character.metadata?.class || &apos;Unknown&apos;}</td>
+                                <td className="p-4">{character.metadata?.class || 'Unknown'}</td>
                                 <td className="p-4">
                                   <span className="font-semibold">Lv. {characterLevel}</span>
                                 </td>

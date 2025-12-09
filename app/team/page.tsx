@@ -307,6 +307,7 @@ export default function TeamPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Available Characters</CardTitle>
+                {/* eslint-disable-next-line react/no-unescaped-entities */}
                 <CardDescription>
                   {characters.length === 0
                     ? noCharactersText
@@ -528,9 +529,9 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             )}
           </div>
           
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <div>
             <p className="text-sm font-semibold mb-2">Available Skills</p>
-            {/* eslint-disable-next-line react/no-unescaped-entities */}
             {skills.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 {noSkillsText}

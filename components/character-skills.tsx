@@ -518,6 +518,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             )}
           </div>
           
+          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <div>
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
