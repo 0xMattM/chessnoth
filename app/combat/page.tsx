@@ -1302,26 +1302,31 @@ export default function CombatPage() {
           handleAction('skill')
           break
         }
-        case '1':
+        case '1': {
           event.preventDefault()
           handleAction('skill', 0)
           break
-        case '2':
+        }
+        case '2': {
           event.preventDefault()
           handleAction('skill', 1)
           break
-        case '3':
+        }
+        case '3': {
           event.preventDefault()
           handleAction('skill', 2)
           break
-        case '4':
+        }
+        case '4': {
           event.preventDefault()
           handleAction('skill', 3)
           break
-        case 'e':
+        }
+        case 'e': {
           event.preventDefault()
           handleAction('item')
           break
+        }
       }
     }
 
