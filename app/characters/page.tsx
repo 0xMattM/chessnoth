@@ -37,6 +37,8 @@ export default function CharactersPage() {
   // Text constants to avoid ESLint errors
   const noCharactersText = 'You do not have any characters yet'
   const mintText = 'Mint your first character on the home page'
+  const clickEquipmentText = 'Click on a character to manage their equipment'
+  const clickSkillsText = 'Click on a character to manage their skills'
 
   // Get balance of NFTs
   const { data: balance } = useContractRead({
