@@ -35,6 +35,7 @@ export interface Item {
   description: string
   type: 'weapon' | 'armor' | 'consumable' | string // Allow string for flexibility with JSON
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary' | string // Allow string for flexibility
+  image?: string // Optional image URL for item display
   stackable?: boolean
   maxStack?: number
   value?: number
