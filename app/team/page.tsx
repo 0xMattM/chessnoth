@@ -310,6 +310,7 @@ export default function TeamPage() {
                 {characters.length === 0 ? (
                   <div className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                    {/* eslint-disable-next-line react/no-unescaped-entities */}
                     <p className="text-muted-foreground">You do not have any characters yet</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Mint your first character on the home page
@@ -525,6 +526,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
               <p className="text-sm text-muted-foreground">
+                {/* eslint-disable-next-line react/no-unescaped-entities */}
                 This character has not learned any skills yet. Learn skills in the Skills page.
               </p>
             ) : (

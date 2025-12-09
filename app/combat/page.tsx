@@ -1298,6 +1298,7 @@ export default function CombatPage() {
           }
           break
         }
+        // eslint-disable-next-line no-case-declarations
         case 'w': {
           event.preventDefault()
           handleAction('skill')
