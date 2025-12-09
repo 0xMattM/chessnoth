@@ -1,9 +1,7 @@
 {
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended"
+    "plugin:@typescript-eslint/recommended"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -11,11 +9,6 @@
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true
-    }
-  },
-  "settings": {
-    "react": {
-      "version": "detect"
     }
   },
   "rules": {
@@ -37,18 +30,8 @@
     "no-var": "error",
     "object-shorthand": "warn",
     "prefer-arrow-callback": "warn",
-    "react/no-unescaped-entities": "off",
-    "react/react-in-jsx-scope": "off",
     "no-case-declarations": "off"
   },
-  "overrides": [
-    {
-      "files": ["**/*.tsx", "**/*.jsx"],
-      "rules": {
-        "react/no-unescaped-entities": "off"
-      }
-    }
-  ],
   "ignorePatterns": ["node_modules/", ".next/", "out/", "dist/", "build/"]
 }
 
