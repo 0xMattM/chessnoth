@@ -181,7 +181,7 @@ export default function CharactersPage() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">You don't have any characters yet</p>
+                    <p className="text-muted-foreground">You don&apos;t have any characters yet</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Mint your first character on the home page
                     </p>
@@ -239,7 +239,7 @@ export default function CharactersPage() {
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">You don't have any characters yet</p>
+                      <p className="text-muted-foreground">You don&apos;t have any characters yet</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -347,7 +347,7 @@ export default function CharactersPage() {
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">You don't have any characters yet</p>
+                      <p className="text-muted-foreground">You don&apos;t have any characters yet</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">

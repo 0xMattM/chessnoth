@@ -518,7 +518,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                This character hasn't learned any skills yet. Learn skills above.
+                This character hasn&apos;t learned any skills yet. Learn skills above.
               </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
