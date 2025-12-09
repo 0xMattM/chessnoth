@@ -1,23 +1,23 @@
-ï»¿&apos;use client&apos;
+'use client'
 
-import { useAccount, useContractRead, useContractReads } from &apos;wagmi&apos;
-import { Navigation } from &apos;@/components/navigation&apos;
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from &apos;@/components/ui/card&apos;
-import { Button } from &apos;@/components/ui/button&apos;
-import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from &apos;@/lib/contract&apos;
-import { getTeam, addToTeam, removeFromTeam, isInTeam, type TeamMember } from &apos;@/lib/team&apos;
-import { getEquippedSkills, setEquippedSkills, getCharacterSkills, getSkillPoints } from &apos;@/lib/skills&apos;
-import { Sword, Users, X, Plus, Zap } from &apos;lucide-react&apos;
-import { useState, useEffect } from &apos;react&apos;
-import { useToast } from &apos;@/hooks/use-toast&apos;
-import { ERROR_MESSAGES, MAX_TEAM_SIZE } from &apos;@/lib/constants&apos;
+import { useAccount, useContractRead, useContractReads } from 'wagmi'
+import { Navigation } from '@/components/navigation'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
+import { getTeam, addToTeam, removeFromTeam, isInTeam, type TeamMember } from '@/lib/team'
+import { getEquippedSkills, setEquippedSkills, getCharacterSkills, getSkillPoints } from '@/lib/skills'
+import { Sword, Users, X, Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useToast } from '@/hooks/use-toast'
+import { ERROR_MESSAGES, MAX_TEAM_SIZE } from '@/lib/constants'
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from &apos;@/components/ui/dialog&apos;
+} from '@/components/ui/dialog'
 
 interface Character {
   tokenId: bigint
@@ -48,7 +48,7 @@ export default function TeamPage() {
   const { data: balance } = useContractRead({
     address: CHARACTER_NFT_ADDRESS,
     abi: CHARACTER_NFT_ABI,
-    functionName: &apos;balanceOf&apos;,
+    functionName: 'balanceOf',
     args: address ? [address] : undefined,
     enabled: !!address && isConnected,
   })
@@ -59,7 +59,7 @@ export default function TeamPage() {
       ? Array.from({ length: Number(balance) }, (_, i) => ({
           address: CHARACTER_NFT_ADDRESS,
           abi: CHARACTER_NFT_ABI,
-          functionName: &apos;tokenOfOwnerByIndex&apos; as const,
+          functionName: 'tokenOfOwnerByIndex' as const,
           args: [address, BigInt(i)],
         }))
       : []
@@ -73,26 +73,26 @@ export default function TeamPage() {
   const tokenDataContracts =
     tokenIdsData && tokenIdsData.length > 0
       ? tokenIdsData
-          .filter((result) => result?.status === &apos;success&apos; && result?.result)
+          .filter((result) => result?.status === 'success' && result?.result)
           .flatMap((result) => {
             const tokenId = result.result as bigint
             return [
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: &apos;tokenURI&apos; as const,
+                functionName: 'tokenURI' as const,
                 args: [tokenId],
               },
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: &apos;getClass&apos; as const,
+                functionName: 'getClass' as const,
                 args: [tokenId],
               },
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: &apos;getLevel&apos; as const,
+                functionName: 'getLevel' as const,
                 args: [tokenId],
               },
             ]
@@ -113,7 +113,7 @@ export default function TeamPage() {
 
     const validTokenIds = tokenIdsData
       .map((result, index) => {
-        if (result?.status === &apos;success&apos; && result?.result) {
+        if (result?.status === 'success' && result?.result) {
           return { tokenId: result.result as bigint, index }
         }
         return null
@@ -135,17 +135,17 @@ export default function TeamPage() {
       const classResult = tokenDataResults[classIndex]
       const levelResult = tokenDataResults[levelIndex]
 
-      const uri = uriResult?.status === &apos;success&apos; ? (uriResult.result as string) : &apos;&apos;
+      const uri = uriResult?.status === 'success' ? (uriResult.result as string) : ''
       const characterClass =
-        classResult?.status === &apos;success&apos; ? (classResult.result as string) : &apos;warrior&apos;
+        classResult?.status === 'success' ? (classResult.result as string) : 'warrior'
       const level =
-        levelResult?.status === &apos;success&apos; ? Number(levelResult.result as bigint) : 1
+        levelResult?.status === 'success' ? Number(levelResult.result as bigint) : 1
 
       // Format class name (capitalize first letter, handle underscores)
       const formattedClass = characterClass
-        .split(&apos;_&apos;)
+        .split('_')
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(&apos; &apos;)
+        .join(' ')
 
       return {
         tokenId,
@@ -178,17 +178,17 @@ export default function TeamPage() {
     const tokenId = character.tokenId.toString()
     if (teamMembers.length >= MAX_TEAM_SIZE) {
       toast({
-        variant: &apos;destructive&apos;,
-        title: &apos;Team Full&apos;,
+        variant: 'destructive',
+        title: 'Team Full',
         description: ERROR_MESSAGES.TEAM_FULL,
       })
       return
     }
     if (isInTeam(tokenId)) {
       toast({
-        variant: &apos;destructive&apos;,
-        title: &apos;Character Already in Team&apos;,
-        description: &apos;This character is already in your team.&apos;,
+        variant: 'destructive',
+        title: 'Character Already in Team',
+        description: 'This character is already in your team.',
       })
       return
     }
@@ -265,7 +265,7 @@ export default function TeamPage() {
                           </div>
                           <h3 className="font-semibold">{character.metadata?.name || `Character #${character.tokenId}`}</h3>
                           <p className="text-sm text-muted-foreground">
-                            {character.metadata?.class} â€¢ Level {character.metadata?.level || 1}
+                            {character.metadata?.class} • Level {character.metadata?.level || 1}
                           </p>
                           <Button
                             variant="outline"
@@ -303,7 +303,7 @@ export default function TeamPage() {
                 <CardDescription>
                   {characters.length === 0
                     ? "You do not have any characters yet"
-                    : &apos;Click to add to your team&apos;}
+                    : 'Click to add to your team'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -327,10 +327,10 @@ export default function TeamPage() {
                           key={character.tokenId.toString()}
                           className={`transition-all ${
                             inTeam
-                              ? &apos;opacity-50 cursor-not-allowed&apos;
+                              ? 'opacity-50 cursor-not-allowed'
                               : teamFull
-                                ? &apos;opacity-50 cursor-not-allowed&apos;
-                                : &apos;cursor-pointer hover:shadow-lg&apos;
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'cursor-pointer hover:shadow-lg'
                           }`}
                           onClick={() => {
                             if (!inTeam && !teamFull) {
@@ -357,7 +357,7 @@ export default function TeamPage() {
                                 {character.metadata?.name || `Character #${character.tokenId}`}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                {character.metadata?.class} â€¢ Level {character.metadata?.level || 1}
+                                {character.metadata?.class} • Level {character.metadata?.level || 1}
                               </p>
                             </div>
                             {inTeam ? (
@@ -422,7 +422,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
     // Load learned skills
     const loadSkills = async () => {
       try {
-        const classId = character.metadata?.class?.toLowerCase().replace(&apos; &apos;, &apos;_&apos;) || &apos;warrior&apos;
+        const classId = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
         const skillsModule = await import(`@/data/skills/${classId}.json`)
         const allSkills = skillsModule.default || skillsModule
         
@@ -433,7 +433,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
         
         setSkills(learnedSkills)
       } catch (error) {
-        console.error(&apos;Failed to load skills:&apos;, error)
+        console.error('Failed to load skills:', error)
         setSkills([])
       }
     }
@@ -455,9 +455,9 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
       // Add skill (max 4)
       if (current.length >= 4) {
         toast({
-          variant: &apos;destructive&apos;,
-          title: &apos;Maximum Skills Reached&apos;,
-          description: &apos;You can only equip up to 4 skills.&apos;,
+          variant: 'destructive',
+          title: 'Maximum Skills Reached',
+          description: 'You can only equip up to 4 skills.',
         })
         return
       }
@@ -524,7 +524,6 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
           <div>
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
               <p className="text-sm text-muted-foreground">
                 This character has not learned any skills yet. Learn skills in the Skills page.
               </p>
@@ -538,7 +537,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
                     <div
                       key={skill.id}
                       className={`p-3 border rounded-lg ${
-                        isEquipped ? &apos;bg-primary/10 border-primary&apos; : &apos;bg-muted/50&apos;
+                        isEquipped ? 'bg-primary/10 border-primary' : 'bg-muted/50'
                       }`}
                     >
                       <div className="flex items-start justify-between">
@@ -552,12 +551,12 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
                           </div>
                         </div>
                         <Button
-                          variant={isEquipped ? &apos;default&apos; : &apos;outline&apos;}
+                          variant={isEquipped ? 'default' : 'outline'}
                           size="sm"
                           onClick={() => handleToggleSkill(skill.id)}
                           disabled={!canEquip && !isEquipped}
                         >
-                          {isEquipped ? &apos;Equipped&apos; : &apos;Equip&apos;}
+                          {isEquipped ? 'Equipped' : 'Equip'}
                         </Button>
                       </div>
                     </div>
