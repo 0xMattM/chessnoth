@@ -19,7 +19,7 @@ const nextConfig = {
     // Remove ESLint loader from webpack
     if (config.module && config.module.rules) {
       config.module.rules = config.module.rules.filter(
-        (rule) => !(rule.use && rule.use.some && rule.use.some((use: any) => use.loader && use.loader.includes('eslint-loader')))
+        (rule) => !(rule.use && rule.use.some && rule.use.some((use) => use.loader && use.loader.includes('eslint-loader')))
       )
     }
     
