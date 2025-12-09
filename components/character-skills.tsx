@@ -1,16 +1,16 @@
-'use client'
+﻿&apos;use client&apos;
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from &apos;@/components/ui/card&apos;
+import { Button } from &apos;@/components/ui/button&apos;
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { X, Zap, RotateCcw, Lock, Settings } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+} from &apos;@/components/ui/dialog&apos;
+import { X, Zap, RotateCcw, Lock, Settings } from &apos;lucide-react&apos;
+import { useState, useEffect, useMemo } from &apos;react&apos;
 import {
   getCharacterSkills,
   getSkillPoints,
@@ -19,8 +19,8 @@ import {
   resetSkillTree,
   getEquippedSkills,
   setEquippedSkills,
-} from '@/lib/skills'
-import { getSkillTree, getSkillNode, SkillTreeNode } from '@/lib/skill-trees'
+} from &apos;@/lib/skills&apos;
+import { getSkillTree, getSkillNode, SkillTreeNode } from &apos;@/lib/skill-trees&apos;
 
 interface Character {
   tokenId: bigint
@@ -68,14 +68,14 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
 
   const characterLevel = character.metadata?.level || 1
   const availableSkillPoints = characterLevel - characterSkills.usedSkillPoints
-  const characterClass = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
+  const characterClass = character.metadata?.class?.toLowerCase().replace(&apos; &apos;, &apos;_&apos;) || &apos;warrior&apos;
 
   // Load character skills from localStorage
   useEffect(() => {
     setCharacterSkills(getCharacterSkills(tokenId))
   }, [tokenId])
 
-  // Load skills for this character's class
+  // Load skills for this character&apos;s class
   useEffect(() => {
     const loadSkills = async () => {
       try {
@@ -83,7 +83,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
         const classSkills = skillsModule.default || skillsModule
         setSkills(classSkills)
       } catch (error) {
-        console.error('Failed to load skills:', error)
+        console.error(&apos;Failed to load skills:&apos;, error)
         setSkills([])
       }
     }
@@ -147,7 +147,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
       if (dependentSkills.length > 0) {
         const dependentNames = dependentSkills
           .map((n) => skillsMap[n.skillId]?.name || n.skillId)
-          .join(', ')
+          .join(&apos;, &apos;)
         if (!confirm(`Removing this point will make these skills unavailable: ${dependentNames}. Continue?`)) {
           return
         }
@@ -160,7 +160,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
   }
 
   const handleReset = () => {
-    if (confirm('Are you sure you want to reset all learned skills? This will refund all skill points.')) {
+    if (confirm(&apos;Are you sure you want to reset all learned skills? This will refund all skill points.&apos;)) {
       resetSkillTree(tokenId)
       setCharacterSkills(getCharacterSkills(tokenId))
       onSkillsChange?.()
@@ -189,14 +189,14 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
     return branches
   }, [skillTree, skillsMap])
 
-  const formatEffect = (effect: Skill['effects'][0]) => {
-    if (effect.type === 'buff' || effect.type === 'debuff') {
-      const sign = effect.type === 'buff' ? '+' : ''
-      const statName = effect.stat?.toUpperCase() || ''
-      const value = effect.value ? (effect.value * 100).toFixed(0) : '0'
+  const formatEffect = (effect: Skill[&apos;effects&apos;][0]) => {
+    if (effect.type === &apos;buff&apos; || effect.type === &apos;debuff&apos;) {
+      const sign = effect.type === &apos;buff&apos; ? &apos;+&apos; : &apos;&apos;
+      const statName = effect.stat?.toUpperCase() || &apos;&apos;
+      const value = effect.value ? (effect.value * 100).toFixed(0) : &apos;0&apos;
       return `${sign}${value}% ${statName} (${effect.duration} turns)`
     }
-    if (effect.type === 'status') {
+    if (effect.type === &apos;status&apos;) {
       return `${effect.statusId} (${effect.duration} turns)`
     }
     return JSON.stringify(effect)
@@ -204,15 +204,15 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
 
   const getBranchColor = (branch: string): string => {
     const colors: { [key: string]: string } = {
-      offense: 'border-red-500 bg-red-500/10',
-      defense: 'border-blue-500 bg-blue-500/10',
-      healing: 'border-green-500 bg-green-500/10',
-      support: 'border-yellow-500 bg-yellow-500/10',
-      utility: 'border-purple-500 bg-purple-500/10',
-      debuff: 'border-orange-500 bg-orange-500/10',
-      ultimate: 'border-gold-500 bg-gold-500/20',
+      offense: &apos;border-red-500 bg-red-500/10&apos;,
+      defense: &apos;border-blue-500 bg-blue-500/10&apos;,
+      healing: &apos;border-green-500 bg-green-500/10&apos;,
+      support: &apos;border-yellow-500 bg-yellow-500/10&apos;,
+      utility: &apos;border-purple-500 bg-purple-500/10&apos;,
+      debuff: &apos;border-orange-500 bg-orange-500/10&apos;,
+      ultimate: &apos;border-gold-500 bg-gold-500/20&apos;,
     }
-    return colors[branch] || 'border-gray-500 bg-gray-500/10'
+    return colors[branch] || &apos;border-gray-500 bg-gray-500/10&apos;
   }
 
   return (
@@ -272,12 +272,12 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                           key={skill.id}
                           className={`transition-all ${
                             learned
-                              ? 'border-green-500 bg-green-500/10'
+                              ? &apos;border-green-500 bg-green-500/10&apos;
                               : !prerequisitesMet || !meetsLevelReq
-                                ? 'opacity-50 border-dashed'
+                                ? &apos;opacity-50 border-dashed&apos;
                                 : canLearn
-                                  ? 'hover:border-primary cursor-pointer'
-                                  : 'opacity-75'
+                                  ? &apos;hover:border-primary cursor-pointer&apos;
+                                  : &apos;opacity-75&apos;
                           } ${getBranchColor(branch)}`}
                           onClick={() => setSelectedSkill(skill)}
                         >
@@ -311,7 +311,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                                   return (
                                     <p
                                       key={idx}
-                                      className={met ? 'text-green-500' : 'text-red-500'}
+                                      className={met ? &apos;text-green-500&apos; : &apos;text-red-500&apos;}
                                     >
                                       • {prereqSkill?.name || prereq.skillId}: {prereqPoints}/{prereq.pointsRequired} pts
                                     </p>
@@ -356,7 +356,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                                   </Button>
                                 )}
                                 <Button
-                                  variant={learned ? 'outline' : 'default'}
+                                  variant={learned ? &apos;outline&apos; : &apos;default&apos;}
                                   size="sm"
                                   className="flex-1"
                                   onClick={(e) => {
@@ -415,7 +415,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
   const [skills, setSkills] = useState<any[]>([])
   const [equippedSkills, setEquippedSkillsState] = useState<string[]>([])
   const tokenId = character.tokenId.toString()
-  const characterClass = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
+  const characterClass = character.metadata?.class?.toLowerCase().replace(&apos; &apos;, &apos;_&apos;) || &apos;warrior&apos;
 
   useEffect(() => {
     if (!open) return
@@ -436,7 +436,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
         
         setSkills(learnedSkills)
       } catch (error) {
-        console.error('Failed to load skills:', error)
+        console.error(&apos;Failed to load skills:&apos;, error)
         setSkills([])
       }
     }
@@ -530,7 +530,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
                     <div
                       key={skill.id}
                       className={`p-3 border rounded-lg ${
-                        isEquipped ? 'bg-primary/10 border-primary' : 'bg-muted/50'
+                        isEquipped ? &apos;bg-primary/10 border-primary&apos; : &apos;bg-muted/50&apos;
                       }`}
                     >
                       <div className="flex items-start justify-between">
@@ -544,12 +544,12 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
                           </div>
                         </div>
                         <Button
-                          variant={isEquipped ? 'default' : 'outline'}
+                          variant={isEquipped ? &apos;default&apos; : &apos;outline&apos;}
                           size="sm"
                           onClick={() => handleToggleSkill(skill.id)}
                           disabled={!canEquip && !isEquipped}
                         >
-                          {isEquipped ? 'Equipped' : 'Equip'}
+                          {isEquipped ? &apos;Equipped&apos; : &apos;Equip&apos;}
                         </Button>
                       </div>
                     </div>

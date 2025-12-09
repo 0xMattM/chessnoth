@@ -1,18 +1,18 @@
-'use client'
+﻿&apos;use client&apos;
 
-import { useAccount, useContractRead, useContractReads } from 'wagmi'
-import { Navigation } from '@/components/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
-import { CharacterInventory } from '@/components/character-inventory'
-import { CharacterSkills } from '@/components/character-skills'
-import { isInTeam } from '@/lib/team'
-import { getCharacterEquipment } from '@/lib/equipment'
-import { getCharacterSkills } from '@/lib/skills'
-import { Users, Shield, CheckCircle2, Zap } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useAccount, useContractRead, useContractReads } from &apos;wagmi&apos;
+import { Navigation } from &apos;@/components/navigation&apos;
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from &apos;@/components/ui/card&apos;
+import { Tabs, TabsContent, TabsList, TabsTrigger } from &apos;@/components/ui/tabs&apos;
+import { Button } from &apos;@/components/ui/button&apos;
+import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from &apos;@/lib/contract&apos;
+import { CharacterInventory } from &apos;@/components/character-inventory&apos;
+import { CharacterSkills } from &apos;@/components/character-skills&apos;
+import { isInTeam } from &apos;@/lib/team&apos;
+import { getCharacterEquipment } from &apos;@/lib/equipment&apos;
+import { getCharacterSkills } from &apos;@/lib/skills&apos;
+import { Users, Shield, CheckCircle2, Zap } from &apos;lucide-react&apos;
+import { useState, useEffect } from &apos;react&apos;
 
 interface Character {
   tokenId: bigint
@@ -37,7 +37,7 @@ export default function CharactersPage() {
   const { data: balance } = useContractRead({
     address: CHARACTER_NFT_ADDRESS,
     abi: CHARACTER_NFT_ABI,
-    functionName: 'balanceOf',
+    functionName: &apos;balanceOf&apos;,
     args: address ? [address] : undefined,
     enabled: !!address && isConnected,
   })
@@ -48,7 +48,7 @@ export default function CharactersPage() {
       ? Array.from({ length: Number(balance) }, (_, i) => ({
           address: CHARACTER_NFT_ADDRESS,
           abi: CHARACTER_NFT_ABI,
-          functionName: 'tokenOfOwnerByIndex' as const,
+          functionName: &apos;tokenOfOwnerByIndex&apos; as const,
           args: [address, BigInt(i)],
         }))
       : []
@@ -62,26 +62,26 @@ export default function CharactersPage() {
   const tokenDataContracts =
     tokenIdsData && tokenIdsData.length > 0
       ? tokenIdsData
-          .filter((result) => result?.status === 'success' && result?.result)
+          .filter((result) => result?.status === &apos;success&apos; && result?.result)
           .flatMap((result) => {
             const tokenId = result.result as bigint
             return [
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: 'tokenURI' as const,
+                functionName: &apos;tokenURI&apos; as const,
                 args: [tokenId],
               },
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: 'getClass' as const,
+                functionName: &apos;getClass&apos; as const,
                 args: [tokenId],
               },
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
-                functionName: 'getLevel' as const,
+                functionName: &apos;getLevel&apos; as const,
                 args: [tokenId],
               },
             ]
@@ -102,7 +102,7 @@ export default function CharactersPage() {
 
     const validTokenIds = tokenIdsData
       .map((result, index) => {
-        if (result?.status === 'success' && result?.result) {
+        if (result?.status === &apos;success&apos; && result?.result) {
           return { tokenId: result.result as bigint, index }
         }
         return null
@@ -124,17 +124,17 @@ export default function CharactersPage() {
       const classResult = tokenDataResults[classIndex]
       const levelResult = tokenDataResults[levelIndex]
 
-      const uri = uriResult?.status === 'success' ? (uriResult.result as string) : ''
+      const uri = uriResult?.status === &apos;success&apos; ? (uriResult.result as string) : &apos;&apos;
       const characterClass =
-        classResult?.status === 'success' ? (classResult.result as string) : 'warrior'
+        classResult?.status === &apos;success&apos; ? (classResult.result as string) : &apos;warrior&apos;
       const level =
-        levelResult?.status === 'success' ? Number(levelResult.result as bigint) : 1
+        levelResult?.status === &apos;success&apos; ? Number(levelResult.result as bigint) : 1
 
       // Format class name (capitalize first letter, handle underscores)
       const formattedClass = characterClass
-        .split('_')
+        .split(&apos;_&apos;)
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
+        .join(&apos; &apos;)
 
       return {
         tokenId,
@@ -289,7 +289,7 @@ export default function CharactersPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="p-4">{character.metadata?.class || 'Unknown'}</td>
+                                <td className="p-4">{character.metadata?.class || &apos;Unknown&apos;}</td>
                                 <td className="p-4">
                                   <span className="font-semibold">Lv. {character.metadata?.level || 1}</span>
                                 </td>
@@ -397,7 +397,7 @@ export default function CharactersPage() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="p-4">{character.metadata?.class || 'Unknown'}</td>
+                                <td className="p-4">{character.metadata?.class || &apos;Unknown&apos;}</td>
                                 <td className="p-4">
                                   <span className="font-semibold">Lv. {characterLevel}</span>
                                 </td>
