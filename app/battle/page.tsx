@@ -11,6 +11,7 @@ import { loadBattleTeam, isTeamReady, isStageUnlocked, isBossStage } from '@/lib
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ERROR_MESSAGES } from '@/lib/constants'
+import { useToast } from '@/hooks/use-toast'
 
 interface Character {
   tokenId: bigint
@@ -75,9 +76,9 @@ export default function BattlePage() {
   // Get token URIs, classes, and levels for all tokens
   const tokenDataContracts =
     tokenIdsData && tokenIdsData.length > 0
-      ? tokenIdsData.flatMap((result) => {
-          if (!result.result) return []
-          const tokenId = result.result as bigint
+      ? tokenIdsData.flatMap((_result) => {
+          if (!_result.result) return []
+          const tokenId = _result.result as bigint
           return [
             {
               address: CHARACTER_NFT_ADDRESS,

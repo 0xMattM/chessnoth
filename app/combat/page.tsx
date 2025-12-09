@@ -1023,13 +1023,6 @@ export default function CombatPage() {
         }
         setBoard(newBoard)
         
-        // Update characters array
-        const updatedCharacters = combatState.characters.map((c) => {
-          if (c.id === current.id) return castingChar
-          if (c.id === actualTarget.id) return skillTarget
-          return c
-        })
-
         // Check if target is defeated
         if (skillTarget.stats.hp === 0 && skillTarget.team === 'enemy') {
           if (skillTarget.position) {
