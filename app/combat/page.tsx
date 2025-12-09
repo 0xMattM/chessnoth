@@ -1300,6 +1300,7 @@ export default function CombatPage() {
         }
         case 'w': {
           event.preventDefault()
+          // eslint-disable-next-line no-case-declarations
           handleAction('skill')
           break
         }
