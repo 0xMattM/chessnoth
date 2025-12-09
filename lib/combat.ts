@@ -1,7 +1,7 @@
 // Combat system utilities
 import type { BattleCharacter } from './battle'
 import type { TerrainType } from './terrain'
-import { applyTerrainModifiers, TERRAIN_CONFIGS } from './terrain'
+import { TERRAIN_CONFIGS } from './terrain'
 
 export interface CombatStats {
   hp: number
@@ -87,9 +87,9 @@ export async function calculateCombatStats(
   const itemsData = await import('@/data/items.json')
   const items = itemsData.default || itemsData
   
-  Object.entries(character.equipment).forEach(([slot, itemId]) => {
+  Object.entries(character.equipment).forEach(([_slot, itemId]) => {
     if (itemId) {
-      const item = items.find((i: any) => i.id === itemId)
+      const item = items.find((i: { id: string }) => i.id === itemId)
       if (item?.statBonuses) {
         Object.entries(item.statBonuses).forEach(([stat, value]) => {
           const statKey = stat.toLowerCase() as keyof CombatStats
@@ -361,7 +361,7 @@ export function calculateDamage(
  */
 export function getValidSkillTargets(
   character: CombatCharacter,
-  skill: any,
+  skill: { range: number; aoeType?: string; effects?: Array<{ type: string }> },
   allCharacters: CombatCharacter[]
 ): CombatCharacter[] {
   if (!character.position) return []
@@ -395,7 +395,7 @@ export function getValidSkillTargets(
           targets.push(target)
         }
         // For healing/buff skills, target allies
-        if (skill.effects && skill.effects.some((e: any) => e.type === 'heal' || e.type === 'buff') && (isAlly || target === character)) {
+        if (skill.effects && skill.effects.some((e: { type: string }) => e.type === 'heal' || e.type === 'buff') && (isAlly || target === character)) {
           targets.push(target)
         }
       }

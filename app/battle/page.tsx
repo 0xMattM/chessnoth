@@ -29,6 +29,7 @@ export default function BattlePage() {
   const router = useRouter()
   const [characters, setCharacters] = useState<Character[]>([])
   const [highestStage, setHighestStage] = useState(0)
+  const { toast } = useToast()
 
   // Load highest stage completed
   useEffect(() => {

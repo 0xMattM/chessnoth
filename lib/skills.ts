@@ -24,7 +24,7 @@ export function getCharacterSkills(tokenId: string): {
   
   // Migrate old format (learnedSkills array) to new format (skillPoints object)
   if (charSkills.skillPoints === undefined) {
-    const oldFormat = (charSkills as any).learnedSkills
+    const oldFormat = (charSkills as { learnedSkills?: string[] }).learnedSkills
     if (Array.isArray(oldFormat)) {
       const migrated: { [skillId: string]: number } = {}
       oldFormat.forEach((skillId: string) => {
@@ -56,7 +56,7 @@ export function addSkillPoint(tokenId: string, skillId: string, spCost: number) 
   
   // Ensure skillPoints exists and migrate old format if needed
   if (!skills[tokenId].skillPoints) {
-    const oldFormat = (skills[tokenId] as any).learnedSkills
+    const oldFormat = (skills[tokenId] as { learnedSkills?: string[] }).learnedSkills
     if (Array.isArray(oldFormat)) {
       const migrated: { [skillId: string]: number } = {}
       oldFormat.forEach((sid: string) => {
@@ -85,7 +85,7 @@ export function removeSkillPoint(tokenId: string, skillId: string, spCost: numbe
   if (skills[tokenId]) {
     // Ensure skillPoints exists and migrate old format if needed
     if (!skills[tokenId].skillPoints) {
-      const oldFormat = (skills[tokenId] as any).learnedSkills
+      const oldFormat = (skills[tokenId] as { learnedSkills?: string[] }).learnedSkills
       if (Array.isArray(oldFormat)) {
         const migrated: { [skillId: string]: number } = {}
         oldFormat.forEach((sid: string) => {
