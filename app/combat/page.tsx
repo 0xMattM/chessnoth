@@ -1286,10 +1286,11 @@ export default function CombatPage() {
       const key = event.key.toLowerCase()
 
       switch (key) {
-        case ' ':
+        case ' ': {
           event.preventDefault()
           handleAction('wait')
           break
+        }
         case 'q': {
           event.preventDefault()
           if (getValidTargets().length > 0) {
