@@ -3,7 +3,7 @@
 import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Package, Clock } from 'lucide-react'
+import { ArrowLeft, Package, Clock, Sword, Zap } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect, useCallback } from 'react'
 import type { BattleTeam } from '@/lib/battle'
@@ -569,14 +569,14 @@ export default function CombatPage() {
             }, 600)
             
             // Update characters array
-            const _updatedCharacters = prevState.characters.map((c) => {
+            const updatedCharacters = prevState.characters.map((c) => {
               if (c === currentChar) return updatedChar
               if (c === target) return updatedTarget
               return c
             })
             
             // Update turn order
-            const _updatedTurnOrder = prevState.turnOrder.map((c) => {
+            const updatedTurnOrder = prevState.turnOrder.map((c) => {
               if (c === currentChar) return updatedChar
               if (c === target) return updatedTarget
               return c
