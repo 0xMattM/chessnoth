@@ -30,7 +30,9 @@
     "prefer-const": "warn",
     "no-var": "error",
     "object-shorthand": "warn",
-    "prefer-arrow-callback": "warn"
+    "prefer-arrow-callback": "warn",
+    "react/no-unescaped-entities": "warn",
+    "no-case-declarations": "warn"
   },
   "ignorePatterns": ["node_modules/", ".next/", "out/", "dist/", "build/"]
 }
