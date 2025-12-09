@@ -9,12 +9,6 @@ const nextConfig = {
     // ESLint can still be run manually with npm run lint
     ignoreDuringBuilds: true,
   },
-  // Disable ESLint completely
-  experimental: {
-    eslint: {
-      ignoreDuringBuilds: true,
-    },
-  },
   typescript: {
     // Allow production builds to complete even with type errors
     // Type errors should be fixed but won't block deployment
