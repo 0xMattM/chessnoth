@@ -11,7 +11,7 @@ import { CharacterSkills } from '@/components/character-skills'
 import { isInTeam } from '@/lib/team'
 import { getCharacterEquipment } from '@/lib/equipment'
 import { getCharacterSkills } from '@/lib/skills'
-import { Users, Shield, CheckCircle2, Zap } from 'lucide-react'
+import { Users, Shield, CheckCircle2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface Character {
@@ -192,7 +192,7 @@ export default function CharactersPage() {
                     <Card
                       key={character.tokenId.toString()}
                       className="cursor-pointer transition-all hover:shadow-lg"
-                      onClick={() => setSelectedCharacter(character)}
+                      onClick={() => setInventoryCharacter(character)}
                     >
                       <CardHeader>
                         <div className="aspect-square w-full overflow-hidden rounded-lg bg-muted">

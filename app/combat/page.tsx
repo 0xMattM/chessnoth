@@ -1297,12 +1297,13 @@ export default function CombatPage() {
           event.preventDefault()
           handleAction('wait')
           break
-        case 'q':
+        case 'q': {
           event.preventDefault()
           if (getValidTargets().length > 0) {
             handleAction('attack')
           }
           break
+        }
         case 'w':
           event.preventDefault()
           handleAction('skill')
