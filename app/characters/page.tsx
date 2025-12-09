@@ -11,7 +11,7 @@ import { CharacterSkills } from '@/components/character-skills'
 import { isInTeam } from '@/lib/team'
 import { getCharacterEquipment } from '@/lib/equipment'
 import { getCharacterSkills } from '@/lib/skills'
-import { Users, Shield, Sword, Shirt, CheckCircle2, Zap } from 'lucide-react'
+import { Users, Shield, CheckCircle2, Zap } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface Character {
@@ -28,7 +28,6 @@ interface Character {
 export default function CharactersPage() {
   const { address, isConnected } = useAccount()
   const [characters, setCharacters] = useState<Character[]>([])
-  const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
   const [inventoryCharacter, setInventoryCharacter] = useState<Character | null>(null)
   const [skillsCharacter, setSkillsCharacter] = useState<Character | null>(null)
   const [equipmentUpdate, setEquipmentUpdate] = useState(0) // Force re-render when equipment changes
@@ -181,7 +180,7 @@ export default function CharactersPage() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    <p className="text-muted-foreground">You don&apos;t have any characters yet</p>
+                    <p className="text-muted-foreground">You don&#39;t have any characters yet</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Mint your first character on the home page
                     </p>
@@ -239,7 +238,7 @@ export default function CharactersPage() {
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">You don&apos;t have any characters yet</p>
+                      <p className="text-muted-foreground">You don&#39;t have any characters yet</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -347,7 +346,7 @@ export default function CharactersPage() {
                   {characters.length === 0 ? (
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                      <p className="text-muted-foreground">You don&apos;t have any characters yet</p>
+                      <p className="text-muted-foreground">You don&#39;t have any characters yet</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">

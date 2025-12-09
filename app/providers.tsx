@@ -6,7 +6,7 @@ import { publicProvider } from 'wagmi/providers/public'
 import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { confluxESpaceTestnet } from '@/lib/chains'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { validateEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
 

@@ -3,15 +3,14 @@
 import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Zap, Crown, Lock, Users, AlertCircle } from 'lucide-react'
+import { Crown, Lock, Users, AlertCircle } from 'lucide-react'
 import { useAccount, useContractReads } from 'wagmi'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
 import { getTeam } from '@/lib/team'
-import { loadBattleTeam, isTeamReady, isStageUnlocked, isBossStage, getHighestStageCompleted } from '@/lib/battle'
+import { loadBattleTeam, isTeamReady, isStageUnlocked, isBossStage } from '@/lib/battle'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useToast } from '@/hooks/use-toast'
-import { ERROR_MESSAGES, STORAGE_KEYS } from '@/lib/constants'
+import { ERROR_MESSAGES } from '@/lib/constants'
 
 interface Character {
   tokenId: bigint
@@ -76,7 +75,7 @@ export default function BattlePage() {
   // Get token URIs, classes, and levels for all tokens
   const tokenDataContracts =
     tokenIdsData && tokenIdsData.length > 0
-      ? tokenIdsData.flatMap((result, i) => {
+      ? tokenIdsData.flatMap((result) => {
           if (!result.result) return []
           const tokenId = result.result as bigint
           return [

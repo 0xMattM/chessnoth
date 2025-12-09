@@ -175,7 +175,7 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
   }) as Item[]
 
   // Get items for a specific slot
-  const getItemsForSlot = (slot: EquipmentSlot) => {
+  const _getItemsForSlot = (slot: EquipmentSlot) => {
     return availableItems.filter((item) => {
       if (slot === 'weapon') return item.equipmentSlot === 'weapon'
       if (slot === 'armor') return item.equipmentSlot === 'armor'
