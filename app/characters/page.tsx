@@ -33,6 +33,9 @@ export default function CharactersPage() {
   const [skillsCharacter, setSkillsCharacter] = useState<Character | null>(null)
   const [equipmentUpdate, setEquipmentUpdate] = useState(0) // Force re-render when equipment changes
   const [skillsUpdate, setSkillsUpdate] = useState(0) // Force re-render when skills change
+  
+  // Text constants to avoid ESLint errors
+  const noCharactersText = 'You do not have any characters yet'
 
   // Get balance of NFTs
   const { data: balance } = useContractRead({
@@ -181,8 +184,7 @@ export default function CharactersPage() {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    {/* eslint-disable-next-line react/no-unescaped-entities */}
-                    <p className="text-muted-foreground">You do not have any characters yet</p>
+                    <p className="text-muted-foreground">{noCharactersText}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Mint your first character on the home page
                     </p>
@@ -241,7 +243,7 @@ export default function CharactersPage() {
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                       {/* eslint-disable-next-line react/no-unescaped-entities */}
-                      <p className="text-muted-foreground">You do not have any characters yet</p>
+                      <p className="text-muted-foreground">{noCharactersText}</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
@@ -350,7 +352,7 @@ export default function CharactersPage() {
                     <div className="py-12 text-center">
                       <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
                       {/* eslint-disable-next-line react/no-unescaped-entities */}
-                      <p className="text-muted-foreground">You do not have any characters yet</p>
+                      <p className="text-muted-foreground">{noCharactersText}</p>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">

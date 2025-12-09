@@ -4,13 +4,11 @@ const nextConfig = {
   images: {
     domains: ['ipfs.io', 'gateway.pinata.cloud', 'cloudflare-ipfs.com'],
   },
-  // Completely disable ESLint - multiple methods
-  eslint: {
-    ignoreDuringBuilds: true,
-    dirs: [], // No lint any directories
-  },
   experimental: {
     esmExternals: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
   typescript: {
     // Allow production builds to complete even with type errors

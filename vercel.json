@@ -1,4 +1,4 @@
 {
-  "buildCommand": "SKIP_ESLINT=true NEXT_PRIVATE_SKIP_ESLINT=1 ESLINT_NO_DEV_ERRORS=true next build",
+  "buildCommand": "next build",
   "framework": "nextjs"
 }

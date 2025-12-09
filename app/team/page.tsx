@@ -39,6 +39,10 @@ export default function TeamPage() {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
   const [equipSkillsOpen, setEquipSkillsOpen] = useState(false)
   const { toast } = useToast()
+  
+  // Text constants to avoid ESLint errors
+  const noCharactersText = 'You do not have any characters yet'
+  const noSkillsText = 'This character has not learned any skills yet. Learn skills in the Skills page.'
 
   // Load team from localStorage
   useEffect(() => {
@@ -303,7 +307,7 @@ export default function TeamPage() {
                 <CardTitle>Available Characters</CardTitle>
                 <CardDescription>
                   {characters.length === 0
-                    ? "You do not have any characters yet"
+                    ? noCharactersText
                     : 'Click to add to your team'}
                 </CardDescription>
               </CardHeader>
@@ -311,8 +315,7 @@ export default function TeamPage() {
                 {characters.length === 0 ? (
                   <div className="py-12 text-center">
                     <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                    {/* eslint-disable-next-line react/no-unescaped-entities */}
-                    <p className="text-muted-foreground">You do not have any characters yet</p>
+                    <p className="text-muted-foreground">{noCharactersText}</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Mint your first character on the home page
                     </p>
@@ -528,7 +531,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             {/* eslint-disable-next-line react/no-unescaped-entities */}
             {skills.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                This character has not learned any skills yet. Learn skills in the Skills page.
+                {noSkillsText}
               </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
