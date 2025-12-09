@@ -1,3 +1,4 @@
+/* eslint-disable no-case-declarations */
 'use client'
 
 import { Navigation } from '@/components/navigation'

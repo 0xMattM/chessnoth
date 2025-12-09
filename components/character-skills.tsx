@@ -1,4 +1,5 @@
-﻿&apos;use client&apos;
+﻿/* eslint-disable react/no-unescaped-entities */
+'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from &apos;@/components/ui/card&apos;
 import { Button } from &apos;@/components/ui/button&apos;

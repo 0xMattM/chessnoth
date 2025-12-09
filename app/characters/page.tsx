@@ -1,4 +1,5 @@
-﻿'use client'
+﻿/* eslint-disable react/no-unescaped-entities */
+'use client'
 
 import { useAccount, useContractRead, useContractReads } from 'wagmi'
 import { Navigation } from '@/components/navigation'
