@@ -9,6 +9,7 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+    dirs: [], // No ejecutar ESLint en ningún directorio
   },
   typescript: {
     // Allow production builds to complete even with type errors

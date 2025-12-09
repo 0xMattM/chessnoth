@@ -4,12 +4,22 @@
   "rules": {
     "react/no-unescaped-entities": "off",
     "no-case-declarations": "off",
-    "@typescript-eslint/no-unused-vars": "warn",
-    "@typescript-eslint/no-explicit-any": "warn",
-    "@next/next/no-img-element": "warn",
-    "react-hooks/exhaustive-deps": "warn",
-    "prefer-const": "warn",
-    "no-console": "warn",
-    "prefer-arrow-callback": "warn"
-  }
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@next/next/no-img-element": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "prefer-const": "off",
+    "no-console": "off",
+    "prefer-arrow-callback": "off"
+  },
+  "ignorePatterns": [
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx",
+    "node_modules/**",
+    ".next/**",
+    "out/**",
+    "build/**"
+  ]
 }

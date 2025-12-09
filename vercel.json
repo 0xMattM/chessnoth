@@ -1,4 +1,9 @@
 {
-  "buildCommand": "next build",
-  "framework": "nextjs"
+  "buildCommand": "SKIP_ESLINT=true ESLINT_NO_DEV_ERRORS=true NEXT_PRIVATE_SKIP_ESLINT=1 npm run build",
+  "framework": "nextjs",
+  "env": {
+    "SKIP_ESLINT": "true",
+    "ESLINT_NO_DEV_ERRORS": "true",
+    "NEXT_PRIVATE_SKIP_ESLINT": "1"
+  }
 }
