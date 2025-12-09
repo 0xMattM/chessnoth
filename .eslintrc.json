@@ -34,6 +34,14 @@
     "react/no-unescaped-entities": "off",
     "no-case-declarations": "off"
   },
+  "overrides": [
+    {
+      "files": ["**/*.tsx", "**/*.jsx"],
+      "rules": {
+        "react/no-unescaped-entities": "off"
+      }
+    }
+  ],
   "ignorePatterns": ["node_modules/", ".next/", "out/", "dist/", "build/"]
 }
 
