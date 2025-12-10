@@ -5,13 +5,26 @@ import { useAccount, useContractWrite, useWaitForTransaction } from 'wagmi'
 import { Navigation } from '@/components/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS, isContractAddressConfigured } from '@/lib/contract'
+import {
+  CHARACTER_NFT_ABI,
+  CHARACTER_NFT_ADDRESS,
+  isContractAddressConfigured,
+} from '@/lib/contract'
 import { CHARACTER_CLASSES } from '@/lib/classes'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { logger } from '@/lib/logger'
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, PLACEHOLDER_IPFS_HASH } from '@/lib/constants'
+import {
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  PLACEHOLDER_IPFS_HASH,
+  CHARACTER_NAME_MAX_LENGTH,
+} from '@/lib/constants'
 import { useToast } from '@/hooks/use-toast'
 
+/**
+ * Main minting page for character NFTs
+ * Allows users to create new character NFTs with custom names and classes
+ */
 export default function MintPage() {
   const { address, isConnected } = useAccount()
   const [characterName, setCharacterName] = useState('')
@@ -19,7 +32,12 @@ export default function MintPage() {
   const { toast } = useToast()
   const successShownRef = useRef(false)
 
-  const { data: hash, write, isLoading: isPending, error } = useContractWrite({
+  const {
+    data: hash,
+    write,
+    isLoading: isPending,
+    error,
+  } = useContractWrite({
     address: CHARACTER_NFT_ADDRESS,
     abi: CHARACTER_NFT_ABI,
     functionName: 'mintCharacter',
@@ -32,10 +50,11 @@ export default function MintPage() {
   useEffect(() => {
     if (isSuccess && !successShownRef.current) {
       successShownRef.current = true
+      const className = CHARACTER_CLASSES.find(c => c.id === characterClass)?.name || characterClass
       toast({
         variant: 'success',
         title: SUCCESS_MESSAGES.CHARACTER_MINTED,
-        description: `${characterName || 'Character'} (${CHARACTER_CLASSES.find((c) => c.id === characterClass)?.name || characterClass})`,
+        description: `${characterName || 'Character'} (${className})`,
       })
       logger.info('Character NFT minted successfully', { hash, characterName, characterClass })
       // Reset form after successful mint
@@ -45,7 +64,9 @@ export default function MintPage() {
     if (!isSuccess && !isPending && !isConfirming) {
       successShownRef.current = false
     }
-  }, [isSuccess, isPending, isConfirming, hash, characterClass, characterName, toast])
+    // Note: toast is stable and doesn't need to be in dependencies
+    // characterClass and characterName are captured in the closure when needed
+  }, [isSuccess, isPending, isConfirming, hash, characterClass, characterName])
 
   const handleMint = async () => {
     if (!isConnected || !address) {
@@ -75,7 +96,8 @@ export default function MintPage() {
       return
     }
 
-    if (!characterName.trim()) {
+    const trimmedName = characterName.trim()
+    if (!trimmedName) {
       toast({
         variant: 'destructive',
         title: 'Invalid Input',
@@ -84,10 +106,31 @@ export default function MintPage() {
       return
     }
 
+    // Validate name length
+    if (trimmedName.length > CHARACTER_NAME_MAX_LENGTH) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Input',
+        description: `Character name must be ${CHARACTER_NAME_MAX_LENGTH} characters or less`,
+      })
+      return
+    }
+
+    // Basic sanitization - remove potentially problematic characters
+    const sanitizedName = trimmedName.replace(/[<>]/g, '')
+    if (sanitizedName !== trimmedName) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Input',
+        description: 'Character name contains invalid characters',
+      })
+      return
+    }
+
     logger.info('Minting character NFT', {
       address,
       ipfsHash: PLACEHOLDER_IPFS_HASH,
-      name: characterName,
+      name: sanitizedName,
       class: characterClass,
     })
 
@@ -134,7 +177,13 @@ export default function MintPage() {
                     ⚠️ Contract Address Not Configured
                   </p>
                   <p className="text-xs text-destructive-foreground">
-                    Please set <code className="bg-destructive/20 px-1 py-0.5 rounded">NEXT_PUBLIC_CONTRACT_ADDRESS</code> in your <code className="bg-destructive/20 px-1 py-0.5 rounded">.env.local</code> file with your deployed contract address.
+                    Please set{' '}
+                    <code className="bg-destructive/20 px-1 py-0.5 rounded">
+                      NEXT_PUBLIC_CONTRACT_ADDRESS
+                    </code>{' '}
+                    in your{' '}
+                    <code className="bg-destructive/20 px-1 py-0.5 rounded">.env.local</code> file
+                    with your deployed contract address.
                   </p>
                 </div>
               )}
@@ -155,9 +204,9 @@ export default function MintPage() {
                   id="name"
                   type="text"
                   value={characterName}
-                  onChange={(e) => setCharacterName(e.target.value)}
+                  onChange={e => setCharacterName(e.target.value)}
                   placeholder="Enter your character's name"
-                  maxLength={50}
+                  maxLength={CHARACTER_NAME_MAX_LENGTH}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -172,21 +221,24 @@ export default function MintPage() {
                 <select
                   id="class"
                   value={characterClass}
-                  onChange={(e) => {
+                  onChange={e => {
                     const newClass = e.target.value
                     logger.debug('Character class changed', { newClass })
                     setCharacterClass(newClass)
                   }}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  {CHARACTER_CLASSES.map((cls) => (
+                  {CHARACTER_CLASSES.map(cls => (
                     <option key={cls.id} value={cls.id}>
                       {cls.name}
                     </option>
                   ))}
                 </select>
                 <p className="text-xs text-muted-foreground">
-                  Selected: <strong className="text-foreground">{CHARACTER_CLASSES.find((c) => c.id === characterClass)?.name || characterClass}</strong>
+                  Selected:{' '}
+                  <strong className="text-foreground">
+                    {CHARACTER_CLASSES.find(c => c.id === characterClass)?.name || characterClass}
+                  </strong>
                 </p>
               </div>
 
@@ -200,7 +252,9 @@ export default function MintPage() {
 
               <Button
                 onClick={handleMint}
-                disabled={!isConnected || !isContractAddressConfigured() || isPending || isConfirming}
+                disabled={
+                  !isConnected || !isContractAddressConfigured() || isPending || isConfirming
+                }
                 className="w-full"
                 size="lg"
               >
@@ -223,4 +277,3 @@ export default function MintPage() {
     </div>
   )
 }
-

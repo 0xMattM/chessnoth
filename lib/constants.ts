@@ -18,6 +18,21 @@ export const ENEMY_START_COLS = { min: 6, max: 7 }
 export const DEFAULT_MOVE_RANGE = 3
 export const DEFAULT_ATTACK_RANGE = 1
 
+// Animation and Timing Constants (in milliseconds)
+export const ANIMATION_DURATIONS = {
+  MOVEMENT: 400,
+  ATTACK: 600,
+  SKILL: 800,
+  TURN_ADVANCE_SHORT: 300,
+  TURN_ADVANCE_MEDIUM: 500,
+  ENEMY_THINKING: 500,
+} as const
+
+// Character Constants
+export const CHARACTER_NAME_MAX_LENGTH = 50
+export const MAX_SKILLS_EQUIPPED = 4
+export const MAX_EQUIPMENT_SLOTS = 6
+
 // IPFS and Metadata
 export const PLACEHOLDER_IPFS_HASH = 'placeholder'
 export const DEFAULT_GENERATION = 1

@@ -6,6 +6,7 @@ import { Sword, Shield, Shirt, Package, X, Heart, Zap, Shield as ShieldIcon, Dro
 import itemsData from '@/data/items.json'
 import { getCharacterEquipment, setCharacterEquipment, type EquipmentSlot } from '@/lib/equipment'
 import { useState, useEffect } from 'react'
+import { logger } from '@/lib/logger'
 
 interface Character {
   tokenId: bigint
@@ -105,8 +106,10 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
         try {
           const warriorModule = await import('@/data/classes/warrior.json')
           setClassData(warriorModule.default || warriorModule)
-        } catch {
-          console.error('Failed to load class data')
+        } catch (error) {
+          logger.error('Failed to load class data', error instanceof Error ? error : new Error(String(error)), {
+            className,
+          })
         }
       }
     }

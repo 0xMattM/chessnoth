@@ -4,6 +4,17 @@
  */
 
 /**
+ * Skill effect definition
+ */
+export interface SkillEffect {
+  type: 'heal' | 'mana' | 'buff' | 'debuff' | 'status' | string
+  value?: number
+  stat?: string // For buff/debuff effects
+  duration?: number // For buff/debuff effects
+  statusId?: string // For status effects
+}
+
+/**
  * Skill definition from JSON files
  */
 export interface Skill {
@@ -19,11 +30,7 @@ export interface Skill {
   damageType: string
   damageMultiplier: number
   requiresTarget: boolean
-  effects?: Array<{
-    type: string
-    value?: number
-    statusId?: string
-  }>
+  effects?: SkillEffect[]
 }
 
 /**
@@ -40,11 +47,7 @@ export interface Item {
   maxStack?: number
   value?: number
   statBonuses?: Record<string, number>
-  effects?: Array<{
-    type: string
-    value?: number
-    statusId?: string
-  }>
+  effects?: SkillEffect[]
   allowedClasses?: string[]
   cooldown?: number
   equipmentSlot?: string

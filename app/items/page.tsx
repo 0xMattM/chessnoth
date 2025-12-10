@@ -3,6 +3,7 @@
 import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import Image from 'next/image'
 import { Package, Sword, FlaskConical } from 'lucide-react'
 import itemsData from '@/data/items.json'
 
@@ -16,6 +17,7 @@ interface Item {
   statBonuses?: Record<string, number>
   effects?: Array<{ type: string; value?: number; statusId?: string }>
   allowedClasses?: string[]
+  image?: string
 }
 
 const equipmentItems: Item[] = itemsData.filter(
@@ -51,6 +53,10 @@ function formatEffects(effects?: Array<{ type: string; value?: number; statusId?
     .join(', ')
 }
 
+/**
+ * Items catalog page
+ * Displays available equipment and consumable items
+ */
 export default function ItemsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
@@ -77,9 +83,15 @@ export default function ItemsPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {equipmentItems.map((item) => (
                 <Card key={item.id} className="overflow-hidden">
-                  <div className="aspect-square w-full overflow-hidden bg-muted">
+                  <div className="relative aspect-square w-full overflow-hidden bg-muted">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <Package className="h-16 w-16 text-muted-foreground" />
@@ -137,9 +149,15 @@ export default function ItemsPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {consumableItems.map((item) => (
                 <Card key={item.id} className="overflow-hidden">
-                  <div className="aspect-square w-full overflow-hidden bg-muted">
+                  <div className="relative aspect-square w-full overflow-hidden bg-muted">
                     {item.image ? (
-                      <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <FlaskConical className="h-16 w-16 text-muted-foreground" />

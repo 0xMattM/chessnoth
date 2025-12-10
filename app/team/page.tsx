@@ -6,9 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
 import { getTeam, addToTeam, removeFromTeam, isInTeam, type TeamMember } from '@/lib/team'
-import { getEquippedSkills, setEquippedSkills, getCharacterSkills, getSkillPoints } from '@/lib/skills'
-import { Sword, Users, X, Plus } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import {
+  getEquippedSkills,
+  setEquippedSkills,
+  getCharacterSkills,
+  getSkillPoints,
+} from '@/lib/skills'
+import { Sword, Users, X, Plus, Zap } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { ERROR_MESSAGES, MAX_TEAM_SIZE } from '@/lib/constants'
 import {
@@ -38,7 +43,6 @@ export default function TeamPage() {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
   const [equipSkillsOpen, setEquipSkillsOpen] = useState(false)
   const { toast } = useToast()
-  
 
   // Load team from localStorage
   useEffect(() => {
@@ -55,15 +59,19 @@ export default function TeamPage() {
   })
 
   // Prepare contracts for batch reading token IDs
-  const tokenIndexContracts =
-    address && balance && balance > 0n
-      ? Array.from({ length: Number(balance) }, (_, i) => ({
-          address: CHARACTER_NFT_ADDRESS,
-          abi: CHARACTER_NFT_ABI,
-          functionName: 'tokenOfOwnerByIndex' as const,
-          args: [address, BigInt(i)],
-        }))
-      : []
+  // Memoize to avoid recreating on every render
+  const tokenIndexContracts = useMemo(
+    () =>
+      address && balance && balance > 0n
+        ? Array.from({ length: Number(balance) }, (_, i) => ({
+            address: CHARACTER_NFT_ADDRESS,
+            abi: CHARACTER_NFT_ABI,
+            functionName: 'tokenOfOwnerByIndex' as const,
+            args: [address, BigInt(i)],
+          }))
+        : [],
+    [address, balance]
+  )
 
   const { data: tokenIdsData } = useContractReads({
     contracts: tokenIndexContracts,
@@ -71,34 +79,38 @@ export default function TeamPage() {
   }) as { data?: Array<{ result?: bigint; status?: string }> }
 
   // Fetch token URIs, classes, and levels for each token
-  const tokenDataContracts =
-    tokenIdsData && tokenIdsData.length > 0
-      ? tokenIdsData
-          .filter((result) => result?.status === 'success' && result?.result)
-          .flatMap((result) => {
-            const tokenId = result.result as bigint
-            return [
-              {
-                address: CHARACTER_NFT_ADDRESS,
-                abi: CHARACTER_NFT_ABI,
-                functionName: 'tokenURI' as const,
-                args: [tokenId],
-              },
-              {
-                address: CHARACTER_NFT_ADDRESS,
-                abi: CHARACTER_NFT_ABI,
-                functionName: 'getClass' as const,
-                args: [tokenId],
-              },
-              {
-                address: CHARACTER_NFT_ADDRESS,
-                abi: CHARACTER_NFT_ABI,
-                functionName: 'getLevel' as const,
-                args: [tokenId],
-              },
-            ]
-          })
-      : []
+  // Memoize to avoid recreating on every render
+  const tokenDataContracts = useMemo(
+    () =>
+      tokenIdsData && tokenIdsData.length > 0
+        ? tokenIdsData
+            .filter(result => result?.status === 'success' && result?.result)
+            .flatMap(result => {
+              const tokenId = result.result as bigint
+              return [
+                {
+                  address: CHARACTER_NFT_ADDRESS,
+                  abi: CHARACTER_NFT_ABI,
+                  functionName: 'tokenURI' as const,
+                  args: [tokenId],
+                },
+                {
+                  address: CHARACTER_NFT_ADDRESS,
+                  abi: CHARACTER_NFT_ABI,
+                  functionName: 'getClass' as const,
+                  args: [tokenId],
+                },
+                {
+                  address: CHARACTER_NFT_ADDRESS,
+                  abi: CHARACTER_NFT_ABI,
+                  functionName: 'getLevel' as const,
+                  args: [tokenId],
+                },
+              ]
+            })
+        : [],
+    [tokenIdsData]
+  )
 
   const { data: tokenDataResults } = useContractReads({
     contracts: tokenDataContracts,
@@ -139,13 +151,12 @@ export default function TeamPage() {
       const uri = uriResult?.status === 'success' ? (uriResult.result as string) : ''
       const characterClass =
         classResult?.status === 'success' ? (classResult.result as string) : 'warrior'
-      const level =
-        levelResult?.status === 'success' ? Number(levelResult.result as bigint) : 1
+      const level = levelResult?.status === 'success' ? Number(levelResult.result as bigint) : 1
 
       // Format class name (capitalize first letter, handle underscores)
       const formattedClass = characterClass
         .split('_')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ')
 
       return {
@@ -166,10 +177,8 @@ export default function TeamPage() {
   // Get team characters with full metadata
   const getTeamCharacters = (): Character[] => {
     return teamMembers
-      .map((member) => {
-        const character = characters.find(
-          (c) => c.tokenId.toString() === member.tokenId
-        )
+      .map(member => {
+        const character = characters.find(c => c.tokenId.toString() === member.tokenId)
         return character
       })
       .filter((c): c is Character => c !== undefined)
@@ -194,13 +203,13 @@ export default function TeamPage() {
       return
     }
     if (addToTeam(tokenId)) {
-      setTeamUpdate((prev) => prev + 1)
+      setTeamUpdate(prev => prev + 1)
     }
   }
 
   const handleRemoveFromTeam = (tokenId: string) => {
     removeFromTeam(tokenId)
-    setTeamUpdate((prev) => prev + 1)
+    setTeamUpdate(prev => prev + 1)
   }
 
   const teamCharacters = getTeamCharacters()
@@ -218,7 +227,9 @@ export default function TeamPage() {
           <Card>
             <CardContent className="py-12 text-center">
               <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-              <p className="text-muted-foreground">Please connect your wallet to view your characters</p>
+              <p className="text-muted-foreground">
+                Please connect your wallet to view your characters
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -242,7 +253,7 @@ export default function TeamPage() {
                   </div>
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {teamCharacters.map((character) => (
+                    {teamCharacters.map(character => (
                       <Card key={character.tokenId.toString()} className="relative">
                         <button
                           onClick={() => handleRemoveFromTeam(character.tokenId.toString())}
@@ -264,9 +275,12 @@ export default function TeamPage() {
                               </div>
                             )}
                           </div>
-                          <h3 className="font-semibold">{character.metadata?.name || `Character #${character.tokenId}`}</h3>
+                          <h3 className="font-semibold">
+                            {character.metadata?.name || `Character #${character.tokenId}`}
+                          </h3>
                           <p className="text-sm text-muted-foreground">
-                            {character.metadata?.class} � Level {character.metadata?.level || 1}
+                            {character.metadata?.class} {' • '} Level{' '}
+                            {character.metadata?.level || 1}{' '}
                           </p>
                           <Button
                             variant="outline"
@@ -278,7 +292,8 @@ export default function TeamPage() {
                             }}
                           >
                             <Zap className="h-4 w-4 mr-2" />
-                            Equip Skills ({getEquippedSkills(character.tokenId.toString()).length}/4)
+                            Equip Skills ({getEquippedSkills(character.tokenId.toString()).length}
+                            /4)
                           </Button>
                         </CardContent>
                       </Card>
@@ -318,7 +333,7 @@ export default function TeamPage() {
                   </div>
                 ) : (
                   <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                    {characters.map((character) => {
+                    {characters.map(character => {
                       const tokenId = character.tokenId.toString()
                       const inTeam = isInTeam(tokenId)
                       const teamFull = teamMembers.length >= 4
@@ -358,7 +373,8 @@ export default function TeamPage() {
                                 {character.metadata?.name || `Character #${character.tokenId}`}
                               </h3>
                               <p className="text-sm text-muted-foreground">
-                                {character.metadata?.class} � Level {character.metadata?.level || 1}
+                                {character.metadata?.class} {' • '} Level{' '}
+                                {character.metadata?.level || 1}
                               </p>
                             </div>
                             {inTeam ? (
@@ -369,7 +385,7 @@ export default function TeamPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation()
                                   handleAddToTeam(character)
                                 }}
@@ -389,13 +405,13 @@ export default function TeamPage() {
           </div>
         )}
       </main>
-      
+
       {/* Equip Skills Dialog */}
       <EquipSkillsDialog
         character={selectedCharacter}
         open={equipSkillsOpen}
         onOpenChange={setEquipSkillsOpen}
-        onUpdate={() => setTeamUpdate((prev) => prev + 1)}
+        onUpdate={() => setTeamUpdate(prev => prev + 1)}
       />
     </div>
   )
@@ -426,12 +442,12 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
         const classId = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
         const skillsModule = await import(`@/data/skills/${classId}.json`)
         const allSkills = skillsModule.default || skillsModule
-        
+
         // Filter to only learned skills
-        const learnedSkills = allSkills.filter((skill: any) => 
-          getSkillPoints(tokenId, skill.id) > 0
+        const learnedSkills = allSkills.filter(
+          (skill: any) => getSkillPoints(tokenId, skill.id) > 0
         )
-        
+
         setSkills(learnedSkills)
       } catch (error) {
         console.error('Failed to load skills:', error)
@@ -476,9 +492,12 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Equip Skills - {character.metadata?.name || `Character #${character.tokenId}`}</DialogTitle>
+          <DialogTitle>
+            Equip Skills - {character.metadata?.name || `Character #${character.tokenId}`}
+          </DialogTitle>
           <DialogDescription>
-            Select up to 4 skills to equip for combat. Equipped skills can be used with hotkeys W+1-4.
+            Select up to 4 skills to equip for combat. Equipped skills can be used with hotkeys
+            W+1-4.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -491,7 +510,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             ) : (
               <div className="grid grid-cols-4 gap-2">
                 {equippedSkills.map((skillId, index) => {
-                  const skill = skills.find((s) => s.id === skillId)
+                  const skill = skills.find(s => s.id === skillId)
                   return (
                     <div
                       key={skillId}
@@ -521,7 +540,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
               </div>
             )}
           </div>
-          
+
           <div>
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
@@ -530,10 +549,10 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
               </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto">
-                {skills.map((skill) => {
+                {skills.map(skill => {
                   const isEquipped = equippedSkills.includes(skill.id)
                   const canEquip = !isEquipped && equippedSkills.length < 4
-                  
+
                   return (
                     <div
                       key={skill.id}

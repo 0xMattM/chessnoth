@@ -15,7 +15,14 @@ interface CombatBoardProps {
   validAttackTargets: CombatCharacter[]
   onCellClick: (row: number, col: number) => void
   currentCharacter: CombatCharacter | null
-  movingCharacters?: Map<string, { from: { row: number; col: number }; to: { row: number; col: number }; character?: CombatCharacter }>
+  movingCharacters?: Map<
+    string,
+    {
+      from: { row: number; col: number }
+      to: { row: number; col: number }
+      character?: CombatCharacter
+    }
+  >
 }
 
 /**
@@ -43,13 +50,11 @@ export function CombatBoard({
   movingCharacters = new Map(),
 }: CombatBoardProps) {
   const isMovePosition = (row: number, col: number) => {
-    return validMovePositions.some((pos) => pos.row === row && pos.col === col)
+    return validMovePositions.some(pos => pos.row === row && pos.col === col)
   }
 
   const isAttackTarget = (row: number, col: number) => {
-    return validAttackTargets.some(
-      (char) => char.position?.row === row && char.position?.col === col
-    )
+    return validAttackTargets.some(char => char.position?.row === row && char.position?.col === col)
   }
 
   const getCharacterAt = (row: number, col: number): CombatCharacter | null => {
@@ -73,7 +78,8 @@ export function CombatBoard({
             const isSelected = selectedPosition?.row === row && selectedPosition?.col === col
             const isValidMove = isMovePosition(row, col)
             const isValidAttack = isAttackTarget(row, col)
-            const isCurrentChar = currentCharacter?.position?.row === row && currentCharacter?.position?.col === col
+            const isCurrentChar =
+              currentCharacter?.position?.row === row && currentCharacter?.position?.col === col
 
             // Get terrain for this cell
             const terrain = terrainMap[row]?.[col] || 'grassland'
@@ -86,30 +92,42 @@ export function CombatBoard({
                 className={cn(
                   'relative w-16 h-16 rounded-lg transition-all overflow-hidden shadow-md',
                   // Current character - very visible with animation
-                  isCurrentChar && 'ring-4 ring-blue-400 ring-offset-2 ring-offset-background animate-pulse shadow-blue-400/50 shadow-lg',
+                  isCurrentChar &&
+                    'ring-4 ring-blue-400 ring-offset-2 ring-offset-background animate-pulse shadow-blue-400/50 shadow-lg',
                   // Selected position
                   isSelected && !isCurrentChar && 'ring-2 ring-primary',
                   // Valid move - use cyan/blue instead of green for better contrast
-                  isValidMove && !isCurrentChar && 'cursor-pointer border-2 border-cyan-400 shadow-cyan-400/30',
+                  isValidMove &&
+                    !isCurrentChar &&
+                    'cursor-pointer border-2 border-cyan-400 shadow-cyan-400/30',
                   // Valid attack target
                   isValidAttack && 'cursor-pointer border-2 border-red-500 shadow-red-500/30',
                   // Character hover effect
                   character && 'hover:scale-105',
                   // Empty cells
-                  !character && !isValidMove && !isValidAttack && !isCurrentChar && 'opacity-90 hover:opacity-100'
+                  !character &&
+                    !isValidMove &&
+                    !isValidAttack &&
+                    !isCurrentChar &&
+                    'opacity-90 hover:opacity-100'
                 )}
                 title={terrainConfig.name}
               >
                 {/* Terrain background with improved styling */}
-                <div className={cn(
-                  'absolute inset-0 transition-opacity',
-                  (isValidMove || isValidAttack || isCurrentChar) && 'opacity-75'
-                )}>
-                  <div 
+                <div
+                  className={cn(
+                    'absolute inset-0 transition-opacity',
+                    (isValidMove || isValidAttack || isCurrentChar) && 'opacity-75'
+                  )}
+                >
+                  <div
                     className="w-full h-full relative"
                     style={{
-                      backgroundColor: terrainConfig.solidColor || terrainConfig.bgColor || '#4ade80',
-                      backgroundImage: terrainConfig.texturePath ? `url(${terrainConfig.texturePath})` : undefined,
+                      backgroundColor:
+                        terrainConfig.solidColor || terrainConfig.bgColor || '#4ade80',
+                      backgroundImage: terrainConfig.texturePath
+                        ? `url(${terrainConfig.texturePath})`
+                        : undefined,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center',
                     }}
@@ -117,7 +135,7 @@ export function CombatBoard({
                     {/* Gradient overlay for depth */}
                     <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-black/15" />
                     {/* Pattern overlay for texture */}
-                    <div 
+                    <div
                       className="absolute inset-0 opacity-30"
                       style={{
                         backgroundImage: `repeating-linear-gradient(
@@ -131,7 +149,7 @@ export function CombatBoard({
                     />
                   </div>
                 </div>
-                
+
                 {/* Overlay for valid moves - cyan/blue for better visibility */}
                 {isValidMove && !isCurrentChar && (
                   <div className="absolute inset-0 bg-cyan-400/50 border-2 border-cyan-300 rounded-lg flex items-center justify-center z-5">
@@ -162,7 +180,7 @@ export function CombatBoard({
                     <CharacterSprite character={character} />
                   </div>
                 )}
-                
+
                 {/* Grid coordinates for debugging */}
                 {process.env.NODE_ENV === 'development' && (
                   <div className="absolute top-0 left-0 text-[8px] opacity-30 p-0.5 bg-black/50 rounded-br z-20">
@@ -173,15 +191,16 @@ export function CombatBoard({
             )
           })
         )}
-        
+
         {/* Moving characters overlay - rendered above the grid */}
         {Array.from(movingCharacters.entries()).map(([characterId, movement]) => {
           // Use stored character copy or find in board/allCharacters
-          const character = movement.character || 
-                           board[movement.from.row]?.[movement.from.col] || 
-                           allCharacters.find((c) => c.id === characterId)
+          const character =
+            movement.character ||
+            board[movement.from.row]?.[movement.from.col] ||
+            allCharacters.find(c => c.id === characterId)
           if (!character) return null
-          
+
           // Calculate pixel positions relative to grid container
           // Padding is 16px (p-4), cell size is 64px (w-16), gap is 4px (gap-1)
           const padding = 16
@@ -189,11 +208,11 @@ export function CombatBoard({
           const fromY = padding + movement.from.row * totalCellSize
           const toX = padding + movement.to.col * totalCellSize
           const toY = padding + movement.to.row * totalCellSize
-          
+
           // Calculate translation needed
           const translateX = toX - fromX
           const translateY = toY - fromY
-          
+
           return (
             <MovingCharacter
               key={`moving-${characterId}`}
@@ -299,19 +318,23 @@ function CharacterSprite({ character }: { character: CombatCharacter }) {
             animationState === 'hit' && 'brightness-150'
           )}
           unoptimized
-          onError={(e) => {
+          onError={e => {
             // Fallback to colored square if sprite not found
+            // Using textContent instead of innerHTML to prevent XSS vulnerabilities
             const target = e.target as HTMLImageElement
             target.style.display = 'none'
             const parent = target.parentElement
             if (parent) {
-              parent.innerHTML = `
-                <div class="w-12 h-12 rounded ${
-                  character.team === 'player' ? 'bg-blue-500' : 'bg-red-500'
-                } flex items-center justify-center text-white text-xs font-bold">
-                  ${character.name.substring(0, 2)}
-                </div>
-              `
+              // Clear any existing content
+              parent.textContent = ''
+              // Create fallback element safely
+              const fallback = document.createElement('div')
+              fallback.className = `w-12 h-12 rounded ${
+                character.team === 'player' ? 'bg-blue-500' : 'bg-red-500'
+              } flex items-center justify-center text-white text-xs font-bold`
+              // Use textContent instead of innerHTML to prevent XSS
+              fallback.textContent = character.name.substring(0, 2)
+              parent.appendChild(fallback)
             }
           }}
         />
@@ -335,11 +358,20 @@ function CharacterSprite({ character }: { character: CombatCharacter }) {
             <div className="absolute inset-0 bg-gradient-radial from-purple-400/30 to-transparent" />
             {/* Magic particles */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-2 bg-purple-300 rounded-full animate-bounce" />
-            <div className="absolute top-2 left-1/4 w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '75ms' }} />
-            <div className="absolute top-2 right-1/4 w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <div
+              className="absolute top-2 left-1/4 w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce"
+              style={{ animationDelay: '75ms' }}
+            />
+            <div
+              className="absolute top-2 right-1/4 w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce"
+              style={{ animationDelay: '150ms' }}
+            />
             {/* Magic circle */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 border-2 border-purple-300 rounded-full animate-spin" style={{ animationDuration: '1s' }} />
+              <div
+                className="w-12 h-12 border-2 border-purple-300 rounded-full animate-spin"
+                style={{ animationDuration: '1s' }}
+              />
             </div>
           </div>
         )}
@@ -386,4 +418,3 @@ function CharacterSprite({ character }: { character: CombatCharacter }) {
     </div>
   )
 }
-

@@ -21,6 +21,8 @@ import {
   setEquippedSkills,
 } from '@/lib/skills'
 import { getSkillTree, getSkillNode, SkillTreeNode } from '@/lib/skill-trees'
+import { logger } from '@/lib/logger'
+import type { Skill } from '@/lib/types'
 
 interface Character {
   tokenId: bigint
@@ -63,7 +65,6 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
   const tokenId = character.tokenId.toString()
   const [skills, setSkills] = useState<Skill[]>([])
   const [characterSkills, setCharacterSkills] = useState({ skillPoints: {}, usedSkillPoints: 0 })
-  const [_selectedSkill, setSelectedSkill] = useState<Skill | null>(null)
   const [equipSkillsOpen, setEquipSkillsOpen] = useState(false)
   
 
@@ -81,10 +82,12 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
     const loadSkills = async () => {
       try {
         const skillsModule = await import(`@/data/skills/${characterClass}.json`)
-        const classSkills = skillsModule.default || skillsModule
+        const classSkills = (skillsModule.default || skillsModule) as Skill[]
         setSkills(classSkills)
       } catch (error) {
-        console.error('Failed to load skills:', error)
+        logger.error('Failed to load skills', error instanceof Error ? error : new Error(String(error)), {
+          characterClass,
+        })
         setSkills([])
       }
     }
@@ -280,7 +283,6 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                                   ? 'hover:border-primary cursor-pointer'
                                   : 'opacity-75'
                           } ${getBranchColor(branch)}`}
-                          onClick={() => setSelectedSkill(skill)}
                         >
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
@@ -413,7 +415,7 @@ interface EquipSkillsDialogProps {
 }
 
 function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSkillsDialogProps) {
-  const [skills, setSkills] = useState<any[]>([])
+  const [skills, setSkills] = useState<Skill[]>([])
   const [equippedSkills, setEquippedSkillsState] = useState<string[]>([])
   const tokenId = character.tokenId.toString()
   const characterClass = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
@@ -428,16 +430,19 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
     const loadSkills = async () => {
       try {
         const skillsModule = await import(`@/data/skills/${characterClass}.json`)
-        const allSkills = skillsModule.default || skillsModule
+        const allSkills = (skillsModule.default || skillsModule) as Skill[]
         
         // Filter to only learned skills
-        const learnedSkills = allSkills.filter((skill: any) => 
+        const learnedSkills = allSkills.filter((skill) => 
           getSkillPoints(tokenId, skill.id) > 0
         )
         
         setSkills(learnedSkills)
       } catch (error) {
-        console.error('Failed to load skills:', error)
+        logger.error('Failed to load skills', error instanceof Error ? error : new Error(String(error)), {
+          characterClass,
+          tokenId,
+        })
         setSkills([])
       }
     }
