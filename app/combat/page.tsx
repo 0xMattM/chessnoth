@@ -82,7 +82,7 @@ export default function CombatPage() {
     if (!combatState) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't trigger hotkeys when typing in inputs
+      // Don&apos;t trigger hotkeys when typing in inputs
       const target = event.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
         return
@@ -96,48 +96,40 @@ export default function CombatPage() {
       const key = event.key.toLowerCase()
 
       switch (key) {
-        case ' ': {
+        case ' ':
           event.preventDefault()
           handleAction('wait')
           break
-        }
-        case 'q': {
+        case 'q':
           event.preventDefault()
           if (getValidTargets(selectedSkill).length > 0) {
             handleAction('attack')
           }
           break
-        }
-        case 'w': {
+        case 'w':
           event.preventDefault()
           handleAction('skill')
           break
-        }
-        case '1': {
+        case '1':
           event.preventDefault()
           handleAction('skill', 0)
           break
-        }
-        case '2': {
+        case '2':
           event.preventDefault()
           handleAction('skill', 1)
           break
-        }
-        case '3': {
+        case '3':
           event.preventDefault()
           handleAction('skill', 2)
           break
-        }
-        case '4': {
+        case '4':
           event.preventDefault()
           handleAction('skill', 3)
           break
-        }
-        case 'e': {
+        case 'e':
           event.preventDefault()
           handleAction('item')
           break
-        }
       }
     }
 

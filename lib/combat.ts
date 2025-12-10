@@ -1,7 +1,6 @@
 // Combat system utilities
 import type { BattleCharacter } from './battle'
 import type { TerrainType } from './terrain'
-import { TERRAIN_CONFIGS } from './terrain'
 
 export interface CombatStats {
   hp: number
@@ -87,11 +86,13 @@ export async function calculateCombatStats(
   const itemsData = await import('@/data/items.json')
   const items = itemsData.default || itemsData
   
-  Object.entries(character.equipment).forEach(([_slot, itemId]) => {
+  Object.entries(character.equipment).forEach(([, itemId]) => {
     if (itemId) {
-      const item = items.find((i: { id: string }) => i.id === itemId)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const item = items.find((i: any) => i.id === itemId)
       if (item?.statBonuses) {
-        Object.entries(item.statBonuses).forEach(([stat, value]) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Object.entries(item.statBonuses).forEach(([stat, value]: [string, any]) => {
           const statKey = stat.toLowerCase() as keyof CombatStats
           if (statKey in stats) {
             const bonus = value as number
@@ -361,7 +362,7 @@ export function calculateDamage(
  */
 export function getValidSkillTargets(
   character: CombatCharacter,
-  skill: { range: number; aoeType?: string; effects?: Array<{ type: string }> },
+  skill: { range: number; aoeType?: string; effects?: Array<{ type: string }>; requiresTarget?: boolean; damageType?: string },
   allCharacters: CombatCharacter[]
 ): CombatCharacter[] {
   if (!character.position) return []

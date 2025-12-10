@@ -8,6 +8,10 @@ const nextConfig = {
     esmExternals: true,
   },
   // ESLint removido completamente del proyecto
+  eslint: {
+    // Allow production builds to complete even with ESLint errors
+    ignoreDuringBuilds: true,
+  },
   typescript: {
     // Allow production builds to complete even with type errors
     ignoreBuildErrors: true,

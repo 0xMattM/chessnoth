@@ -18,9 +18,8 @@ import {
 } from '@/lib/character-utils'
 import { logger } from '@/lib/logger'
 import Image from 'next/image'
-import { CharacterCardSkeleton } from '@/components/character-card-skeleton'
 import { CharactersErrorBoundary } from '@/components/characters-error-boundary'
-import { Users, Shield, CheckCircle2, Zap } from 'lucide-react'
+import { Users, Shield, CheckCircle2 } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 
 interface Character {
@@ -43,7 +42,7 @@ export default function CharactersPage() {
   const [characters, setCharacters] = useState<Character[]>([])
   const [inventoryCharacter, setInventoryCharacter] = useState<Character | null>(null)
   const [skillsCharacter, setSkillsCharacter] = useState<Character | null>(null)
-  const [refreshTrigger, setRefreshTrigger] = useState(0) // Trigger refresh when equipment/skills change
+  const [_refreshTrigger, setRefreshTrigger] = useState(0) // Trigger refresh when equipment/skills change
 
   // Get balance of NFTs
   const { data: balance, error: balanceError } = useContractRead({

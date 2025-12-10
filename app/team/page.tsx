@@ -12,7 +12,7 @@ import {
   getCharacterSkills,
   getSkillPoints,
 } from '@/lib/skills'
-import { Sword, Users, X, Plus, Zap } from 'lucide-react'
+import { Sword, Users, X, Plus } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { ERROR_MESSAGES, MAX_TEAM_SIZE } from '@/lib/constants'
@@ -291,7 +291,7 @@ export default function TeamPage() {
                               setEquipSkillsOpen(true)
                             }}
                           >
-                            <Zap className="h-4 w-4 mr-2" />
+                            <Sword className="h-4 w-4 mr-2" />
                             Equip Skills ({getEquippedSkills(character.tokenId.toString()).length}
                             /4)
                           </Button>

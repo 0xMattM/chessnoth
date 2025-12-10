@@ -66,7 +66,6 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
   const [skills, setSkills] = useState<Skill[]>([])
   const [characterSkills, setCharacterSkills] = useState({ skillPoints: {}, usedSkillPoints: 0 })
   const [equipSkillsOpen, setEquipSkillsOpen] = useState(false)
-  
 
   const characterLevel = character.metadata?.level || 1
   const availableSkillPoints = characterLevel - characterSkills.usedSkillPoints

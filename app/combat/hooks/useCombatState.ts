@@ -209,7 +209,7 @@ export function useCombatState(): UseCombatStateReturn {
 
   /**
    * Gets valid move positions for the current character
-   * Only shows moves for player characters that haven't moved or acted yet
+   * Only shows moves for player characters that have not moved or acted yet
    * @returns Array of valid move positions {row, col}
    */
   const getValidMoves = useCallback((): Array<{ row: number; col: number }> => {
@@ -304,7 +304,7 @@ export function useCombatState(): UseCombatStateReturn {
         // Check if character exists and is alive
         if (nextChar && nextChar.stats.hp > 0) {
           // If it's a new turn, character can act (hasMoved and hasActed were reset)
-          // If it's same turn, check if character hasn't acted yet (can have moved but not acted)
+          // If it is same turn, check if character has not acted yet (can have moved but not acted)
           if (newTurn > prevState.turn || !nextChar.hasActed) {
             break
           }

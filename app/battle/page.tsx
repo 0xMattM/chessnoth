@@ -19,7 +19,6 @@ import { ERROR_MESSAGES, MAX_STAGES } from '@/lib/constants'
 import { useToast } from '@/hooks/use-toast'
 import { logger } from '@/lib/logger'
 import { BattleErrorBoundary } from '@/components/battle-error-boundary'
-import { Zap } from 'lucide-react'
 
 interface Character {
   tokenId: bigint

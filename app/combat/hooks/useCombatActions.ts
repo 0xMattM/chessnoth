@@ -209,11 +209,11 @@ export function useCombatActions({
           if (cellOccupant.id === current.id) {
             // Same character, allow (shouldn't happen but just in case)
           } else if (cellOccupant.team === current.team) {
-            // Ally is here - can't end movement on ally
+            // Ally is here - cannot end movement on ally
             logger.debug('Cannot move to cell occupied by ally', { name: cellOccupant?.name })
             return
           } else {
-            // Enemy is here - can't move to enemy
+            // Enemy is here - cannot move to enemy
             logger.debug('Cannot move to cell occupied by enemy', { name: cellOccupant?.name })
             return
           }

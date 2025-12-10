@@ -132,7 +132,7 @@ export function useEnemyAI({
               if (cellOccupant.id === currentChar.id) {
                 // Same character, allow (shouldn't happen)
               } else if (cellOccupant.team === currentChar.team) {
-                // Ally is here - can't end movement on ally
+                // Ally is here - cannot end movement on ally
                 logger.debug('Enemy cannot move to cell occupied by ally', { name: cellOccupant?.name })
                 const updatedChar = { ...currentChar, hasMoved: true }
                 const updatedCharacters = prevState.characters.map((c) =>
@@ -148,7 +148,7 @@ export function useEnemyAI({
                   selectedCharacter: updatedChar,
                 }
               } else {
-                // Enemy is here - can't move to enemy
+                // Enemy is here - cannot move to enemy
                 logger.debug('Enemy cannot move to cell occupied by enemy', { name: cellOccupant?.name })
                 const updatedChar = { ...currentChar, hasMoved: true }
                 const updatedCharacters = prevState.characters.map((c) =>
