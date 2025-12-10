@@ -318,7 +318,7 @@ export default function TeamPage() {
                 <CardTitle>Available Characters</CardTitle>
                 <CardDescription>
                   {characters.length === 0
-                    ? 'You do not have any characters yet'
+                    ? &apos;You do not have any characters yet&apos;
                     : 'Click to add to your team'}
                 </CardDescription>
               </CardHeader>
