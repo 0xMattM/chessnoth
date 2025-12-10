@@ -152,6 +152,21 @@ npm run set-minter   # Set authorized minter
 5. **TypeScript**: Avoid `any`, use proper types
 6. **File Size**: Keep files under 500 lines (refactor if needed)
 
+## Wallet Connection
+
+### Supported Wallets
+- MetaMask (Recommended)
+- Coinbase Wallet
+- WalletConnect
+- Rainbow Wallet
+- Brave Wallet
+
+### Troubleshooting Wallet Issues
+
+If you encounter wallet connection issues, especially errors about "Multiple Ethereum providers", please see [WALLET_TROUBLESHOOTING.md](./WALLET_TROUBLESHOOTING.md) for detailed solutions.
+
+**Quick fix**: If you have multiple wallet extensions installed (e.g., MetaMask + Coinbase Wallet), disable the ones you're not using to avoid conflicts.
+
 ## Notes
 
 - The Characters page currently uses placeholder data. You'll need to implement proper contract calls to fetch user's NFTs

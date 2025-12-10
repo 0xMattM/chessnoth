@@ -1,6 +1,7 @@
 // Combat system utilities
 import type { BattleCharacter } from './battle'
 import type { TerrainType } from './terrain'
+import { TERRAIN_CONFIGS } from './terrain'
 
 export interface CombatStats {
   hp: number

@@ -22,7 +22,7 @@ import {
 } from '@/lib/skills'
 import { getSkillTree, getSkillNode, SkillTreeNode } from '@/lib/skill-trees'
 import { logger } from '@/lib/logger'
-import type { Skill } from '@/lib/types'
+import type { Skill, SkillEffect } from '@/lib/types'
 
 interface Character {
   tokenId: bigint
@@ -31,28 +31,6 @@ interface Character {
     class?: string
     level?: number
   }
-}
-
-interface Skill {
-  id: string
-  name: string
-  description: string
-  classId: string
-  levelReq: number
-  spCost: number
-  manaCost: number
-  range: number
-  aoeType: string
-  damageType: string
-  damageMultiplier: number
-  effects?: Array<{
-    type: string
-    stat?: string
-    value?: number
-    duration?: number
-    statusId?: string
-  }>
-  requiresTarget: boolean
 }
 
 interface CharacterSkillsProps {
@@ -173,7 +151,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
   // Group skills by branch and tier for visual display
   const skillsByBranch = useMemo(() => {
     const branches: { [branch: string]: Array<{ node: SkillTreeNode; skill: Skill }> } = {}
-    
+
     skillTree.forEach((node) => {
       const skill = skillsMap[node.skillId]
       if (!skill) return
@@ -192,7 +170,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
     return branches
   }, [skillTree, skillsMap])
 
-  const formatEffect = (effect: Skill['effects'][0]) => {
+  const formatEffect = (effect: SkillEffect) => {
     if (effect.type === 'buff' || effect.type === 'debuff') {
       const sign = effect.type === 'buff' ? '+' : ''
       const statName = effect.stat?.toUpperCase() || ''
@@ -231,9 +209,9 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setEquipSkillsOpen(true)}
             >
               <Settings className="h-4 w-4 mr-2" />
@@ -273,15 +251,14 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                       return (
                         <Card
                           key={skill.id}
-                          className={`transition-all ${
-                            learned
-                              ? 'border-green-500 bg-green-500/10'
-                              : !prerequisitesMet || !meetsLevelReq
-                                ? 'opacity-50 border-dashed'
-                                : canLearn
-                                  ? 'hover:border-primary cursor-pointer'
-                                  : 'opacity-75'
-                          } ${getBranchColor(branch)}`}
+                          className={`transition-all ${learned
+                            ? 'border-green-500 bg-green-500/10'
+                            : !prerequisitesMet || !meetsLevelReq
+                              ? 'opacity-50 border-dashed'
+                              : canLearn
+                                ? 'hover:border-primary cursor-pointer'
+                                : 'opacity-75'
+                            } ${getBranchColor(branch)}`}
                         >
                           <CardHeader className="pb-3">
                             <div className="flex items-center justify-between">
@@ -301,7 +278,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                           </CardHeader>
                           <CardContent>
                             <p className="text-sm text-muted-foreground mb-3">{skill.description}</p>
-                            
+
                             {/* Prerequisites */}
                             {node.prerequisites.length > 0 && (
                               <div className="mb-3 p-2 bg-muted/50 rounded text-xs">
@@ -392,7 +369,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
           )}
         </CardContent>
       </Card>
-      
+
       {/* Equip Skills Dialog */}
       <EquipSkillsDialog
         character={character}
@@ -430,12 +407,12 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
       try {
         const skillsModule = await import(`@/data/skills/${characterClass}.json`)
         const allSkills = (skillsModule.default || skillsModule) as Skill[]
-        
+
         // Filter to only learned skills
-        const learnedSkills = allSkills.filter((skill) => 
+        const learnedSkills = allSkills.filter((skill) =>
           getSkillPoints(tokenId, skill.id) > 0
         )
-        
+
         setSkills(learnedSkills)
       } catch (error) {
         logger.error('Failed to load skills', error instanceof Error ? error : new Error(String(error)), {
@@ -518,7 +495,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
               </div>
             )}
           </div>
-          
+
           <div>
             <p className="text-sm font-semibold mb-2">Available Skills</p>
             {skills.length === 0 ? (
@@ -530,13 +507,12 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
                 {skills.map((skill) => {
                   const isEquipped = equippedSkills.includes(skill.id)
                   const canEquip = !isEquipped && equippedSkills.length < 4
-                  
+
                   return (
                     <div
                       key={skill.id}
-                      className={`p-3 border rounded-lg ${
-                        isEquipped ? 'bg-primary/10 border-primary' : 'bg-muted/50'
-                      }`}
+                      className={`p-3 border rounded-lg ${isEquipped ? 'bg-primary/10 border-primary' : 'bg-muted/50'
+                        }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">

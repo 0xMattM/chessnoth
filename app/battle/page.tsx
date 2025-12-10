@@ -3,7 +3,7 @@
 import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Crown, Lock, Users, AlertCircle } from 'lucide-react'
+import { Crown, Lock, Users, AlertCircle, Sword } from 'lucide-react'
 import { useAccount, useContractReads } from 'wagmi'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
 import { getTeam } from '@/lib/team'
@@ -283,47 +283,76 @@ export default function BattlePage() {
 
   return (
     <BattleErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-red-950 to-slate-900">
+        {/* Animated background elements */}
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500/10 rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.2s' }} />
+          <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-yellow-500/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '0.5s' }} />
+        </div>
+
         <Navigation />
-        <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mb-8">
-            <h1 className="mb-4 text-4xl font-bold tracking-tight">Battle Arena</h1>
-            <p className="text-lg text-muted-foreground">
+        <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="mb-8 animate-slide-up">
+            <div className="inline-block mb-4 rounded-full bg-red-500/10 px-4 py-1.5 text-sm font-medium text-red-300 border border-red-500/20">
+              ⚔️ Combat Arena
+            </div>
+            <h1 className="mb-4 text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-red-100 to-orange-200 bg-clip-text text-transparent">
+              Battle Arena
+            </h1>
+            <p className="text-lg text-red-200/80">
               Fight through stages and defeat bosses to earn rewards
             </p>
           </div>
 
           {!isConnected ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-                <p className="text-muted-foreground">Please connect your wallet to access battle</p>
+            <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
+              <CardContent className="py-16 text-center">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20 border border-red-500/20">
+                  <Users className="h-10 w-10 text-red-300" />
+                </div>
+                <p className="text-red-200/80 font-medium">Please connect your wallet to access battle</p>
               </CardContent>
             </Card>
           ) : !teamReady ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <AlertCircle className="mx-auto mb-4 h-12 w-12 text-yellow-500" />
-                <p className="text-lg font-semibold mb-2">Team Not Ready</p>
-                <p className="text-muted-foreground mb-4">
+            <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
+              <CardContent className="py-16 text-center">
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-yellow-500/20">
+                  <AlertCircle className="h-10 w-10 text-yellow-400" />
+                </div>
+                <p className="text-xl font-bold mb-2 text-yellow-100">Team Not Ready</p>
+                <p className="text-red-200/60 mb-6">
                   You need to select at least one character in your team before battling.
                 </p>
-                <Button onClick={() => router.push('/team')}>Go to Team Selection</Button>
+                <Button 
+                  onClick={() => router.push('/team')}
+                  className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/40 transition-all"
+                >
+                  Go to Team Selection
+                </Button>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-6">
               {/* Progress Info */}
-              <Card>
+              <Card className="border-border/40 bg-gradient-to-r from-slate-900/50 to-red-900/30 backdrop-blur-xl animate-scale-in">
                 <CardHeader>
-                  <CardTitle>Battle Progress</CardTitle>
-                  <CardDescription>Highest stage completed: Stage {highestStage}</CardDescription>
+                  <CardTitle className="flex items-center gap-3 text-2xl">
+                    <div className="rounded-lg bg-red-500/10 p-2 border border-red-500/20">
+                      <Crown className="h-5 w-5 text-red-400" />
+                    </div>
+                    Battle Progress
+                  </CardTitle>
+                  <CardDescription className="text-red-200/60">
+                    Highest stage completed:{' '}
+                    <span className="font-semibold text-red-300">Stage {highestStage}</span>
+                  </CardDescription>
                 </CardHeader>
               </Card>
 
               {/* Stages Grid */}
               <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {stages.map(stage => {
+                {stages.map((stage, index) => {
                   const unlocked = isStageUnlocked(stage)
                   const isBoss = isBossStage(stage)
                   const completed = stage <= highestStage
@@ -331,46 +360,97 @@ export default function BattlePage() {
                   return (
                     <Card
                       key={stage}
-                      className={`transition-all ${
+                      className={`group relative overflow-hidden transition-all duration-300 border-border/40 backdrop-blur-xl animate-scale-in ${
                         unlocked
-                          ? 'hover:shadow-lg cursor-pointer'
+                          ? 'hover:shadow-2xl cursor-pointer hover:-translate-y-2'
                           : 'opacity-50 cursor-not-allowed'
-                      } ${isBoss ? 'border-yellow-500 bg-yellow-500/10' : ''} ${
-                        completed ? 'border-green-500 bg-green-500/10' : ''
+                      } ${
+                        isBoss
+                          ? 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/30 to-orange-900/30 hover:shadow-yellow-500/30'
+                          : 'bg-slate-900/50 hover:shadow-red-500/20'
+                      } ${
+                        completed
+                          ? 'border-green-500/50 bg-gradient-to-br from-green-900/20 to-emerald-900/20'
+                          : ''
                       }`}
+                      style={{ animationDelay: `${index * 0.05}s` }}
                     >
-                      <CardHeader className="pb-3">
+                      {/* Glow effect on hover */}
+                      <div className={`absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${
+                        isBoss
+                          ? 'bg-gradient-to-br from-yellow-500/10 to-orange-500/10'
+                          : 'bg-gradient-to-br from-red-500/10 to-orange-500/10'
+                      }`} />
+                      
+                      <CardHeader className="relative pb-3">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">
+                          <CardTitle className={`text-lg font-bold ${
+                            isBoss ? 'text-yellow-300' : completed ? 'text-green-300' : 'text-red-100'
+                          }`}>
                             {isBoss ? (
                               <span className="flex items-center gap-2">
-                                <Crown className="h-5 w-5 text-yellow-500" />
-                                Boss
+                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500/20 border border-yellow-500/40">
+                                  <Crown className="h-4 w-4 text-yellow-400 animate-float" />
+                                </div>
+                                <span>Boss</span>
                               </span>
                             ) : (
-                              `Stage ${stage}`
+                              <span className="flex items-center gap-2">
+                                <span className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
+                                  completed
+                                    ? 'bg-green-500/20 text-green-300 border border-green-500/40'
+                                    : 'bg-red-500/20 text-red-300 border border-red-500/40'
+                                }`}>
+                                  {stage}
+                                </span>
+                                <span>Stage {stage}</span>
+                              </span>
                             )}
                           </CardTitle>
-                          {!unlocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+                          {!unlocked && (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/50 border border-border/40">
+                              <Lock className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
                           {completed && (
-                            <span className="text-xs text-green-500 font-semibold">✓</span>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 border border-green-500/40">
+                              <span className="text-sm font-bold text-green-400">✓</span>
+                            </div>
                           )}
                         </div>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="relative">
                         <div className="space-y-3">
-                          <p className="text-sm text-muted-foreground">
+                          <p className={`text-sm ${
+                            isBoss ? 'text-yellow-200/70' : 'text-red-200/70'
+                          }`}>
                             {isBoss
                               ? 'Face a powerful boss enemy'
                               : `Battle against stage ${stage} enemies`}
                           </p>
                           <Button
-                            className="w-full"
-                            variant={isBoss ? 'default' : 'outline'}
+                            className={`w-full font-semibold transition-all ${
+                              isBoss
+                                ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/40'
+                                : unlocked
+                                  ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40'
+                                  : ''
+                            }`}
+                            variant={unlocked ? 'default' : 'outline'}
                             disabled={!unlocked}
                             onClick={() => handleStartBattle(stage)}
                           >
-                            {unlocked ? 'Start Battle' : 'Locked'}
+                            {unlocked ? (
+                              <span className="flex items-center gap-2">
+                                <Sword className="h-4 w-4" />
+                                Start Battle
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-2">
+                                <Lock className="h-4 w-4" />
+                                Locked
+                              </span>
+                            )}
                           </Button>
                         </div>
                       </CardContent>

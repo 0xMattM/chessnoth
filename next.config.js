@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['ipfs.io', 'gateway.pinata.cloud', 'cloudflare-ipfs.com'],
+    domains: ['ipfs.io', 'gateway.pinata.cloud', 'cloudflare-ipfs.com', 'api.dicebear.com'],
   },
   experimental: {
     esmExternals: true,

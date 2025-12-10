@@ -6,9 +6,10 @@ import { publicProvider } from 'wagmi/providers/public'
 import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { confluxESpaceTestnet } from '@/lib/chains'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { validateEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
+import { initializeWalletHandler } from '@/lib/wallet-provider-handler'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 
@@ -36,7 +37,7 @@ const { connectors } = getDefaultWallets({
 })
 
 const wagmiConfig = createConfig({
-  autoConnect: false, // Disable auto-connect to prevent hydration issues
+  autoConnect: true, // Enable auto-connect for better UX
   connectors,
   publicClient,
 })
@@ -50,10 +51,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
             refetchOnWindowFocus: false,
             staleTime: 5 * 60 * 1000, // 5 minutes
             cacheTime: 10 * 60 * 1000, // 10 minutes
+            retry: 2,
           },
         },
       })
   )
+
+  // Initialize wallet handler on mount
+  useEffect(() => {
+    initializeWalletHandler()
+  }, [])
 
   // Show error if environment validation failed
   if (envValidation && !envValidation.isValid) {
@@ -89,7 +96,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiConfig config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider chains={chains}>{children}</RainbowKitProvider>
+        <RainbowKitProvider
+          chains={chains}
+          modalSize="compact"
+          showRecentTransactions={true}
+        >
+          {children}
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiConfig>
   )
