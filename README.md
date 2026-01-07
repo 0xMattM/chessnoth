@@ -40,7 +40,7 @@ cp .env.example .env.local
    
    **Important**: 
    - Get `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [WalletConnect Cloud](https://cloud.walletconnect.com)
-   - Replace `0xYourDeployedContractAddress` with your actual deployed CharacterNFT contract address on Conflux eSpace Testnet
+   - Replace `0xYourDeployedContractAddress` with your actual deployed CharacterNFT contract address on Mantle Network
    - Without the contract address, minting will not work!
 
 4. Run the development server:
@@ -52,25 +52,44 @@ npm run dev
 
 ## Contract Integration
 
-The app connects to the `CharacterNFT.sol` contract deployed on **Conflux eSpace Testnet**. Make sure:
+The app connects to the `CharacterNFT.sol` contract deployed on **Mantle Network**. Make sure:
 
-1. The contract is deployed to Conflux eSpace Testnet (Chain ID: 71)
+1. The contract is deployed to Mantle Sepolia Testnet (Chain ID: 5003) or Mantle Mainnet (Chain ID: 5000)
 2. Update `NEXT_PUBLIC_CONTRACT_ADDRESS` in `.env.local` with your deployed contract address
 3. The contract ABI matches the one in `lib/contract.ts`
 
-### Conflux eSpace Testnet Configuration
+### Mantle Network Configuration
 
-- **Chain ID**: 71
-- **RPC URL**: https://evmtestnet.confluxrpc.com
-- **Explorer**: https://evmtestnet.confluxscan.org
-- **Currency**: CFX
+#### Mantle Sepolia Testnet (Recommended for Development)
 
-To add Conflux eSpace Testnet to MetaMask:
-1. Network Name: Conflux eSpace (Testnet)
-2. RPC URL: https://evmtestnet.confluxrpc.com
-3. Chain ID: 71
-4. Currency Symbol: CFX
-5. Block Explorer: https://evmtestnet.confluxscan.org
+- **Chain ID**: 5003
+- **RPC URL**: https://rpc.sepolia.mantle.xyz
+- **Explorer**: https://explorer.sepolia.mantle.xyz
+- **Currency**: MNT
+- **Faucet**: https://faucet.testnet.mantle.xyz
+
+#### Mantle Mainnet
+
+- **Chain ID**: 5000
+- **RPC URL**: https://rpc.mantle.xyz
+- **Explorer**: https://explorer.mantle.xyz
+- **Currency**: MNT
+
+To add Mantle Network to MetaMask:
+
+**Mantle Sepolia Testnet:**
+1. Network Name: Mantle Sepolia
+2. RPC URL: https://rpc.sepolia.mantle.xyz
+3. Chain ID: 5003
+4. Currency Symbol: MNT
+5. Block Explorer: https://explorer.sepolia.mantle.xyz
+
+**Mantle Mainnet:**
+1. Network Name: Mantle
+2. RPC URL: https://rpc.mantle.xyz
+3. Chain ID: 5000
+4. Currency Symbol: MNT
+5. Block Explorer: https://explorer.mantle.xyz
 
 ## Project Structure
 
@@ -125,9 +144,11 @@ npm run test:watch   # Run tests in watch mode
 npm run test:coverage # Run tests with coverage report
 
 # Smart Contracts
-npm run compile      # Compile Hardhat contracts
-npm run deploy       # Deploy contracts
-npm run set-minter   # Set authorized minter
+npm run compile              # Compile Hardhat contracts
+npm run deploy:testnet       # Deploy contracts to Mantle Sepolia Testnet
+npm run deploy:mainnet       # Deploy contracts to Mantle Mainnet
+npm run set-minter:testnet   # Set authorized minter on Mantle Sepolia Testnet
+npm run set-minter:mainnet   # Set authorized minter on Mantle Mainnet
 ```
 
 ### Project Structure
@@ -166,6 +187,21 @@ npm run set-minter   # Set authorized minter
 If you encounter wallet connection issues, especially errors about "Multiple Ethereum providers", please see [WALLET_TROUBLESHOOTING.md](./WALLET_TROUBLESHOOTING.md) for detailed solutions.
 
 **Quick fix**: If you have multiple wallet extensions installed (e.g., MetaMask + Coinbase Wallet), disable the ones you're not using to avoid conflicts.
+
+## Mantle Network Integration
+
+This project is built for the **Mantle Global Hackathon 2025** (GameFi & Social track). Mantle Network is a modular Ethereum Layer 2 that offers:
+
+- **Low gas fees**: Cost-efficient transactions
+- **High throughput**: Scalable for gaming applications
+- **EVM compatibility**: Easy migration from Ethereum
+- **Built-in tooling**: Mantle DA, Mantle SDK, bridges, and testnets
+
+### Hackathon Track: GameFi & Social
+
+This project focuses on:
+- Consumer-facing apps integrating RWA or yield logic
+- Token incentive design and user retention tools
 
 ## Notes
 

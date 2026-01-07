@@ -13,10 +13,15 @@ module.exports = {
     },
   },
   networks: {
-    confluxESpaceTestnet: {
-      url: 'https://evmtestnet.confluxrpc.com',
+    mantleMainnet: {
+      url: 'https://rpc.mantle.xyz',
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      chainId: 71,
+      chainId: 5000,
+    },
+    mantleSepolia: {
+      url: 'https://rpc.sepolia.mantle.xyz',
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 5003,
     },
   },
   paths: {

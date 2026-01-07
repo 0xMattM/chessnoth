@@ -10,7 +10,7 @@ Chessnoth is a tactical RPG NFT game built on Next.js 14 with Web3 integration. 
 - **Language**: TypeScript
 - **UI**: React 18, Tailwind CSS, Shadcn UI, Radix UI
 - **Web3**: Wagmi, Viem, RainbowKit
-- **Blockchain**: Conflux eSpace Testnet
+- **Blockchain**: Mantle Network (Sepolia Testnet / Mainnet)
 - **State Management**: React Query (TanStack Query)
 - **Smart Contracts**: Hardhat, Solidity
 
@@ -126,7 +126,43 @@ Chessnoth is a tactical RPG NFT game built on Next.js 14 with Web3 integration. 
 - **Environment**: Vercel (recommended) or similar
 - **Build**: `npm run build`
 - **Environment variables**: Set in deployment platform
-- **Contract**: Deploy to Conflux eSpace Testnet (or Mainnet)
+- **Contract**: Deploy to Mantle Sepolia Testnet (for testing) or Mantle Mainnet (for production)
+  - Testnet: `npm run deploy:testnet`
+  - Mainnet: `npm run deploy:mainnet`
+
+## Mantle Network Integration
+
+This project is built for the **Mantle Global Hackathon 2025** (GameFi & Social track).
+
+### Mantle Network Benefits
+
+- **Low gas fees**: Cost-efficient transactions ideal for gaming
+- **High throughput**: Scalable for high-frequency game interactions
+- **EVM compatibility**: Seamless migration from Ethereum
+- **Modular architecture**: Optimized for performance
+
+### Network Configuration
+
+- **Testnet (Development)**: Mantle Sepolia (Chain ID: 5003)
+  - RPC: https://rpc.sepolia.mantle.xyz
+  - Explorer: https://explorer.sepolia.mantle.xyz
+  - Faucet: https://faucet.testnet.mantle.xyz
+
+- **Mainnet (Production)**: Mantle (Chain ID: 5000)
+  - RPC: https://rpc.mantle.xyz
+  - Explorer: https://explorer.mantle.xyz
+
+### Hackathon Track Requirements
+
+**GameFi & Social Track** focuses on:
+- Consumer-facing apps integrating RWA or yield logic
+- Token incentive design and user retention tools
+
+**Future Enhancements for Hackathon:**
+- [ ] Integrate yield-bearing mechanisms (staking rewards, etc.)
+- [ ] Design token incentive system (MNT rewards for achievements)
+- [ ] Implement user retention tools (leaderboards, daily quests, achievements)
+- [ ] Social features (guilds, friend system, battle replays)
 
 ## Security Considerations
 

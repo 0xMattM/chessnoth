@@ -41,9 +41,23 @@ async function main() {
   
   // Verify
   const authorizedMinter = await CharacterNFT.authorizedMinter()
+  const network = await hre.ethers.provider.getNetwork()
+  
+  // Determine explorer URL based on network
+  let explorerUrl = ''
+  if (network.chainId === 5003n) {
+    // Mantle Sepolia Testnet
+    explorerUrl = `https://explorer.sepolia.mantle.xyz/tx/${tx.hash}`
+  } else if (network.chainId === 5000n) {
+    // Mantle Mainnet
+    explorerUrl = `https://explorer.mantle.xyz/tx/${tx.hash}`
+  }
+  
   console.log('\n✅ Authorized minter set to:', authorizedMinter)
-  console.log('🔗 View on ConfluxScan:')
-  console.log(`  https://evmtestnet.confluxscan.org/tx/${tx.hash}`)
+  if (explorerUrl) {
+    console.log('🔗 View on Mantle Explorer:')
+    console.log(`  ${explorerUrl}`)
+  }
 }
 
 main()

@@ -12,6 +12,7 @@ import { useEnemyAI } from './hooks/useEnemyAI'
 import { useCombatActions } from './hooks/useCombatActions'
 import { CombatActions } from './components/CombatActions'
 import { CombatErrorBoundary } from '@/components/combat-error-boundary'
+import { CombatEndScreen } from './components/CombatEndScreen'
 import type { CombatCharacter } from '@/lib/combat'
 
 type MovingCharacterData = {
@@ -180,13 +181,7 @@ export default function CombatPage() {
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
         <Navigation />
         <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h1 className="mb-2 text-4xl font-bold tracking-tight">Combat</h1>
-              <p className="text-lg text-muted-foreground">
-                Stage {stage} • Turn {combatState.turn} • {current?.name || 'Waiting...'}
-              </p>
-            </div>
+          <div className="mb-6 flex items-center justify-end">
             <Button variant="outline" onClick={() => router.push('/battle')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Battle
@@ -194,41 +189,27 @@ export default function CombatPage() {
           </div>
 
           {combatState.gameOver ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <h2 className="text-2xl font-bold mb-4">
-                  {combatState.victory ? 'Victory!' : 'Defeat!'}
-                </h2>
-                <p className="text-muted-foreground mb-6">
-                  {combatState.victory
-                    ? 'You have defeated all enemies!'
-                    : 'Your team has been defeated.'}
-                </p>
-                <Button onClick={() => router.push('/battle')}>Return to Battle Selection</Button>
-              </CardContent>
-            </Card>
+            <CombatEndScreen
+              victory={combatState.victory}
+              stage={stage}
+              turn={combatState.turn}
+              characters={combatState.characters}
+              onReturn={() => router.push('/battle')}
+            />
           ) : (
             <div className="grid gap-6 lg:grid-cols-3">
               {/* Combat Board */}
               <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Battlefield</CardTitle>
-                    <CardDescription>8x8 Chess Board</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <CombatBoard
-                      board={board}
-                      terrainMap={combatState.terrainMap}
-                      selectedPosition={current?.position || null}
-                      validMovePositions={validMoves}
-                      validAttackTargets={validTargets}
-                      onCellClick={handleCellClick}
-                      currentCharacter={current}
-                      movingCharacters={movingCharacters}
-                    />
-                  </CardContent>
-                </Card>
+                <CombatBoard
+                  board={board}
+                  terrainMap={combatState.terrainMap}
+                  selectedPosition={current?.position || null}
+                  validMovePositions={validMoves}
+                  validAttackTargets={validTargets}
+                  onCellClick={handleCellClick}
+                  currentCharacter={current}
+                  movingCharacters={movingCharacters}
+                />
               </div>
 
               {/* Action Panel */}

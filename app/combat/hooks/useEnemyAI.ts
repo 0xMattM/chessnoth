@@ -5,6 +5,8 @@ import {
   getValidMovePositions,
   getValidAttackTargets,
   calculateDamage,
+  rebuildBoardFromCharacters,
+  checkCombatEnd,
   type CombatCharacter,
   type CombatState,
   type AnimationState,
@@ -92,9 +94,10 @@ export function useEnemyAI({
         if (currentChar.position) {
           for (const player of players) {
             if (player.position) {
-              const distance =
-                Math.abs(player.position.row - currentChar.position!.row) +
-                Math.abs(player.position.col - currentChar.position!.col)
+              // Use Manhattan distance (sum of row and col differences)
+              const rowDiff = Math.abs(player.position.row - currentChar.position!.row)
+              const colDiff = Math.abs(player.position.col - currentChar.position!.col)
+              const distance = rowDiff + colDiff
               if (distance < minDistance) {
                 minDistance = distance
                 nearestPlayer = player
@@ -117,12 +120,17 @@ export function useEnemyAI({
           if (validMoves.length > 0) {
             // Move towards nearest player
             const targetPos = nearestPlayer.position
-            const bestMove = validMoves.reduce((best, move) => {
-              const bestDist =
-                Math.abs(targetPos.row - best.row) + Math.abs(targetPos.col - best.col)
+            // Find the move that gets closest to the target
+            let bestMove = validMoves[0]
+            let bestDist = Math.abs(targetPos.row - bestMove.row) + Math.abs(targetPos.col - bestMove.col)
+            
+            for (const move of validMoves) {
               const moveDist = Math.abs(targetPos.row - move.row) + Math.abs(targetPos.col - move.col)
-              return moveDist < bestDist ? move : best
-            })
+              if (moveDist < bestDist) {
+                bestDist = moveDist
+                bestMove = move
+              }
+            }
 
             logger.debug('Enemy moving', { row: bestMove.row, col: bestMove.col })
 
@@ -166,41 +174,41 @@ export function useEnemyAI({
               }
             }
 
-            // Mark as moved IMMEDIATELY to prevent issues
-            const updatedCharImmediate = { ...currentChar, hasMoved: true }
-            const updatedCharactersImmediate = prevState.characters.map((c) =>
-              c === currentChar ? updatedCharImmediate : c
-            )
-            const updatedTurnOrderImmediate = prevState.turnOrder.map((c) =>
-              c === currentChar ? updatedCharImmediate : c
-            )
-
-            // Start movement animation
-            const characterCopy = { ...currentChar }
+            // Start movement animation FIRST
+            // Use the ORIGINAL position for animation
             const fromRow = currentChar.position!.row
             const fromCol = currentChar.position!.col
+            const characterCopy = { ...currentChar, position: { row: fromRow, col: fromCol } } // Keep original position for animation
 
             setMovingCharacters((prev) => {
               const newMap = new Map(prev)
               newMap.set(currentChar.id, {
                 from: { row: fromRow, col: fromCol },
                 to: { row: bestMove.row, col: bestMove.col },
-                character: characterCopy,
+                character: characterCopy, // Use copy with original position
               })
               return newMap
             })
+            
+            // DON'T update state yet - wait until animation completes
+            // This prevents the board from showing character in new position before animation
 
-            // Wait for animation to complete before updating board position
+            // Wait for animation to complete before updating board position AND state position
+            // This prevents visual "jump" where character appears in new position before animation
             const moveTimer = setTimeout(() => {
               setCombatState((prev) => {
                 if (!prev) return prev
 
-                // Get the current character state (should have hasMoved = true)
+                // Get the current character state (should still have old position)
                 const currentCharState = prev.characters.find((c) => c.id === currentChar.id)
                 if (!currentCharState) return prev
 
-                // Create updated character with new position
-                let updatedChar = { ...currentCharState, position: { row: bestMove.row, col: bestMove.col } }
+                // NOW update position in state, mark as moved, and apply terrain modifiers
+                let updatedChar = { 
+                  ...currentCharState, 
+                  hasMoved: true,
+                  position: { row: bestMove.row, col: bestMove.col } 
+                }
 
                 // Apply terrain modifiers for new position
                 if (prev.terrainMap) {
@@ -243,21 +251,43 @@ export function useEnemyAI({
                   }
                 }
 
-                // Update board
-                const newBoard = board.map((r) => [...r])
-                if (fromRow !== undefined && fromCol !== undefined) {
-                  newBoard[fromRow][fromCol] = null
-                }
-                newBoard[bestMove.row][bestMove.col] = updatedChar
-                setBoard(newBoard)
-
-                // Update combat state with new character position
+                // Update combat state with terrain-modified stats and new position
                 const updatedCharacters = prev.characters.map((c) =>
                   c.id === updatedChar.id ? updatedChar : c
                 )
                 const updatedTurnOrder = prev.turnOrder.map((c) =>
                   c.id === updatedChar.id ? updatedChar : c
                 )
+
+                // Update board FIRST - clear old position and set new one
+                setBoard((prevBoard) => {
+                  const newBoard = prevBoard.map((r) => [...r])
+                  
+                  // Clear old position (fromRow, fromCol)
+                  if (fromRow !== undefined && fromCol !== undefined) {
+                    // Only clear if it's the same character
+                    if (newBoard[fromRow][fromCol]?.id === currentChar.id) {
+                      newBoard[fromRow][fromCol] = null
+                    }
+                  }
+                  
+                  // Clear any other position where this character might be
+                  const newRow = updatedChar.position?.row ?? bestMove.row
+                  const newCol = updatedChar.position?.col ?? bestMove.col
+                  
+                  for (let r = 0; r < 8; r++) {
+                    for (let c = 0; c < 8; c++) {
+                      if (newBoard[r][c]?.id === currentChar.id && (r !== newRow || c !== newCol)) {
+                        newBoard[r][c] = null
+                      }
+                    }
+                  }
+                  
+                  // Set new position using updatedChar (with new position and stats)
+                  newBoard[newRow][newCol] = updatedChar
+                  
+                  return newBoard
+                })
 
                 // Clear movement animation after board update
                 setTimeout(() => {
@@ -268,6 +298,7 @@ export function useEnemyAI({
                   })
                 }, 50)
 
+                // Return updated state with new position
                 return {
                   ...prev,
                   characters: updatedCharacters,
@@ -278,13 +309,9 @@ export function useEnemyAI({
             }, ANIMATION_DURATIONS.MOVEMENT)
             timeoutRefsRef.current.add(moveTimer)
 
-            // Return updated state immediately (with hasMoved = true)
-            return {
-              ...prevState,
-              characters: updatedCharactersImmediate,
-              turnOrder: updatedTurnOrderImmediate,
-              selectedCharacter: updatedCharImmediate,
-            }
+            // DON'T return updated state - state will be updated after animation completes
+            // This prevents the board from showing character in new position before animation
+            return prevState
           } else {
             logger.debug('Enemy has no valid moves, marking as moved')
             const updatedChar = { ...currentChar, hasMoved: true }
@@ -364,55 +391,65 @@ export function useEnemyAI({
             }, ANIMATION_DURATIONS.ATTACK)
             timeoutRefsRef.current.add(attackTimer)
 
-            // Update characters array
+            // Update characters array FIRST (use id comparison for reliability)
             const updatedCharacters = prevState.characters.map((c) => {
-              if (c === currentChar) return updatedChar
-              if (c === target) return updatedTarget
+              if (c.id === currentChar.id) return updatedChar
+              if (c.id === target.id) return updatedTarget
               return c
             })
 
-            // Update turn order
+            // Update turn order (use id comparison for reliability)
             const updatedTurnOrder = prevState.turnOrder.map((c) => {
-              if (c === currentChar) return updatedChar
-              if (c === target) return updatedTarget
+              if (c.id === currentChar.id) return updatedChar
+              if (c.id === target.id) return updatedTarget
               return c
             })
 
-            // Check if target is defeated
-            if (updatedTarget.stats.hp === 0) {
-              const newBoard = board.map((r) => [...r])
-              if (updatedTarget.position) {
-                newBoard[updatedTarget.position.row][updatedTarget.position.col] = null
-                updatedTarget.position = null
+            // Update board incrementally - sync with updated character positions
+            setBoard((prevBoard) => {
+              const newBoard = prevBoard.map((r) => [...r])
+              
+              // Update attacker - ensure position matches updatedChar
+              if (updatedChar.position) {
+                // Clear old position if it exists and is different
+                if (currentChar.position && 
+                    (currentChar.position.row !== updatedChar.position.row || 
+                     currentChar.position.col !== updatedChar.position.col)) {
+                  // Only clear if it's still this character
+                  const oldPos = newBoard[currentChar.position.row][currentChar.position.col]
+                  if (oldPos?.id === currentChar.id) {
+                    newBoard[currentChar.position.row][currentChar.position.col] = null
+                  }
+                }
+                // Set new position
+                newBoard[updatedChar.position.row][updatedChar.position.col] = updatedChar
               }
-              setBoard(newBoard)
-            }
+              
+              // Update target
+              if (target.position) {
+                if (updatedTarget.stats.hp > 0) {
+                  newBoard[target.position.row][target.position.col] = updatedTarget
+                } else {
+                  // Remove defeated character
+                  newBoard[target.position.row][target.position.col] = null
+                  updatedTarget.position = null
+                }
+              }
+              
+              return newBoard
+            })
 
-            // Check victory/defeat
-            const aliveEnemies = updatedCharacters.filter((c) => c.team === 'enemy' && c.stats.hp > 0)
-            const alivePlayers = updatedCharacters.filter((c) => c.team === 'player' && c.stats.hp > 0)
-
-            if (aliveEnemies.length === 0) {
-              logger.info('Victory!')
+            // Check victory/defeat using centralized function
+            const combatEnd = checkCombatEnd(updatedCharacters)
+            if (combatEnd.gameOver) {
+              logger.info(combatEnd.victory ? 'Victory!' : 'Defeat!')
               return {
                 ...prevState,
                 characters: updatedCharacters,
                 turnOrder: updatedTurnOrder,
                 selectedCharacter: updatedChar,
-                gameOver: true,
-                victory: true,
-              }
-            }
-
-            if (alivePlayers.length === 0) {
-              logger.info('Defeat!')
-              return {
-                ...prevState,
-                characters: updatedCharacters,
-                turnOrder: updatedTurnOrder,
-                selectedCharacter: updatedChar,
-                gameOver: true,
-                victory: false,
+                gameOver: combatEnd.gameOver,
+                victory: combatEnd.victory,
               }
             }
 

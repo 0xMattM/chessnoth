@@ -4,14 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
-import { Sword, Users, Package, Zap, Home, Menu, X } from 'lucide-react'
+import { Sword, Users, Package, Zap, Home, Menu, X, TrendingUp, ShoppingCart, Coins } from 'lucide-react'
 import { useState } from 'react'
 
 const navigation = [
-  { name: 'Mint NFT', href: '/', icon: Home },
-  { name: 'Characters', href: '/characters', icon: Users },
+  { name: 'Dashboard', href: '/', icon: Users },
+  { name: 'Marketplace', href: '/marketplace', icon: ShoppingCart },
   { name: 'Team', href: '/team', icon: Sword },
-  { name: 'Items', href: '/items', icon: Package },
   { name: 'Battle', href: '/battle', icon: Zap },
 ]
 

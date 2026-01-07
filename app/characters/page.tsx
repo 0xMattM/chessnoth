@@ -16,11 +16,21 @@ import {
   extractStringFromResult,
   extractLevelFromResult,
 } from '@/lib/character-utils'
+import { getNFTCharacterImage, getNFTCharacterPortrait } from '@/lib/nft-images'
+import { getItemImageFromData } from '@/lib/item-images'
 import { logger } from '@/lib/logger'
 import Image from 'next/image'
 import { CharactersErrorBoundary } from '@/components/characters-error-boundary'
-import { Users, Shield, CheckCircle2, Zap } from 'lucide-react'
+import { Users, Shield, CheckCircle2, Zap, TrendingUp, Coins, Package, Sword, FlaskConical, Loader2, Gift } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useOwnedCharacters, useUpgradeCharacter } from '@/hooks/useCharacterNFT'
+import { calculateLevelFromExperience, getExperienceForNextLevel } from '@/lib/nft'
+import { getTotalPendingEXP, getPendingRewards, getTotalPendingCHS } from '@/lib/rewards'
+import { formatCHSAmount } from '@/lib/chs-token'
+import { useToast } from '@/hooks/use-toast'
+import itemsData from '@/data/items.json'
 
 interface Character {
   tokenId: bigint
@@ -183,7 +193,7 @@ export default function CharactersPage() {
           name: `Character #${tokenId}`,
           class: formattedClass,
           level,
-          image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${tokenId}`,
+          image: getNFTCharacterImage(characterClass) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tokenId}`,
         },
       }
     })
@@ -210,10 +220,10 @@ export default function CharactersPage() {
               👥 Character Management
             </div>
             <h1 className="mb-4 text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-purple-100 to-purple-200 bg-clip-text text-transparent">
-              My Characters
+              Dashboard
             </h1>
             <p className="text-lg text-purple-200/80">
-              Manage your NFT characters and equipment
+              Manage your characters, equipment, skills, and rewards
             </p>
           </div>
 
@@ -232,13 +242,16 @@ export default function CharactersPage() {
             <Tabs defaultValue="list" className="space-y-6">
               <TabsList className="bg-slate-900/50 backdrop-blur-xl border border-border/40 p-1">
                 <TabsTrigger value="list" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
-                  Character List
+                  Characters
                 </TabsTrigger>
                 <TabsTrigger value="equipment" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
                   Equipment
                 </TabsTrigger>
                 <TabsTrigger value="skills" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
                   Skills
+                </TabsTrigger>
+                <TabsTrigger value="levelup" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
+                  Level Up
                 </TabsTrigger>
               </TabsList>
 
@@ -251,7 +264,7 @@ export default function CharactersPage() {
                       </div>
                       <p className="text-purple-200/80 font-medium mb-2">You do not have any characters yet</p>
                       <p className="text-sm text-purple-200/60">
-                        Mint your first character on the home page
+                        Mint your first character in the Marketplace
                       </p>
                     </CardContent>
                   </Card>
@@ -356,22 +369,25 @@ export default function CharactersPage() {
                                   <td className="p-4">
                                     <div className="flex items-center gap-3">
                                       <div className="h-10 w-10 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                                        {character.metadata?.image ? (
-                                          <Image
-                                            src={character.metadata.image}
-                                            alt={
-                                              character.metadata.name ||
-                                              `Character #${character.tokenId}`
-                                            }
-                                            width={40}
-                                            height={40}
-                                            className="object-cover"
-                                          />
-                                        ) : (
-                                          <div className="flex h-full items-center justify-center">
-                                            <Users className="h-6 w-6 text-muted-foreground" />
-                                          </div>
-                                        )}
+                                        {(() => {
+                                          const portrait = getNFTCharacterPortrait(character.metadata?.class)
+                                          return portrait ? (
+                                            <Image
+                                              src={portrait}
+                                              alt={
+                                                character.metadata?.name ||
+                                                `Character #${character.tokenId}`
+                                              }
+                                              width={40}
+                                              height={40}
+                                              className="object-cover"
+                                            />
+                                          ) : (
+                                            <div className="flex h-full items-center justify-center">
+                                              <Users className="h-6 w-6 text-muted-foreground" />
+                                            </div>
+                                          )
+                                        })()}
                                       </div>
                                       <span className="font-medium">
                                         {character.metadata?.name ||
@@ -475,22 +491,25 @@ export default function CharactersPage() {
                                   <td className="p-4">
                                     <div className="flex items-center gap-3">
                                       <div className="h-10 w-10 rounded-lg bg-muted overflow-hidden flex-shrink-0">
-                                        {character.metadata?.image ? (
-                                          <Image
-                                            src={character.metadata.image}
-                                            alt={
-                                              character.metadata.name ||
-                                              `Character #${character.tokenId}`
-                                            }
-                                            width={40}
-                                            height={40}
-                                            className="object-cover"
-                                          />
-                                        ) : (
-                                          <div className="flex h-full items-center justify-center">
-                                            <Users className="h-6 w-6 text-muted-foreground" />
-                                          </div>
-                                        )}
+                                        {(() => {
+                                          const portrait = getNFTCharacterPortrait(character.metadata?.class)
+                                          return portrait ? (
+                                            <Image
+                                              src={portrait}
+                                              alt={
+                                                character.metadata?.name ||
+                                                `Character #${character.tokenId}`
+                                              }
+                                              width={40}
+                                              height={40}
+                                              className="object-cover"
+                                            />
+                                          ) : (
+                                            <div className="flex h-full items-center justify-center">
+                                              <Users className="h-6 w-6 text-muted-foreground" />
+                                            </div>
+                                          )
+                                        })()}
                                       </div>
                                       <span className="font-medium">
                                         {character.metadata?.name ||
@@ -541,8 +560,18 @@ export default function CharactersPage() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              <TabsContent value="levelup" className="space-y-4">
+                <LevelUpTab />
+              </TabsContent>
             </Tabs>
           )}
+
+          {/* Items Section - Below Characters */}
+          <ItemsSection />
+
+          {/* Claim Section - Below Items */}
+          <ClaimSection />
         </main>
 
         {inventoryCharacter && (
@@ -572,5 +601,583 @@ export default function CharactersPage() {
         )}
       </div>
     </CharactersErrorBoundary>
+  )
+}
+
+/**
+ * Level Up Tab Component
+ * Allows users to distribute experience and upgrade characters
+ */
+function LevelUpTab() {
+  const { address, isConnected } = useAccount()
+  const { data: characters, isLoading, error } = useOwnedCharacters()
+  const { upgrade, isLoading: isUpgrading, isSuccess, error: upgradeError } = useUpgradeCharacter()
+  const { toast } = useToast()
+
+  const [availableExp, setAvailableExp] = useState<string>('0')
+  const [expDistribution, setExpDistribution] = useState<Record<string, string>>({})
+  const [pendingRewards, setPendingRewards] = useState<number>(0)
+
+  useEffect(() => {
+    const totalPending = getTotalPendingEXP()
+    setPendingRewards(totalPending)
+    if (totalPending > 0) {
+      setAvailableExp(totalPending.toString())
+    }
+  }, [])
+
+  const totalDistributed = Object.values(expDistribution).reduce((sum, exp) => {
+    return sum + (parseFloat(exp) || 0)
+  }, 0)
+
+  const isValidDistribution = totalDistributed <= parseFloat(availableExp || '0')
+
+  const handleExpChange = (tokenId: string, value: string) => {
+    const numValue = parseFloat(value) || 0
+    if (numValue < 0) return
+    setExpDistribution((prev) => ({
+      ...prev,
+      [tokenId]: value,
+    }))
+  }
+
+  const handleUpgrade = async (tokenId: bigint, expAmount: bigint) => {
+    try {
+      await upgrade(tokenId, expAmount)
+      const usedExp = Number(expAmount)
+      const rewards = getPendingRewards()
+      let remainingExp = usedExp
+      const updatedRewards = [...rewards]
+      for (let i = 0; i < updatedRewards.length && remainingExp > 0; i++) {
+        if (updatedRewards[i].exp <= remainingExp) {
+          remainingExp -= updatedRewards[i].exp
+          updatedRewards.splice(i, 1)
+          i--
+        } else {
+          updatedRewards[i].exp -= remainingExp
+          remainingExp = 0
+        }
+      }
+      if (updatedRewards.length > 0) {
+        localStorage.setItem('chessnoth_pending_rewards', JSON.stringify(updatedRewards))
+      } else {
+        localStorage.removeItem('chessnoth_pending_rewards')
+      }
+      const newTotal = getTotalPendingEXP()
+      setPendingRewards(newTotal)
+      toast({
+        title: 'Upgrade iniciado',
+        description: 'La transacción ha sido enviada. Espera la confirmación.',
+      })
+    } catch (error) {
+      logger.error('Error upgrading character', { tokenId, expAmount, error })
+      toast({
+        title: 'Error',
+        description: 'No se pudo realizar el upgrade. Verifica que tengas suficiente gas.',
+        variant: 'destructive',
+      })
+    }
+  }
+
+  const clearDistribution = () => {
+    setExpDistribution({})
+    setAvailableExp('0')
+  }
+
+  if (!isConnected) {
+    return (
+      <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
+        <CardContent className="py-12 text-center">
+          <p className="text-purple-200/80">Please connect your wallet to view your characters</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
+        <CardContent className="py-12 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-300" />
+          <p className="text-purple-200/80">Loading characters...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (error || !characters || characters.length === 0) {
+    return (
+      <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
+        <CardContent className="py-12 text-center">
+          <p className="text-purple-200/80">You don't have any NFT characters yet</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-purple-400" />
+            Available Experience
+          </CardTitle>
+          <CardDescription className="text-purple-200/60">
+            {pendingRewards > 0
+              ? `You have ${pendingRewards} EXP pending from won battles`
+              : 'Enter the amount of experience you gained in combat'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {pendingRewards > 0 && (
+            <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="h-4 w-4 text-blue-400" />
+                <span className="text-sm font-medium text-blue-300">Pending Rewards</span>
+              </div>
+              <p className="text-sm text-blue-200/80">
+                You have {pendingRewards} EXP available from won battles.
+              </p>
+            </div>
+          )}
+          <div>
+            <Label htmlFor="availableExp">Total Available Experience</Label>
+            <Input
+              id="availableExp"
+              type="number"
+              min="0"
+              value={availableExp}
+              onChange={(e) => setAvailableExp(e.target.value)}
+              placeholder="0"
+              className="bg-slate-800/50 border-border/40"
+            />
+            {pendingRewards > 0 && parseFloat(availableExp) !== pendingRewards && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={() => setAvailableExp(pendingRewards.toString())}
+              >
+                Use Pending Rewards ({pendingRewards} EXP)
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-purple-200/60">Total Distributed:</span>
+            <span className={isValidDistribution ? 'text-green-400' : 'text-red-400'}>
+              {totalDistributed} / {parseFloat(availableExp || '0')}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {characters.map((character) => {
+          const currentLevel = Number(character.level)
+          const currentExp = Number(character.experience)
+          const expForNextLevel = Number(getExperienceForNextLevel(character.experience))
+          const distributedExp = parseFloat(expDistribution[character.tokenId.toString()] || '0')
+          const newExp = currentExp + distributedExp
+          const newLevel = calculateLevelFromExperience(BigInt(Math.floor(newExp)))
+          const willLevelUp = newLevel > currentLevel
+
+          return (
+            <Card key={character.tokenId.toString()} className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="text-lg">{character.name}</CardTitle>
+                <CardDescription className="text-purple-200/60">
+                  {character.class} • Level {currentLevel}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-purple-200/60">Current Experience:</span>
+                    <span className="font-medium text-purple-200">{currentExp}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-purple-200/60">Current Level:</span>
+                    <span className="font-medium text-purple-200">{currentLevel}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-purple-200/60">EXP for Next Level:</span>
+                    <span className="font-medium text-purple-200">{expForNextLevel}</span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`exp-${character.tokenId}`}>Experience to Add</Label>
+                  <Input
+                    id={`exp-${character.tokenId}`}
+                    type="number"
+                    min="0"
+                    value={expDistribution[character.tokenId.toString()] || ''}
+                    onChange={(e) => handleExpChange(character.tokenId.toString(), e.target.value)}
+                    placeholder="0"
+                    className="bg-slate-800/50 border-border/40"
+                  />
+                </div>
+                {distributedExp > 0 && (
+                  <div className="p-3 bg-purple-500/10 rounded-lg space-y-1 border border-purple-500/20">
+                    <div className="flex items-center gap-2 text-sm font-medium text-purple-300">
+                      <TrendingUp className="h-4 w-4" />
+                      After Upgrade:
+                    </div>
+                    <div className="text-sm space-y-1 text-purple-200/80">
+                      <div className="flex justify-between">
+                        <span>New EXP:</span>
+                        <span className="font-medium">{Math.floor(newExp)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>New Level:</span>
+                        <span className={`font-medium ${willLevelUp ? 'text-green-400' : ''}`}>
+                          {newLevel} {willLevelUp && '⬆️'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    if (distributedExp > 0) {
+                      handleUpgrade(character.tokenId, BigInt(Math.floor(distributedExp)))
+                    }
+                  }}
+                  disabled={
+                    distributedExp <= 0 ||
+                    isUpgrading ||
+                    !isValidDistribution ||
+                    totalDistributed > parseFloat(availableExp || '0')
+                  }
+                >
+                  {isUpgrading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="h-4 w-4 mr-2" />
+                      Upgrade ({distributedExp > 0 ? Math.floor(distributedExp) : 0} EXP)
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+
+      {totalDistributed > 0 && (
+        <div className="flex justify-center">
+          <Button variant="outline" onClick={clearDistribution}>
+            Clear Distribution
+          </Button>
+        </div>
+      )}
+
+      {isSuccess && (
+        <Card className="border-green-500 bg-green-500/10">
+          <CardContent className="py-4">
+            <p className="text-green-400 text-center">
+              ✅ Upgrade completed successfully!
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {upgradeError && (
+        <Card className="border-red-500 bg-red-500/10">
+          <CardContent className="py-4">
+            <p className="text-red-400 text-center">
+              ❌ Error: {upgradeError.message}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Items Section Component
+ * Displays available items catalog
+ */
+function ItemsSection() {
+  const equipmentItems = itemsData.filter(
+    (item) => item.type === 'weapon' || item.type === 'armor'
+  )
+  const consumableItems = itemsData.filter((item) => item.type === 'consumable')
+
+  const rarityColors = {
+    common: 'border-gray-500 text-gray-500',
+    uncommon: 'border-green-500 text-green-500',
+    rare: 'border-blue-500 text-blue-500',
+    epic: 'border-purple-500 text-purple-500',
+    legendary: 'border-yellow-500 text-yellow-500',
+  }
+
+  return (
+    <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-3 text-2xl">
+          <div className="rounded-lg bg-indigo-500/10 p-2 border border-indigo-500/20">
+            <Package className="h-5 w-5 text-indigo-400" />
+          </div>
+          Items Catalog
+        </CardTitle>
+        <CardDescription className="text-purple-200/60">
+          Preview available equipment and consumables
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="equipment" className="space-y-4">
+          <TabsList className="bg-slate-800/50 border border-border/40">
+            <TabsTrigger value="equipment" className="flex items-center gap-2">
+              <Sword className="h-4 w-4" />
+              Equipment
+            </TabsTrigger>
+            <TabsTrigger value="consumables" className="flex items-center gap-2">
+              <FlaskConical className="h-4 w-4" />
+              Consumables
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="equipment">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {equipmentItems.map((item) => {
+                const itemImage = getItemImageFromData(item)
+                return (
+                  <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-lg hover:shadow-primary/20 transition-all">
+                    <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
+                      {itemImage ? (
+                        <Image
+                          src={itemImage}
+                          alt={item.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Package className="h-16 w-16 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold border ${
+                        rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common
+                      }`}>
+                        {item.rarity.toUpperCase()}
+                      </div>
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{item.name}</CardTitle>
+                      <CardDescription>{item.description}</CardDescription>
+                    </CardHeader>
+                  </Card>
+                )
+              })}
+            </div>
+          </TabsContent>
+          <TabsContent value="consumables">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {consumableItems.map((item) => {
+                const itemImage = getItemImageFromData(item)
+                return (
+                  <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-lg hover:shadow-primary/20 transition-all">
+                    <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
+                      {itemImage ? (
+                        <Image
+                          src={itemImage}
+                          alt={item.name}
+                          fill
+                          className="object-cover transition-transform duration-300 group-hover:scale-110"
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <FlaskConical className="h-16 w-16 text-muted-foreground/50" />
+                        </div>
+                      )}
+                      <div className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-semibold border ${
+                        rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common
+                      }`}>
+                        {item.rarity.toUpperCase()}
+                      </div>
+                    </div>
+                    <CardHeader>
+                      <CardTitle className="text-lg">{item.name}</CardTitle>
+                      <CardDescription>{item.description}</CardDescription>
+                    </CardHeader>
+                  </Card>
+                )
+              })}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  )
+}
+
+/**
+ * Claim Section Component
+ * Allows users to claim pending CHS rewards
+ */
+function ClaimSection() {
+  const { address, isConnected } = useAccount()
+  const { toast } = useToast()
+  const [totalPendingCHS, setTotalPendingCHS] = useState(0)
+  const [isClaiming, setIsClaiming] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  // Ensure component is mounted before rendering client-only content
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (mounted && isConnected) {
+      setTotalPendingCHS(getTotalPendingCHS())
+    }
+  }, [mounted, isConnected])
+
+  const handleClaimCHS = async () => {
+    if (!address || totalPendingCHS === 0 || isClaiming) return
+
+    try {
+      setIsClaiming(true)
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api/claim-chs'
+      const response = await fetch(backendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address,
+          amount: totalPendingCHS,
+        }),
+      })
+
+      if (response.ok) {
+        const rewards = getPendingRewards()
+        const updatedRewards = rewards.map((r) => ({ ...r, chs: 0 }))
+        const filteredRewards = updatedRewards.filter((r) => r.exp > 0 || r.chs > 0)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('chessnoth_pending_rewards', JSON.stringify(filteredRewards))
+        }
+        setTotalPendingCHS(0)
+        toast({
+          title: 'CHS Reclamados',
+          description: `You have successfully claimed ${totalPendingCHS} CHS tokens!`,
+        })
+      } else {
+        toast({
+          title: 'Claim Error',
+          description: 'Could not claim CHS tokens.',
+          variant: 'destructive',
+        })
+      }
+    } catch (error) {
+      logger.error('Error claiming CHS', { error })
+      toast({
+        title: 'Error',
+        description: 'An error occurred while trying to claim CHS.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsClaiming(false)
+    }
+  }
+
+  // Always render the same structure to avoid hydration errors
+  if (!mounted) {
+    return (
+      <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-yellow-500" />
+            Claim CHS
+          </CardTitle>
+          <CardDescription className="text-purple-200/60">
+            Claim the CHS tokens you earned in combat
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-center p-4 bg-muted rounded-lg">
+            <span className="text-sm text-muted-foreground">Loading...</span>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!isConnected) {
+    return (
+      <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Coins className="h-5 w-5 text-yellow-500" />
+            Claim CHS
+          </CardTitle>
+          <CardDescription className="text-purple-200/60">
+            Claim the CHS tokens you earned in combat
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-4 bg-muted rounded-lg">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span>Connect your wallet to claim CHS</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Coins className="h-5 w-5 text-yellow-500" />
+          Reclamar CHS
+        </CardTitle>
+        <CardDescription className="text-purple-200/60">
+          Reclama los tokens CHS que has ganado en combate
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+          <span className="text-lg font-medium text-purple-200">Total Pending:</span>
+          <span className="text-3xl font-bold text-primary">
+            {formatCHSAmount(BigInt(totalPendingCHS))} CHS
+          </span>
+        </div>
+        {totalPendingCHS > 0 ? (
+          <Button
+            onClick={handleClaimCHS}
+            disabled={isClaiming}
+            className="w-full"
+            size="lg"
+          >
+            {isClaiming ? (
+              <>
+                <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                Reclamando...
+              </>
+            ) : (
+              <>
+                <Coins className="h-5 w-5 mr-2" />
+                Claim {formatCHSAmount(BigInt(totalPendingCHS))} CHS
+              </>
+            )}
+          </Button>
+        ) : (
+          <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+            <div className="flex items-center gap-2 text-green-400">
+              <CheckCircle2 className="h-5 w-5" />
+              <span>You have no pending CHS to claim</span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

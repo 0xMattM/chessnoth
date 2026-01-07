@@ -20,13 +20,28 @@ async function main() {
   await characterNFT.waitForDeployment()
 
   const address = await characterNFT.getAddress()
+  const network = await hre.ethers.provider.getNetwork()
+  
+  // Determine explorer URL based on network
+  let explorerUrl = ''
+  if (network.chainId === 5003n) {
+    // Mantle Sepolia Testnet
+    explorerUrl = `https://explorer.sepolia.mantle.xyz/address/${address}`
+  } else if (network.chainId === 5000n) {
+    // Mantle Mainnet
+    explorerUrl = `https://explorer.mantle.xyz/address/${address}`
+  }
+  
   console.log('\n✅ CharacterNFT deployed to:', address)
   console.log('\n📋 Contract Details:')
   console.log('  Name:', name)
   console.log('  Symbol:', symbol)
   console.log('  Base URI:', baseTokenURI || '(empty)')
-  console.log('\n🔗 View on ConfluxScan:')
-  console.log(`  https://evmtestnet.confluxscan.org/address/${address}`)
+  console.log('  Network:', network.name, `(Chain ID: ${network.chainId})`)
+  if (explorerUrl) {
+    console.log('\n🔗 View on Mantle Explorer:')
+    console.log(`  ${explorerUrl}`)
+  }
   console.log('\n⚠️  IMPORTANT: Update your .env.local file:')
   console.log(`  NEXT_PUBLIC_CONTRACT_ADDRESS=${address}`)
   console.log('\n💡 Next steps:')

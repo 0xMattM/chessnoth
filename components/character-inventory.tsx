@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Sword, Shield, Shirt, Package, X, Heart, Zap, Shield as ShieldIcon, Droplet } from 'lucide-react'
 import itemsData from '@/data/items.json'
 import { getCharacterEquipment, setCharacterEquipment, type EquipmentSlot } from '@/lib/equipment'
+import { getItemImageFromData } from '@/lib/item-images'
 import { useState, useEffect } from 'react'
 import { logger } from '@/lib/logger'
+import Image from 'next/image'
 
 interface Character {
   tokenId: bigint
@@ -254,26 +256,34 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
         }}
         title={equippedItem ? equippedItem.name : slotLabels[slot]}
       >
-        {equippedItem ? (
-          <div className="relative w-full h-full rounded overflow-hidden">
-            <div
-              className={`w-full h-full rounded border-2 ${
-                rarityColors[equippedItem.rarity as keyof typeof rarityColors] || rarityColors.common
-              }`}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl">
-                {slot === 'weapon' ? '⚔️' : slot === 'helmet' ? '🛡️' : slot === 'armor' ? '🦺' : slot === 'pants' ? '👖' : slot === 'boots' ? '👢' : '💍'}
-              </span>
+        {equippedItem ? (() => {
+          const itemImage = getItemImageFromData(equippedItem)
+          return (
+            <div className="relative w-full h-full rounded overflow-hidden">
+              {itemImage ? (
+                <Image
+                  src={itemImage}
+                  alt={equippedItem.name}
+                  fill
+                  className="object-cover"
+                  sizes="80px"
+                />
+              ) : (
+                <div
+                  className={`w-full h-full rounded border-2 ${
+                    rarityColors[equippedItem.rarity as keyof typeof rarityColors] || rarityColors.common
+                  }`}
+                />
+              )}
+              {/* Rarity indicator dot */}
+              <div
+                className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border border-background ${
+                  rarityTextColors[equippedItem.rarity as keyof typeof rarityTextColors]?.replace('text-', 'bg-') || 'bg-gray-500'
+                }`}
+              />
             </div>
-            {/* Rarity indicator dot */}
-            <div
-              className={`absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full border border-background ${
-                rarityTextColors[equippedItem.rarity as keyof typeof rarityTextColors]?.replace('text-', 'bg-') || 'bg-gray-500'
-              }`}
-            />
-          </div>
-        ) : (
+          )
+        })() : (
           <div className="text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
             {slot === 'weapon' ? <Sword className="h-8 w-8" /> : slot === 'helmet' ? <Shield className="h-8 w-8" /> : slot === 'armor' ? <Shirt className="h-8 w-8" /> : slot === 'pants' ? <Shirt className="h-8 w-8" /> : slot === 'boots' ? <Shirt className="h-8 w-8" /> : <Package className="h-8 w-8" />}
           </div>
@@ -456,11 +466,12 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                     <div className="grid grid-cols-4 gap-3">
                       {availableItems.map((item) => {
                         const isEquipped = Object.values(equipment).includes(item.id)
+                        const itemImage = getItemImageFromData(item)
                         return (
                           <button
                             key={item.id}
                             onClick={() => handleItemClick(item)}
-                            className={`relative aspect-square rounded-lg border-2 p-2 transition-all hover:scale-110 hover:z-10 ${
+                            className={`relative aspect-square rounded-lg border-2 overflow-hidden transition-all hover:scale-110 hover:z-10 ${
                               isEquipped
                                 ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
                                 : selectedItem?.id === item.id
@@ -469,20 +480,28 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                             }`}
                             title={item.name}
                           >
-                            <div className="flex flex-col items-center justify-center h-full">
-                              <span className="text-2xl mb-1 drop-shadow-sm">
-                                {item.equipmentSlot === 'weapon' ? '⚔️' : item.equipmentSlot === 'armor' ? '🦺' : '📦'}
-                              </span>
-                              {isEquipped && (
-                                <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background shadow-sm" />
-                              )}
-                              {/* Rarity indicator */}
-                              <div
-                                className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
-                                  rarityTextColors[item.rarity as keyof typeof rarityTextColors]?.replace('text-', 'bg-') || 'bg-gray-500'
-                                }`}
+                            {itemImage ? (
+                              <Image
+                                src={itemImage}
+                                alt={item.name}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 25vw, 80px"
                               />
-                            </div>
+                            ) : (
+                              <div className="flex flex-col items-center justify-center h-full">
+                                <Package className="h-8 w-8 text-muted-foreground/50" />
+                              </div>
+                            )}
+                            {isEquipped && (
+                              <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background shadow-sm" />
+                            )}
+                            {/* Rarity indicator */}
+                            <div
+                              className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+                                rarityTextColors[item.rarity as keyof typeof rarityTextColors]?.replace('text-', 'bg-') || 'bg-gray-500'
+                              }`}
+                            />
                           </button>
                         )
                       })}
@@ -492,18 +511,31 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
               </Card>
 
               {/* Selected Item Details */}
-              {selectedItem && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">{selectedItem.name}</CardTitle>
-                    <CardDescription
-                      className={rarityTextColors[selectedItem.rarity as keyof typeof rarityTextColors] || rarityTextColors.common}
-                    >
-                      {selectedItem.rarity.toUpperCase()}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-sm text-muted-foreground">{selectedItem.description}</p>
+              {selectedItem && (() => {
+                const itemImage = getItemImageFromData(selectedItem)
+                return (
+                  <Card>
+                    <CardHeader>
+                      {itemImage && (
+                        <div className="aspect-square w-full max-w-xs mx-auto mb-4 overflow-hidden rounded-lg bg-slate-900/50 border border-border/40 relative">
+                          <Image
+                            src={itemImage}
+                            alt={selectedItem.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, 300px"
+                          />
+                        </div>
+                      )}
+                      <CardTitle className="text-lg">{selectedItem.name}</CardTitle>
+                      <CardDescription
+                        className={rarityTextColors[selectedItem.rarity as keyof typeof rarityTextColors] || rarityTextColors.common}
+                      >
+                        {selectedItem.rarity.toUpperCase()}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-sm text-muted-foreground">{selectedItem.description}</p>
                     {selectedItem.statBonuses && (
                       <div className="space-y-1">
                         <p className="text-xs font-semibold">Bonuses:</p>
@@ -538,7 +570,8 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                     )}
                   </CardContent>
                 </Card>
-              )}
+                )
+              })()}
             </div>
           </div>
         </CardContent>

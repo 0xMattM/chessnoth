@@ -9,6 +9,11 @@ import {
   getValidMovePositions,
   getValidAttackTargets,
   getValidSkillTargets,
+  processStatusEffects,
+  removeDefeatedFromTurnOrder,
+  rebuildBoardFromCharacters,
+  checkCombatEnd,
+  canCharacterAct,
   type CombatCharacter,
   type CombatState,
 } from '@/lib/combat'
@@ -245,10 +250,10 @@ export function useCombatState(): UseCombatStateReturn {
 
   /**
    * Advances to the next turn in combat
-   * Handles turn order, resets character states, and skips defeated characters
+   * Handles turn order, resets character states, processes status effects, and skips defeated characters
    * Uses a callback to prevent stale closures
    */
-  const nextTurn = useCallback(() => {
+  const nextTurn = useCallback(async () => {
     // Prevent race conditions by checking if operation is in progress
     if (operationInProgressRef.current) {
       logger.debug('Turn advance already in progress, skipping')
@@ -256,20 +261,93 @@ export function useCombatState(): UseCombatStateReturn {
     }
 
     operationInProgressRef.current = true
+
+    // Get current state and process status effects
     setCombatState((prevState) => {
       if (!prevState) {
         operationInProgressRef.current = false
         return prevState
       }
 
-      // Get updated references from characters array
-      const updatedCharacters = prevState.characters.map((char) => ({ ...char }))
+      // Process status effects synchronously (we'll handle async processing in a separate effect)
+      // For now, just reduce duration and apply basic effects
+      const updatedCharacters = prevState.characters.map((char) => {
+        if (char.stats.hp <= 0) return char
 
-      // Update turnOrder with current character references from characters array
-      const updatedTurnOrder = prevState.turnOrder.map((char) => {
-        const updatedChar = updatedCharacters.find((c) => c.id === char.id)
-        return updatedChar || { ...char }
+        const updatedChar = { ...char }
+        const updatedStatusEffects = []
+        let hpChange = 0
+
+        // Process status effects
+        for (const statusEffect of char.statusEffects) {
+          const newDuration = statusEffect.duration - 1
+
+          const statusId = statusEffect.statusId || statusEffect.type
+
+          // Apply regeneration
+          if (statusId === 'regeneration' || statusEffect.type === 'regeneration') {
+            hpChange += Math.floor(updatedChar.stats.maxHp * 0.05)
+          }
+
+          // Apply DoT effects
+          if (statusId === 'poison' || statusEffect.type === 'poison') {
+            hpChange -= Math.floor(updatedChar.stats.maxHp * 0.05)
+          } else if (statusId === 'burn' || statusEffect.type === 'burn') {
+            hpChange -= Math.floor(updatedChar.stats.maxHp * 0.03)
+          } else if (statusId === 'bleed' || statusEffect.type === 'bleed') {
+            hpChange -= Math.floor(updatedChar.stats.maxHp * 0.03)
+          }
+
+          // Keep non-expired effects
+          if (newDuration > 0) {
+            updatedStatusEffects.push({
+              ...statusEffect,
+              duration: newDuration,
+            })
+          }
+        }
+
+        // Update HP
+        if (hpChange !== 0) {
+          updatedChar.stats.hp = Math.max(0, Math.min(updatedChar.stats.maxHp, updatedChar.stats.hp + hpChange))
+        }
+
+        updatedChar.statusEffects = updatedStatusEffects
+        return updatedChar
       })
+
+      // Remove defeated characters from turn order
+      const updatedTurnOrder = removeDefeatedFromTurnOrder(prevState.turnOrder, updatedCharacters)
+
+      // Update board incrementally - only remove defeated characters
+      // Don't rebuild board here to avoid breaking animations
+      // Board will be updated by individual actions (move, attack, etc.)
+      setBoard((prevBoard) => {
+        const newBoard = prevBoard.map((r) => r.map((c) => {
+          if (!c) return null
+          // Find character in updated list
+          const char = updatedCharacters.find((uc) => uc.id === c.id)
+          // Remove if character is defeated or no longer exists
+          if (!char || char.stats.hp <= 0) return null
+          // Update character reference but keep current board position
+          // This preserves animations and visual state
+          return { ...char, position: c.position || char.position }
+        }))
+        return newBoard
+      })
+
+      // Check for victory/defeat
+      const combatEnd = checkCombatEnd(updatedCharacters)
+      if (combatEnd.gameOver) {
+        operationInProgressRef.current = false
+        return {
+          ...prevState,
+          characters: updatedCharacters,
+          turnOrder: updatedTurnOrder,
+          gameOver: combatEnd.gameOver,
+          victory: combatEnd.victory,
+        }
+      }
 
       let nextIndex = prevState.currentTurnIndex + 1
       let newTurn = prevState.turn
@@ -291,7 +369,7 @@ export function useCombatState(): UseCombatStateReturn {
         })
       }
 
-      // Skip characters that are defeated or have already acted this turn
+      // Skip characters that are defeated, have already acted, or cannot act
       while (attempts < maxAttempts) {
         if (nextIndex >= updatedTurnOrder.length) {
           nextIndex = 0
@@ -303,6 +381,15 @@ export function useCombatState(): UseCombatStateReturn {
 
         // Check if character exists and is alive
         if (nextChar && nextChar.stats.hp > 0) {
+          // Check if character can act (not stunned, frozen, etc.)
+          if (!canCharacterAct(nextChar)) {
+            // Character cannot act, mark as acted and skip
+            nextChar.hasActed = true
+            nextIndex++
+            attempts++
+            continue
+          }
+
           // If it's a new turn, character can act (hasMoved and hasActed were reset)
           // If it is same turn, check if character has not acted yet (can have moved but not acted)
           if (newTurn > prevState.turn || !nextChar.hasActed) {
@@ -324,6 +411,8 @@ export function useCombatState(): UseCombatStateReturn {
         }
       }
 
+      operationInProgressRef.current = false
+
       return {
         ...prevState,
         turn: newTurn,
@@ -339,8 +428,8 @@ export function useCombatState(): UseCombatStateReturn {
     // Reset operation flag after state update completes
     setTimeout(() => {
       operationInProgressRef.current = false
-    }, 100)
-  }, [])
+    }, 200)
+  }, [setBoard])
 
   return {
     stage,

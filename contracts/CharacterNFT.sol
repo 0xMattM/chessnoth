@@ -21,6 +21,9 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     // Mapping from token ID to class
     mapping(uint256 => string) private _classes;
     
+    // Mapping from token ID to name
+    mapping(uint256 => string) private _names;
+    
     // Mapping from token ID to level
     mapping(uint256 => uint256) private _levels;
     
@@ -41,6 +44,7 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         uint256 indexed tokenId,
         address indexed owner,
         string class,
+        string name,
         uint256 generation,
         string ipfsHash
     );
@@ -49,13 +53,14 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         uint256 indexed tokenId,
         uint256 oldLevel,
         uint256 newLevel,
-        uint256 experience,
-        string ipfsHash
+        uint256 totalExperience
     );
     
-    event ExperienceGained(
+    event CharacterUpgraded(
         uint256 indexed tokenId,
-        uint256 amount,
+        uint256 expAdded,
+        uint256 oldLevel,
+        uint256 newLevel,
         uint256 totalExperience
     );
     
@@ -101,16 +106,20 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
      * @param ipfsHash IPFS hash of the character metadata
      * @param generation Generation number of the character
      * @param class Character class name
+     * @param name Character name
      * @return tokenId The ID of the newly minted token
      */
     function mintCharacter(
         address to,
         string memory ipfsHash,
         uint256 generation,
-        string memory class
+        string memory class,
+        string memory name
     ) external returns (uint256) {
         require(to != address(0), "CharacterNFT: Cannot mint to zero address");
         require(bytes(ipfsHash).length > 0, "CharacterNFT: IPFS hash required");
+        require(bytes(class).length > 0, "CharacterNFT: Class required");
+        require(bytes(name).length > 0, "CharacterNFT: Name required");
         
         uint256 tokenId = _tokenIdCounter;
         _tokenIdCounter++;
@@ -119,10 +128,11 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         _setTokenURI(tokenId, ipfsHash);
         _generations[tokenId] = generation;
         _classes[tokenId] = class;
+        _names[tokenId] = name;
         _levels[tokenId] = 1; // Start at level 1
         _experience[tokenId] = 0; // Start with 0 experience
         
-        emit CharacterMinted(tokenId, to, class, generation, ipfsHash);
+        emit CharacterMinted(tokenId, to, class, name, generation, ipfsHash);
         
         return tokenId;
     }
@@ -148,7 +158,42 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
     
     /**
-     * @dev Updates metadata and emits level up event
+     * @dev Upgrades a character by adding experience points
+     * Automatically calculates new level based on experience (level = floor(EXP / 100) + 1)
+     * @param tokenId Token ID to upgrade
+     * @param expAmount Amount of experience to add
+     */
+    function upgradeCharacter(
+        uint256 tokenId,
+        uint256 expAmount
+    ) external {
+        require(
+            _isAuthorized(_ownerOf(tokenId), msg.sender, tokenId),
+            "CharacterNFT: Not authorized to upgrade"
+        );
+        require(expAmount > 0, "CharacterNFT: Experience amount must be greater than 0");
+        
+        uint256 oldLevel = _levels[tokenId];
+        
+        // Add experience
+        _experience[tokenId] += expAmount;
+        
+        // Calculate new level: level = floor(EXP / 100) + 1
+        uint256 newLevel = (_experience[tokenId] / 100) + 1;
+        
+        // Update level if it increased
+        bool leveledUp = newLevel > oldLevel;
+        if (leveledUp) {
+            _levels[tokenId] = newLevel;
+            emit CharacterLevelUp(tokenId, oldLevel, newLevel, _experience[tokenId]);
+        }
+        
+        // Emit upgrade event
+        emit CharacterUpgraded(tokenId, expAmount, oldLevel, newLevel, _experience[tokenId]);
+    }
+    
+    /**
+     * @dev Updates metadata and emits level up event (kept for backward compatibility)
      * @param tokenId Token ID to update
      * @param newLevel New level of the character
      * @param ipfsHash New IPFS hash
@@ -169,27 +214,7 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         _levels[tokenId] = newLevel;
         _setTokenURI(tokenId, ipfsHash);
         
-        emit CharacterLevelUp(tokenId, oldLevel, newLevel, _experience[tokenId], ipfsHash);
-    }
-    
-    /**
-     * @dev Adds experience points to a character
-     * @param tokenId Token ID to update
-     * @param amount Amount of experience to add
-     */
-    function addExperience(
-        uint256 tokenId,
-        uint256 amount
-    ) external {
-        require(
-            _isAuthorized(_ownerOf(tokenId), msg.sender, tokenId),
-            "CharacterNFT: Not authorized to update"
-        );
-        require(amount > 0, "CharacterNFT: Experience amount must be greater than 0");
-        
-        _experience[tokenId] += amount;
-        
-        emit ExperienceGained(tokenId, amount, _experience[tokenId]);
+        emit CharacterLevelUp(tokenId, oldLevel, newLevel, _experience[tokenId]);
     }
     
     /**
@@ -206,9 +231,20 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
             "CharacterNFT: Not authorized to set experience"
         );
         
+        uint256 oldLevel = _levels[tokenId];
         _experience[tokenId] = amount;
         
-        emit ExperienceGained(tokenId, amount, _experience[tokenId]);
+        // Calculate new level: level = floor(EXP / 100) + 1
+        uint256 newLevel = (_experience[tokenId] / 100) + 1;
+        
+        // Update level if it changed
+        if (newLevel != oldLevel) {
+            _levels[tokenId] = newLevel;
+            emit CharacterLevelUp(tokenId, oldLevel, newLevel, _experience[tokenId]);
+        }
+        
+        // Emit upgrade event
+        emit CharacterUpgraded(tokenId, amount, oldLevel, newLevel, _experience[tokenId]);
     }
     
     /**
@@ -229,6 +265,16 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     function getClass(uint256 tokenId) external view returns (string memory) {
         require(_ownerOf(tokenId) != address(0), "CharacterNFT: Token does not exist");
         return _classes[tokenId];
+    }
+    
+    /**
+     * @dev Gets the name of a token
+     * @param tokenId Token ID
+     * @return Character name
+     */
+    function getName(uint256 tokenId) external view returns (string memory) {
+        require(_ownerOf(tokenId) != address(0), "CharacterNFT: Token does not exist");
+        return _names[tokenId];
     }
     
     /**

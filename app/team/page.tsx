@@ -12,6 +12,7 @@ import {
   getCharacterSkills,
   getSkillPoints,
 } from '@/lib/skills'
+import { getNFTCharacterImage, getNFTCharacterPortrait } from '@/lib/nft-images'
 import { Sword, Users, X, Plus } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
@@ -166,7 +167,7 @@ export default function TeamPage() {
           name: `Character #${tokenId}`,
           class: formattedClass,
           level,
-          image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${tokenId}`,
+          image: getNFTCharacterImage(characterClass) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tokenId}`,
         },
       }
     })
@@ -388,17 +389,20 @@ export default function TeamPage() {
                         >
                           <CardContent className="flex items-center gap-4 p-4">
                             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-700/50 border border-border/40 group-hover:border-primary/40 transition-all">
-                              {character.metadata?.image ? (
-                                <img
-                                  src={character.metadata.image}
-                                  alt={character.metadata.name}
-                                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                />
-                              ) : (
-                                <div className="flex h-full items-center justify-center">
-                                  <Users className="h-8 w-8 text-primary/50 group-hover:text-primary transition-colors" />
-                                </div>
-                              )}
+                              {(() => {
+                                const portrait = getNFTCharacterPortrait(character.metadata?.class)
+                                return portrait ? (
+                                  <img
+                                    src={portrait}
+                                    alt={character.metadata?.name || `Character #${character.tokenId}`}
+                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                  />
+                                ) : (
+                                  <div className="flex h-full items-center justify-center">
+                                    <Users className="h-8 w-8 text-primary/50 group-hover:text-primary transition-colors" />
+                                  </div>
+                                )
+                              })()}
                             </div>
                             <div className="flex-1">
                               <h3 className="font-semibold text-emerald-100 group-hover:text-emerald-200 transition-colors">

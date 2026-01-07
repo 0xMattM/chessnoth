@@ -5,7 +5,7 @@ import { WagmiConfig, createConfig, configureChains } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
 import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
-import { confluxESpaceTestnet } from '@/lib/chains'
+import { defaultChain } from '@/lib/chains'
 import { useState, useEffect } from 'react'
 import { validateEnv } from '@/lib/env'
 import { logger } from '@/lib/logger'
@@ -13,7 +13,7 @@ import { initializeWalletHandler } from '@/lib/wallet-provider-handler'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 
-const { chains, publicClient } = configureChains([confluxESpaceTestnet], [publicProvider()])
+const { chains, publicClient } = configureChains([defaultChain], [publicProvider()])
 
 // Validate environment variables on client side
 let envValidation: ReturnType<typeof validateEnv> | null = null

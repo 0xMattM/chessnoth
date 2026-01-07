@@ -19,6 +19,13 @@ export interface CombatStats {
 
 export type AnimationState = 'idle' | 'moving' | 'attacking' | 'casting' | 'hit' | 'defeated'
 
+export interface StatusEffect {
+  type: string
+  duration: number
+  value?: number
+  statusId?: string // ID from statusEffects.json
+}
+
 export interface CombatCharacter {
   id: string
   tokenId: string
@@ -32,11 +39,7 @@ export interface CombatCharacter {
   hasMoved: boolean
   hasActed: boolean
   animationState?: AnimationState // Current animation state
-  statusEffects: Array<{
-    type: string
-    duration: number
-    value?: number
-  }>
+  statusEffects: StatusEffect[]
   skills?: {
     [skillId: string]: number // Points invested in each skill
   }
@@ -323,8 +326,84 @@ export function getValidAttackTargets(
 }
 
 /**
+ * Get effective stats for a character (base stats + status effect modifiers)
+ * This is a synchronous version that calculates modifiers from status effects
+ * Handles stacking of status effects correctly
+ */
+export function getEffectiveStats(character: CombatCharacter): CombatStats {
+  if (character.statusEffects.length === 0) {
+    return { ...character.stats }
+  }
+
+  // Start with base stats (after terrain modifiers)
+  const effectiveStats = { ...character.stats }
+
+  // Accumulate all modifiers first (to handle stacking)
+  const statModifiers: Record<string, number> = {}
+
+  // Map status effects to stat modifiers
+  // This matches the statusEffects.json structure
+  for (const statusEffect of character.statusEffects) {
+    const statusId = statusEffect.statusId || statusEffect.type
+    
+    // Map status effect IDs to stat modifiers (matching statusEffects.json)
+    switch (statusId) {
+      case 'strength_up':
+        statModifiers.atk = (statModifiers.atk || 0) + 0.2
+        break
+      case 'defense_up':
+        statModifiers.def = (statModifiers.def || 0) + 0.2
+        break
+      case 'speed_up':
+        statModifiers.spd = (statModifiers.spd || 0) + 0.2
+        break
+      case 'evasion_up':
+        statModifiers.eva = (statModifiers.eva || 0) + 0.15
+        break
+      case 'critical_up':
+        statModifiers.crit = (statModifiers.crit || 0) + 0.1
+        break
+      case 'weakness':
+        statModifiers.atk = (statModifiers.atk || 0) - 0.2
+        break
+      case 'vulnerability':
+        statModifiers.def = (statModifiers.def || 0) - 0.2
+        break
+      case 'slow':
+        statModifiers.spd = (statModifiers.spd || 0) - 0.2
+        break
+      case 'blind':
+        statModifiers.eva = (statModifiers.eva || 0) - 0.1
+        break
+      case 'curse':
+        statModifiers.atk = (statModifiers.atk || 0) - 0.2
+        statModifiers.def = (statModifiers.def || 0) - 0.2
+        statModifiers.mag = (statModifiers.mag || 0) - 0.2
+        statModifiers.res = (statModifiers.res || 0) - 0.2
+        statModifiers.spd = (statModifiers.spd || 0) - 0.2
+        statModifiers.eva = (statModifiers.eva || 0) - 0.2
+        statModifiers.crit = (statModifiers.crit || 0) - 0.2
+        break
+    }
+  }
+
+  // Apply accumulated modifiers to effective stats
+  Object.entries(statModifiers).forEach(([stat, modifier]) => {
+    const statKey = stat.toLowerCase() as keyof CombatStats
+    if (statKey in effectiveStats && statKey !== 'hp' && statKey !== 'maxHp' && statKey !== 'mana' && statKey !== 'maxMana') {
+      // Apply percentage modifier to base stat
+      const baseValue = character.baseStats[statKey]
+      effectiveStats[statKey] = Math.floor(baseValue * (1 + modifier))
+    }
+  })
+
+  return effectiveStats
+}
+
+/**
  * Calculate damage using a more balanced formula
  * Uses percentage-based defense reduction instead of flat subtraction
+ * Includes evasion check and applies status effect modifiers
  */
 export function calculateDamage(
   attacker: CombatCharacter,
@@ -332,8 +411,19 @@ export function calculateDamage(
   isPhysical: boolean = true,
   damageMultiplier: number = 1.0
 ): number {
-  const attackStat = isPhysical ? attacker.stats.atk : attacker.stats.mag
-  const defenseStat = isPhysical ? defender.stats.def : defender.stats.res
+  // Get effective stats (with status effect modifiers)
+  const attackerStats = getEffectiveStats(attacker)
+  const defenderStats = getEffectiveStats(defender)
+
+  // Check for evasion first (using effective evasion)
+  const evasionRoll = Math.random() * 100
+  if (evasionRoll < defenderStats.eva) {
+    // Attack missed due to evasion
+    return 0
+  }
+
+  const attackStat = isPhysical ? attackerStats.atk : attackerStats.mag
+  const defenseStat = isPhysical ? defenderStats.def : defenderStats.res
   
   // Base damage is attack stat multiplied by the skill multiplier
   const baseDamage = attackStat * damageMultiplier
@@ -348,9 +438,9 @@ export function calculateDamage(
   // Minimum damage is 20% of base damage (ensures attacks always do meaningful damage)
   const minDamage = baseDamage * 0.2
   
-  // Critical hit chance
+  // Critical hit chance (using effective crit)
   const critRoll = Math.random() * 100
-  const isCrit = critRoll < attacker.stats.crit
+  const isCrit = critRoll < attackerStats.crit
   
   // Final damage with crit multiplier
   const finalDamage = Math.max(minDamage, damageAfterDefense) * (isCrit ? 2 : 1)
@@ -405,5 +495,187 @@ export function getValidSkillTargets(
   })
   
   return targets
+}
+
+/**
+ * Apply status effect modifiers to character stats
+ * Returns modified stats based on active status effects
+ */
+export async function applyStatusEffectModifiers(
+  character: CombatCharacter
+): Promise<CombatStats> {
+  if (character.statusEffects.length === 0) {
+    return { ...character.stats }
+  }
+
+  // Load status effects definitions
+  const statusEffectsData = await import('@/data/statusEffects.json')
+  const statusDefinitions = (statusEffectsData.default || statusEffectsData) as Array<{
+    id: string
+    statModifiers?: Record<string, number>
+  }>
+
+  // Start with base stats (after terrain modifiers)
+  const modifiedStats = { ...character.stats }
+
+  // Apply stat modifiers from status effects
+  for (const statusEffect of character.statusEffects) {
+    const statusDef = statusDefinitions.find((s) => s.id === statusEffect.statusId || s.id === statusEffect.type)
+    if (statusDef?.statModifiers) {
+      Object.entries(statusDef.statModifiers).forEach(([stat, modifier]) => {
+        const statKey = stat.toLowerCase() as keyof CombatStats
+        if (statKey in modifiedStats && statKey !== 'hp' && statKey !== 'maxHp' && statKey !== 'mana' && statKey !== 'maxMana') {
+          // Apply percentage modifier to base stat
+          const baseValue = character.baseStats[statKey]
+          modifiedStats[statKey] = Math.floor(baseValue * (1 + modifier))
+        }
+      })
+    }
+  }
+
+  return modifiedStats
+}
+
+/**
+ * Process status effects for a character at the start of their turn
+ * Applies DoT effects, reduces duration, and removes expired effects
+ * Returns updated character with processed status effects
+ */
+export async function processStatusEffects(
+  character: CombatCharacter
+): Promise<CombatCharacter> {
+  if (character.statusEffects.length === 0) {
+    return character
+  }
+
+  // Load status effects definitions
+  const statusEffectsData = await import('@/data/statusEffects.json')
+  const statusDefinitions = (statusEffectsData.default || statusEffectsData) as Array<{
+    id: string
+    dotPercent?: number
+    specialEffect?: string
+  }>
+
+  const updatedCharacter = { ...character }
+  const updatedStatusEffects: StatusEffect[] = []
+  let hpChange = 0
+
+  // Process each status effect
+  for (const statusEffect of character.statusEffects) {
+    const statusDef = statusDefinitions.find((s) => s.id === statusEffect.statusId || s.id === statusEffect.type)
+    
+    // Apply DoT (Damage Over Time) effects
+    if (statusDef?.dotPercent) {
+      const dotDamage = Math.floor(updatedCharacter.stats.maxHp * statusDef.dotPercent)
+      hpChange -= dotDamage
+    }
+
+    // Apply regeneration
+    if (statusEffect.type === 'regeneration') {
+      const regenAmount = Math.floor(updatedCharacter.stats.maxHp * 0.05)
+      hpChange += regenAmount
+    }
+
+    // Reduce duration
+    const newDuration = statusEffect.duration - 1
+
+    // Only keep status effects that haven't expired
+    if (newDuration > 0) {
+      updatedStatusEffects.push({
+        ...statusEffect,
+        duration: newDuration,
+      })
+    }
+  }
+
+  // Update HP (clamp to valid range)
+  if (hpChange !== 0) {
+    updatedCharacter.stats.hp = Math.max(0, Math.min(updatedCharacter.stats.maxHp, updatedCharacter.stats.hp + hpChange))
+  }
+
+  // Update status effects
+  updatedCharacter.statusEffects = updatedStatusEffects
+
+  // Reapply stat modifiers after processing
+  const modifiedStats = await applyStatusEffectModifiers(updatedCharacter)
+  updatedCharacter.stats = { ...modifiedStats, hp: updatedCharacter.stats.hp, mana: updatedCharacter.stats.mana }
+
+  return updatedCharacter
+}
+
+/**
+ * Check if character has a specific status effect
+ */
+export function hasStatusEffect(character: CombatCharacter, statusId: string): boolean {
+  return character.statusEffects.some((se) => se.statusId === statusId || se.type === statusId)
+}
+
+/**
+ * Check if character can act (not stunned, frozen, or feared)
+ */
+export function canCharacterAct(character: CombatCharacter): boolean {
+  const blockingStatuses = ['stun', 'fear', 'freeze']
+  return !character.statusEffects.some((se) => blockingStatuses.includes(se.type) || blockingStatuses.includes(se.statusId || ''))
+}
+
+/**
+ * Check if character can use skills (not silenced)
+ */
+export function canCharacterUseSkills(character: CombatCharacter): boolean {
+  return !hasStatusEffect(character, 'silence')
+}
+
+/**
+ * Remove defeated characters from turn order
+ */
+export function removeDefeatedFromTurnOrder(
+  turnOrder: CombatCharacter[],
+  characters: CombatCharacter[]
+): CombatCharacter[] {
+  // Create a map of alive characters by ID
+  const aliveCharacterIds = new Set(
+    characters.filter((c) => c.stats.hp > 0).map((c) => c.id)
+  )
+
+  // Filter turn order to only include alive characters
+  return turnOrder.filter((char) => aliveCharacterIds.has(char.id))
+}
+
+/**
+ * Rebuild board from characters array to ensure synchronization
+ */
+export function rebuildBoardFromCharacters(
+  characters: CombatCharacter[],
+  boardSize: number = 8
+): (CombatCharacter | null)[][] {
+  const board: (CombatCharacter | null)[][] = Array(boardSize)
+    .fill(null)
+    .map(() => Array(boardSize).fill(null))
+
+  characters.forEach((char) => {
+    if (char.position && char.stats.hp > 0) {
+      board[char.position.row][char.position.col] = char
+    }
+  })
+
+  return board
+}
+
+/**
+ * Check victory/defeat conditions
+ */
+export function checkCombatEnd(characters: CombatCharacter[]): { gameOver: boolean; victory: boolean } {
+  const aliveEnemies = characters.filter((c) => c.team === 'enemy' && c.stats.hp > 0)
+  const alivePlayers = characters.filter((c) => c.team === 'player' && c.stats.hp > 0)
+
+  if (aliveEnemies.length === 0) {
+    return { gameOver: true, victory: true }
+  }
+
+  if (alivePlayers.length === 0) {
+    return { gameOver: true, victory: false }
+  }
+
+  return { gameOver: false, victory: false }
 }
 

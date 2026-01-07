@@ -12,8 +12,12 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js --network confluxESpaceTestnet",
-    "set-minter": "hardhat run scripts/setMinter.js --network confluxESpaceTestnet"
+    "deploy:testnet": "hardhat run scripts/deploy.js --network mantleSepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.js --network mantleMainnet",
+    "deploy-all:testnet": "hardhat run scripts/deploy-all.js --network mantleSepolia",
+    "deploy-all:mainnet": "hardhat run scripts/deploy-all.js --network mantleMainnet",
+    "set-minter:testnet": "hardhat run scripts/setMinter.js --network mantleSepolia",
+    "set-minter:mainnet": "hardhat run scripts/setMinter.js --network mantleMainnet"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",

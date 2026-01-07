@@ -4,6 +4,9 @@ import { useState, useCallback, useEffect } from 'react'
 import {
   getValidSkillTargets,
   calculateDamage,
+  rebuildBoardFromCharacters,
+  checkCombatEnd,
+  canCharacterUseSkills,
   type CombatCharacter,
   type CombatState,
   type AnimationState,
@@ -225,8 +228,28 @@ export function useCombatActions({
           const fromRow = current.position.row
           const fromCol = current.position.col
 
-          // Mark as moved IMMEDIATELY to prevent multiple moves
-          const updatedCurrentImmediate = { ...current, hasMoved: true }
+          // Mark as moved BUT keep position until animation completes
+          // This prevents visual "jump" where character appears in new position before animation
+          const updatedCurrentImmediate = { 
+            ...current, 
+            hasMoved: true
+            // DON'T update position here - keep original position until animation completes
+          }
+          
+          // Save a copy of the character for the animation FIRST
+          // Use ORIGINAL position for animation
+          const characterCopy = { ...current, position: { row: fromRow, col: fromCol } } // Keep original position for animation
+          setMovingCharacters((prev) => {
+            const newMap = new Map(prev)
+            newMap.set(current.id, {
+              from: { row: fromRow, col: fromCol },
+              to: { row, col },
+              character: characterCopy, // Store character copy with original position
+            })
+            return newMap
+          })
+          
+          // Update state AFTER animation starts (but position stays old until animation completes)
           setCombatState((prev) => {
             if (!prev) return prev
             const updatedCharacters = prev.characters.map((c) =>
@@ -243,18 +266,6 @@ export function useCombatActions({
             }
           })
 
-          // Save a copy of the character for the animation
-          const characterCopy = { ...current }
-          setMovingCharacters((prev) => {
-            const newMap = new Map(prev)
-            newMap.set(current.id, {
-              from: { row: fromRow, col: fromCol },
-              to: { row, col },
-              character: characterCopy, // Store character copy for animation
-            })
-            return newMap
-          })
-
           // Wait for animation to complete before updating board position
           // This ensures the character stays visible during the animation
           setTimeout(() => {
@@ -262,11 +273,11 @@ export function useCombatActions({
             setCombatState((prev) => {
               if (!prev) return prev
 
-              // Get the current character state (should have hasMoved = true)
+              // Get the current character state (should have hasMoved = true but still old position)
               const currentChar = prev.characters.find((c) => c.id === current.id)
               if (!currentChar) return prev
 
-              // Create updated character with new position
+              // NOW update position in state and apply terrain modifiers
               let updatedCurrent = { ...currentChar, position: { row, col } }
 
               // Apply terrain modifiers for new position
@@ -310,13 +321,32 @@ export function useCombatActions({
                 }
               }
 
-              // Update board
-              const newBoard = board.map((r) => [...r])
-              if (fromRow !== undefined && fromCol !== undefined) {
-                newBoard[fromRow][fromCol] = null
-              }
-              newBoard[row][col] = updatedCurrent
-              setBoard(newBoard)
+              // Update board incrementally - clear all old positions first
+              setBoard((prevBoard) => {
+                const newBoard = prevBoard.map((r) => [...r])
+                
+                // Clear old position (fromRow, fromCol)
+                if (fromRow !== undefined && fromCol !== undefined) {
+                  // Only clear if it's the same character
+                  if (newBoard[fromRow][fromCol]?.id === current.id) {
+                    newBoard[fromRow][fromCol] = null
+                  }
+                }
+                
+                // Clear any other position where this character might be (safety check)
+                for (let r = 0; r < 8; r++) {
+                  for (let c = 0; c < 8; c++) {
+                    if (newBoard[r][c]?.id === current.id && (r !== row || c !== col)) {
+                      newBoard[r][c] = null
+                    }
+                  }
+                }
+                
+                // Set new position
+                newBoard[row][col] = updatedCurrent
+                
+                return newBoard
+              })
 
               // Update combat state with new character position
               const updatedCharacters = prev.characters.map((c) =>
@@ -372,15 +402,20 @@ export function useCombatActions({
           }
           const updatedCurrent = attackingChar
 
-          // Update board with animation states
-          const newBoard = board.map((r) => [...r])
-          if (current.position) {
-            newBoard[current.position.row][current.position.col] = updatedCurrent
-          }
-          if (target.position && newTargetHp > 0) {
-            newBoard[target.position.row][target.position.col] = updatedTarget
-          }
-          setBoard(newBoard)
+          // Update board incrementally (don't rebuild, preserve animations)
+          setBoard((prevBoard) => {
+            const newBoard = prevBoard.map((r) => [...r])
+            if (current.position) {
+              newBoard[current.position.row][current.position.col] = updatedCurrent
+            }
+            if (target.position && newTargetHp > 0) {
+              newBoard[target.position.row][target.position.col] = updatedTarget
+            } else if (target.position && newTargetHp === 0) {
+              // Remove defeated character from board
+              newBoard[target.position.row][target.position.col] = null
+            }
+            return newBoard
+          })
 
           const updatedCharacters = combatState.characters.map((c) => {
             if (c.id === current.id) return updatedCurrent
@@ -431,30 +466,25 @@ export function useCombatActions({
             })
           }, ANIMATION_DURATIONS.ATTACK) // Animation duration
 
-          // Check victory/defeat
-          const aliveEnemies = updatedCharacters.filter((c) => c.team === 'enemy' && c.stats.hp > 0)
-          const alivePlayers = updatedCharacters.filter((c) => c.team === 'player' && c.stats.hp > 0)
-
-          if (aliveEnemies.length === 0) {
-            setCombatState({
-              ...combatState,
-              characters: updatedCharacters,
-              turnOrder: updatedTurnOrder,
-              gameOver: true,
-              victory: true,
-              selectedAction: null,
-              selectedCharacter: updatedCurrent,
+          // Check victory/defeat using centralized function
+          const combatEnd = checkCombatEnd(updatedCharacters)
+          if (combatEnd.gameOver) {
+            // Update board to remove all defeated characters
+            setBoard((prevBoard) => {
+              const newBoard = prevBoard.map((r) => r.map((c) => {
+                if (!c) return null
+                const char = updatedCharacters.find((uc) => uc.id === c.id)
+                if (!char || char.stats.hp === 0) return null
+                return char
+              }))
+              return newBoard
             })
-            return
-          }
-
-          if (alivePlayers.length === 0) {
             setCombatState({
               ...combatState,
               characters: updatedCharacters,
               turnOrder: updatedTurnOrder,
-              gameOver: true,
-              victory: false,
+              gameOver: combatEnd.gameOver,
+              victory: combatEnd.victory,
               selectedAction: null,
               selectedCharacter: updatedCurrent,
             })
@@ -484,6 +514,16 @@ export function useCombatActions({
 
         if (target || (!selectedSkill.requiresTarget && current.position?.row === row && current.position?.col === col)) {
           const actualTarget = target || current
+
+          // Check if character can use skills (not silenced)
+          if (!canCharacterUseSkills(current)) {
+            toast({
+              variant: 'destructive',
+              title: 'Cannot Use Skills',
+              description: 'This character is silenced and cannot use skills.',
+            })
+            return
+          }
 
           // Check mana cost
           if (current.stats.mana < selectedSkill.manaCost) {
@@ -520,9 +560,26 @@ export function useCombatActions({
               } else if (effect.type === 'mana' && effect.value !== undefined) {
                 skillTarget.stats.mana = Math.min(actualTarget.stats.maxMana, skillTarget.stats.mana + effect.value)
               } else if (effect.type === 'buff' && effect.stat && effect.duration !== undefined) {
-                // Add status effect
+                // Add status effect with statusId if provided
                 skillTarget.statusEffects.push({
                   type: effect.stat,
+                  statusId: effect.statusId || effect.stat,
+                  duration: effect.duration,
+                  value: effect.value,
+                })
+              } else if (effect.type === 'debuff' && effect.stat && effect.duration !== undefined) {
+                // Add debuff status effect
+                skillTarget.statusEffects.push({
+                  type: effect.stat,
+                  statusId: effect.statusId || effect.stat,
+                  duration: effect.duration,
+                  value: effect.value,
+                })
+              } else if (effect.type === 'status' && effect.statusId && effect.duration !== undefined) {
+                // Add status effect (stun, freeze, etc.)
+                skillTarget.statusEffects.push({
+                  type: effect.statusId,
+                  statusId: effect.statusId,
                   duration: effect.duration,
                   value: effect.value,
                 })
@@ -532,24 +589,29 @@ export function useCombatActions({
 
           castingChar.hasActed = true
 
-          // Update board with animation states
-          const newBoard = board.map((r) => [...r])
-          if (current.position) {
-            newBoard[current.position.row][current.position.col] = castingChar
-          }
-          if (actualTarget.position) {
-            newBoard[actualTarget.position.row][actualTarget.position.col] = skillTarget
-          }
-          setBoard(newBoard)
-
-          // Check if target is defeated
-          if (skillTarget.stats.hp === 0 && skillTarget.team === 'enemy') {
-            if (skillTarget.position) {
-              newBoard[skillTarget.position.row][skillTarget.position.col] = null
-              skillTarget.position = null
-              skillTarget.animationState = 'defeated' as AnimationState
+          // Update board incrementally (preserve animations)
+          setBoard((prevBoard) => {
+            const newBoard = prevBoard.map((r) => [...r])
+            if (current.position) {
+              newBoard[current.position.row][current.position.col] = castingChar
             }
-            setBoard(newBoard)
+            if (actualTarget.position) {
+              newBoard[actualTarget.position.row][actualTarget.position.col] = skillTarget
+            }
+            return newBoard
+          })
+
+          // Check if target is defeated and update board
+          if (skillTarget.stats.hp === 0 && skillTarget.position) {
+            skillTarget.position = null
+            skillTarget.animationState = 'defeated' as AnimationState
+            setBoard((prevBoard) => {
+              const newBoard = prevBoard.map((r) => [...r])
+              if (actualTarget.position) {
+                newBoard[actualTarget.position.row][actualTarget.position.col] = null
+              }
+              return newBoard
+            })
           }
 
           // Reset animation states after animation completes
@@ -589,26 +651,23 @@ export function useCombatActions({
             })
           }, ANIMATION_DURATIONS.SKILL) // Animation duration for skills (slightly longer)
 
-          // Check victory/defeat
-          const aliveEnemies = combatState.characters.filter((c) => c.team === 'enemy' && c.stats.hp > 0)
-          const alivePlayers = combatState.characters.filter((c) => c.team === 'player' && c.stats.hp > 0)
-
-          if (aliveEnemies.length === 0) {
-            setCombatState({
-              ...combatState,
-              gameOver: true,
-              victory: true,
-              selectedAction: null,
+          // Check victory/defeat using centralized function
+          const combatEnd = checkCombatEnd(combatState.characters)
+          if (combatEnd.gameOver) {
+            // Update board to remove all defeated characters
+            setBoard((prevBoard) => {
+              const newBoard = prevBoard.map((r) => r.map((c) => {
+                if (!c) return null
+                const char = combatState.characters.find((uc) => uc.id === c.id)
+                if (!char || char.stats.hp === 0) return null
+                return char
+              }))
+              return newBoard
             })
-            setSelectedSkill(null)
-            return
-          }
-
-          if (alivePlayers.length === 0) {
             setCombatState({
               ...combatState,
-              gameOver: true,
-              victory: false,
+              gameOver: combatEnd.gameOver,
+              victory: combatEnd.victory,
               selectedAction: null,
             })
             setSelectedSkill(null)

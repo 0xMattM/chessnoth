@@ -121,33 +121,19 @@ export function CombatBoard({
                   )}
                 >
                   <div
-                    className="w-full h-full relative"
+                    className="w-full h-full"
                     style={{
                       backgroundColor:
                         terrainConfig.solidColor || terrainConfig.bgColor || '#4ade80',
                       backgroundImage: terrainConfig.texturePath
                         ? `url(${terrainConfig.texturePath})`
                         : undefined,
-                      backgroundSize: 'cover',
+                      backgroundSize: '64px 64px',
                       backgroundPosition: 'center',
+                      backgroundRepeat: 'no-repeat',
+                      imageRendering: 'crisp-edges',
                     }}
-                  >
-                    {/* Gradient overlay for depth */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/15 via-transparent to-black/15" />
-                    {/* Pattern overlay for texture */}
-                    <div
-                      className="absolute inset-0 opacity-30"
-                      style={{
-                        backgroundImage: `repeating-linear-gradient(
-                          45deg,
-                          transparent,
-                          transparent 2px,
-                          rgba(0,0,0,0.05) 2px,
-                          rgba(0,0,0,0.05) 4px
-                        )`,
-                      }}
-                    />
-                  </div>
+                  />
                 </div>
 
                 {/* Overlay for valid moves - cyan/blue for better visibility */}
@@ -194,16 +180,15 @@ export function CombatBoard({
 
         {/* Moving characters overlay - rendered above the grid */}
         {Array.from(movingCharacters.entries()).map(([characterId, movement]) => {
-          // Use stored character copy or find in board/allCharacters
-          const character =
-            movement.character ||
-            board[movement.from.row]?.[movement.from.col] ||
-            allCharacters.find(c => c.id === characterId)
+          // ALWAYS use stored character copy for animation to ensure correct position
+          // Don't use board position as it may have been updated already
+          const character = movement.character
           if (!character) return null
 
           // Calculate pixel positions relative to grid container
           // Padding is 16px (p-4), cell size is 64px (w-16), gap is 4px (gap-1)
           const padding = 16
+          // Use movement.from and movement.to directly (these are the correct positions for animation)
           const fromX = padding + movement.from.col * totalCellSize
           const fromY = padding + movement.from.row * totalCellSize
           const toX = padding + movement.to.col * totalCellSize
