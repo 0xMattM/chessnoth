@@ -1,11 +1,11 @@
 ﻿'use client'
 
-import { useAccount, useContractRead, useContractReads } from 'wagmi'
+import { useAccount, useContractRead, useContractReads, useContractWrite, useWaitForTransaction } from 'wagmi'
 import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
+import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS, CHS_TOKEN_ADDRESS, CHS_TOKEN_ABI } from '@/lib/contract'
 import { CharacterInventory } from '@/components/character-inventory'
 import { CharacterSkills } from '@/components/character-skills'
 import { isInTeam } from '@/lib/team'
@@ -22,15 +22,20 @@ import { logger } from '@/lib/logger'
 import Image from 'next/image'
 import { CharactersErrorBoundary } from '@/components/characters-error-boundary'
 import { Users, Shield, CheckCircle2, Zap, TrendingUp, Coins, Package, Sword, FlaskConical, Loader2, Gift } from 'lucide-react'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useOwnedCharacters, useUpgradeCharacter } from '@/hooks/useCharacterNFT'
 import { calculateLevelFromExperience, getExperienceForNextLevel } from '@/lib/nft'
 import { getTotalPendingEXP, getPendingRewards, getTotalPendingCHS } from '@/lib/rewards'
-import { formatCHSAmount } from '@/lib/chs-token'
+import { formatCHSAmount, parseCHSAmount } from '@/lib/chs-token'
 import { useToast } from '@/hooks/use-toast'
 import itemsData from '@/data/items.json'
+import { getInventory, getItemQuantity } from '@/lib/inventory'
+import { fixOldRewards } from '@/lib/fix-exp'
+import { DailyRewardsCard } from '@/components/daily-rewards'
+import { DailyQuestsCard } from '@/components/daily-quests'
+import { LeaderboardCard } from '@/components/leaderboard'
 
 interface Character {
   tokenId: bigint
@@ -48,6 +53,10 @@ interface Character {
  * Displays user's NFT characters with equipment and skills management
  */
 export default function DashboardPage() {
+  // Expose fix function for console
+  useEffect(() => {
+    fixOldRewards()
+  }, [])
   const { address, isConnected: isConnectedWagmi } = useAccount()
   const [mounted, setMounted] = useState(false)
   const isConnected = mounted && isConnectedWagmi
@@ -126,6 +135,12 @@ export default function DashboardPage() {
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
+                functionName: 'getName' as const,
+                args: [tokenId],
+              },
+              {
+                address: CHARACTER_NFT_ADDRESS,
+                abi: CHARACTER_NFT_ABI,
                 functionName: 'getClass' as const,
                 args: [tokenId],
               },
@@ -171,17 +186,20 @@ export default function DashboardPage() {
     }
 
     return validTokenIds.map(({ tokenId, index }) => {
-      // Each token has 3 data points: URI (index*3), Class (index*3+1), Level (index*3+2)
-      const uriIndex = index * 3
-      const classIndex = index * 3 + 1
-      const levelIndex = index * 3 + 2
+      // Each token has 4 data points: URI (index*4), Name (index*4+1), Class (index*4+2), Level (index*4+3)
+      const uriIndex = index * 4
+      const nameIndex = index * 4 + 1
+      const classIndex = index * 4 + 2
+      const levelIndex = index * 4 + 3
 
       const uriResult = tokenDataResults[uriIndex]
+      const nameResult = tokenDataResults[nameIndex]
       const classResult = tokenDataResults[classIndex]
       const levelResult = tokenDataResults[levelIndex]
 
       // Extract and validate data using utility functions
       const uri = extractStringFromResult(uriResult)
+      const characterName = extractStringFromResult(nameResult, '')
       const characterClass = extractStringFromResult(classResult, 'warrior')
       const level = extractLevelFromResult(levelResult, 1)
       const formattedClass = formatClassName(characterClass)
@@ -190,7 +208,7 @@ export default function DashboardPage() {
         tokenId,
         uri,
         metadata: {
-          name: `Character #${tokenId}`,
+          name: characterName || 'Unknown Character',
           class: formattedClass,
           level,
           image: getNFTCharacterImage(characterClass) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tokenId}`,
@@ -283,7 +301,7 @@ export default function DashboardPage() {
                             {character.metadata?.image ? (
                               <Image
                                 src={character.metadata.image}
-                                alt={character.metadata.name || `Character #${character.tokenId}`}
+                                alt={character.metadata.name || 'Character'}
                                 fill
                                 className="object-cover transition-transform duration-300 group-hover:scale-110"
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -295,7 +313,7 @@ export default function DashboardPage() {
                             )}
                           </div>
                           <CardTitle className="mt-2 text-sm group-hover:text-purple-200 transition-colors line-clamp-1">
-                            {character.metadata?.name || `Character #${character.tokenId}`}
+                            {character.metadata?.name || 'Unknown Character'}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-1 text-xs">
                             <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
@@ -376,7 +394,7 @@ export default function DashboardPage() {
                                               src={portrait}
                                               alt={
                                                 character.metadata?.name ||
-                                                `Character #${character.tokenId}`
+                                                'Character'
                                               }
                                               width={40}
                                               height={40}
@@ -391,7 +409,7 @@ export default function DashboardPage() {
                                       </div>
                                       <span className="font-medium">
                                         {character.metadata?.name ||
-                                          `Character #${character.tokenId}`}
+                                          'Character'}
                                       </span>
                                     </div>
                                   </td>
@@ -498,7 +516,7 @@ export default function DashboardPage() {
                                               src={portrait}
                                               alt={
                                                 character.metadata?.name ||
-                                                `Character #${character.tokenId}`
+                                                'Character'
                                               }
                                               width={40}
                                               height={40}
@@ -513,7 +531,7 @@ export default function DashboardPage() {
                                       </div>
                                       <span className="font-medium">
                                         {character.metadata?.name ||
-                                          `Character #${character.tokenId}`}
+                                          'Character'}
                                       </span>
                                     </div>
                                   </td>
@@ -566,6 +584,24 @@ export default function DashboardPage() {
               </TabsContent>
             </Tabs>
           )}
+
+          {/* Retention Systems - Daily Rewards, Quests, and Leaderboard */}
+          <div className="space-y-6 mt-8">
+            {/* Daily Rewards - Full width */}
+            <div className="animate-scale-in">
+              <DailyRewardsCard />
+            </div>
+
+            {/* Daily Quests and Leaderboard - Side by side */}
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="animate-scale-in" style={{ animationDelay: '0.1s' }}>
+                <DailyQuestsCard />
+              </div>
+              <div className="animate-scale-in" style={{ animationDelay: '0.2s' }}>
+                <LeaderboardCard />
+              </div>
+            </div>
+          </div>
 
           {/* Items Section - Below Characters */}
           <ItemsSection />
@@ -644,6 +680,13 @@ function LevelUpTab() {
   const handleUpgrade = async (tokenId: bigint, expAmount: bigint) => {
     try {
       await upgrade(tokenId, expAmount)
+      
+      // Update quest progress for character upgrade
+      if (typeof window !== 'undefined') {
+        const { updateQuestProgress } = require('@/lib/daily-quests')
+        updateQuestProgress('upgrade_character', 1)
+      }
+      
       const usedExp = Number(expAmount)
       const rewards = getPendingRewards()
       let remainingExp = usedExp
@@ -666,14 +709,14 @@ function LevelUpTab() {
       const newTotal = getTotalPendingEXP()
       setPendingRewards(newTotal)
       toast({
-        title: 'Upgrade iniciado',
-        description: 'La transacción ha sido enviada. Espera la confirmación.',
+        title: 'Upgrade Started',
+        description: 'Transaction has been sent. Please wait for confirmation.',
       })
     } catch (error) {
-      logger.error('Error upgrading character', { tokenId, expAmount, error })
+      logger.error('Error upgrading character', error as Error, { tokenId, expAmount })
       toast({
         title: 'Error',
-        description: 'No se pudo realizar el upgrade. Verifica que tengas suficiente gas.',
+        description: 'Failed to perform upgrade. Please verify you have sufficient gas.',
         variant: 'destructive',
       })
     }
@@ -902,13 +945,41 @@ function LevelUpTab() {
 
 /**
  * Items Section Component
- * Displays available items catalog
+ * Displays user's inventory items
  */
 function ItemsSection() {
+  const [inventory, setInventory] = useState<Record<string, number>>({})
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    // Load inventory on mount
+    setInventory(getInventory())
+    
+    // Listen for storage changes to update inventory
+    const handleStorageChange = () => {
+      setInventory(getInventory())
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    // Also check periodically (in case same-tab updates)
+    const interval = setInterval(() => {
+      setInventory(getInventory())
+    }, 1000)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Filter items to only show those in inventory
   const equipmentItems = itemsData.filter(
-    (item) => item.type === 'weapon' || item.type === 'armor'
+    (item) => (item.type === 'weapon' || item.type === 'armor') && getItemQuantity(item.id) > 0
   )
-  const consumableItems = itemsData.filter((item) => item.type === 'consumable')
+  const consumableItems = itemsData.filter(
+    (item) => item.type === 'consumable' && getItemQuantity(item.id) > 0
+  )
 
   const rarityColors = {
     common: 'border-gray-500 text-gray-500',
@@ -925,10 +996,10 @@ function ItemsSection() {
           <div className="rounded-lg bg-indigo-500/10 p-2 border border-indigo-500/20">
             <Package className="h-5 w-5 text-indigo-400" />
           </div>
-          Items Catalog
+          My Inventory
         </CardTitle>
         <CardDescription className="text-purple-200/60">
-          Preview available equipment and consumables
+          Items you own in your inventory
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -944,74 +1015,100 @@ function ItemsSection() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value="equipment">
-            <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {equipmentItems.map((item) => {
-                const itemImage = getItemImageFromData(item)
-                return (
-                  <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-md hover:shadow-primary/20 transition-all">
-                    <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
-                      {itemImage ? (
-                        <Image
-                          src={itemImage}
-                          alt={item.name}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Package className="h-8 w-8 text-muted-foreground/50" />
+            {equipmentItems.length === 0 ? (
+              <div className="py-12 text-center">
+                <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="text-muted-foreground">No equipment items in your inventory</p>
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {equipmentItems.map((item) => {
+                  const itemImage = getItemImageFromData(item)
+                  const quantity = getItemQuantity(item.id)
+                  return (
+                    <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-md hover:shadow-primary/20 transition-all">
+                      <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
+                        {itemImage ? (
+                          <Image
+                            src={itemImage}
+                            alt={item.name}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center">
+                            <Package className="h-8 w-8 text-muted-foreground/50" />
+                          </div>
+                        )}
+                        <div className={`absolute top-1 right-1 px-1 py-0.5 rounded text-[10px] font-semibold border ${
+                          rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common
+                        }`}>
+                          {item.rarity.toUpperCase()}
                         </div>
-                      )}
-                      <div className={`absolute top-1 right-1 px-1 py-0.5 rounded text-[10px] font-semibold border ${
-                        rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common
-                      }`}>
-                        {item.rarity.toUpperCase()}
+                        {quantity > 1 && (
+                          <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-primary/80 text-white text-xs font-semibold">
+                            x{quantity}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <CardHeader className="p-3">
-                      <CardTitle className="text-sm line-clamp-1">{item.name}</CardTitle>
-                      <CardDescription className="text-xs line-clamp-2">{item.description}</CardDescription>
-                    </CardHeader>
-                  </Card>
-                )
-              })}
-            </div>
+                      <CardHeader className="p-3">
+                        <CardTitle className="text-sm line-clamp-1">{item.name}</CardTitle>
+                        <CardDescription className="text-xs line-clamp-2">{item.description}</CardDescription>
+                      </CardHeader>
+                    </Card>
+                  )
+                })}
+              </div>
+            )}
           </TabsContent>
           <TabsContent value="consumables">
-            <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {consumableItems.map((item) => {
-                const itemImage = getItemImageFromData(item)
-                return (
-                  <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-md hover:shadow-primary/20 transition-all">
-                    <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
-                      {itemImage ? (
-                        <Image
-                          src={itemImage}
-                          alt={item.name}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-110"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <FlaskConical className="h-8 w-8 text-muted-foreground/50" />
+            {consumableItems.length === 0 ? (
+              <div className="py-12 text-center">
+                <FlaskConical className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <p className="text-muted-foreground">No consumable items in your inventory</p>
+              </div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {consumableItems.map((item) => {
+                  const itemImage = getItemImageFromData(item)
+                  const quantity = getItemQuantity(item.id)
+                  return (
+                    <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-md hover:shadow-primary/20 transition-all">
+                      <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
+                        {itemImage ? (
+                          <Image
+                            src={itemImage}
+                            alt={item.name}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center">
+                            <FlaskConical className="h-8 w-8 text-muted-foreground/50" />
+                          </div>
+                        )}
+                        <div className={`absolute top-1 right-1 px-1 py-0.5 rounded text-[10px] font-semibold border ${
+                          rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common
+                        }`}>
+                          {item.rarity.toUpperCase()}
                         </div>
-                      )}
-                      <div className={`absolute top-1 right-1 px-1 py-0.5 rounded text-[10px] font-semibold border ${
-                        rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common
-                      }`}>
-                        {item.rarity.toUpperCase()}
+                        {quantity > 1 && (
+                          <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded bg-primary/80 text-white text-xs font-semibold">
+                            x{quantity}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <CardHeader className="p-3">
-                      <CardTitle className="text-sm line-clamp-1">{item.name}</CardTitle>
-                      <CardDescription className="text-xs line-clamp-2">{item.description}</CardDescription>
-                    </CardHeader>
-                  </Card>
-                )
-              })}
-            </div>
+                      <CardHeader className="p-3">
+                        <CardTitle className="text-sm line-clamp-1">{item.name}</CardTitle>
+                        <CardDescription className="text-xs line-clamp-2">{item.description}</CardDescription>
+                      </CardHeader>
+                    </Card>
+                  )
+                })}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
@@ -1029,24 +1126,164 @@ function ClaimSection() {
   const [totalPendingCHS, setTotalPendingCHS] = useState(0)
   const [isClaiming, setIsClaiming] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [pendingRewards, setPendingRewards] = useState<ReturnType<typeof getPendingRewards>>([])
+  const justClaimedRef = useRef(false)
+
+  // Check if user is authorized minter
+  const { data: isAuthorizedMinter } = useContractRead({
+    address: CHS_TOKEN_ADDRESS,
+    abi: CHS_TOKEN_ABI,
+    functionName: 'authorizedMinters',
+    args: address ? [address] : undefined,
+    enabled: !!address && isConnected && CHS_TOKEN_ADDRESS !== '0x0000000000000000000000000000',
+  })
+
+  // Contract write for minting
+  const { write: mintCHS, data: mintHash, isLoading: isMinting, error: mintError } = useContractWrite({
+    address: CHS_TOKEN_ADDRESS,
+    abi: CHS_TOKEN_ABI,
+    functionName: 'mint',
+    onError: (error) => {
+      logger.error('Mint transaction error', error as Error)
+      toast({
+        title: 'Mint Failed',
+        description: error.message || 'Failed to mint CHS tokens. Please try again.',
+        variant: 'destructive',
+      })
+      setIsClaiming(false)
+    },
+  })
+
+  const { isLoading: isConfirmingMint, isSuccess: mintSuccess } = useWaitForTransaction({
+    hash: mintHash as `0x${string}` | undefined,
+  })
 
   // Ensure component is mounted before rendering client-only content
   useEffect(() => {
     setMounted(true)
   }, [])
 
+  // Update pending CHS when component mounts, connection changes, or storage changes
   useEffect(() => {
-    if (mounted && isConnected) {
-      setTotalPendingCHS(getTotalPendingCHS())
+    if (!mounted) return
+    
+    const updatePendingCHS = () => {
+      // Don't update if we just claimed (wait a bit to avoid race condition)
+      if (justClaimedRef.current) {
+        justClaimedRef.current = false
+        return
+      }
+      
+      try {
+        const rewards = getPendingRewards()
+        const pending = getTotalPendingCHS()
+        logger.info('Updating pending CHS', { rewards, pending, rewardsCount: rewards.length })
+        setPendingRewards(rewards)
+        setTotalPendingCHS(pending)
+      } catch (error) {
+        logger.error('Error updating pending CHS', { error })
+      }
     }
-  }, [mounted, isConnected])
+    
+    // Initial load
+    updatePendingCHS()
+    
+    // Listen for storage changes from other tabs
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'chessnoth_pending_rewards') {
+        updatePendingCHS()
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Custom event listener for same-tab updates
+    const handleCustomStorageChange = () => {
+      updatePendingCHS()
+    }
+    
+    window.addEventListener('chessnoth-rewards-updated', handleCustomStorageChange)
+    
+    // Also check periodically (in case same-tab updates)
+    const interval = setInterval(updatePendingCHS, 2000)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('chessnoth-rewards-updated', handleCustomStorageChange)
+      clearInterval(interval)
+    }
+  }, [mounted, isConnected, address])
+
+  // Handle successful mint - just show toast
+  useEffect(() => {
+    if (mintSuccess) {
+      toast({
+        title: 'CHS Claimed Successfully',
+        description: 'CHS tokens minted to your wallet!',
+      })
+      setIsClaiming(false)
+    }
+  }, [mintSuccess, toast])
 
   const handleClaimCHS = async () => {
     if (!address || totalPendingCHS === 0 || isClaiming) return
 
     try {
       setIsClaiming(true)
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '/api/claim-chs'
+      const amountInWei = parseCHSAmount(totalPendingCHS.toString())
+
+      if (isAuthorizedMinter && CHS_TOKEN_ADDRESS !== '0x0000000000000000000000000000000000000000') {
+        logger.info('Minting CHS via contract', { address, amount: totalPendingCHS })
+        
+        // LIMPIAR INMEDIATAMENTE ANTES DE MINTEAR
+        justClaimedRef.current = true
+        localStorage.removeItem('chessnoth_pending_rewards')
+        setPendingRewards([])
+        setTotalPendingCHS(0)
+        logger.info('Rewards cleared BEFORE mint')
+        
+        mintCHS({ args: [address, amountInWei] })
+        
+        setTimeout(() => {
+          justClaimedRef.current = false
+        }, 10000)
+        
+        return
+      }
+
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
+      if (!backendUrl) {
+        logger.warn('No backend URL and not authorized minter, simulating claim', { totalPendingCHS })
+        // Save the amount before clearing
+        const claimedAmount = totalPendingCHS
+        
+        // ELIMINAR TODAS LAS RECOMPENSAS DEL CLAIM
+        logger.info('Before claim - totalCHS:', totalPendingCHS)
+        
+        if (typeof window !== 'undefined') {
+          // ELIMINAR COMPLETAMENTE del localStorage
+          localStorage.removeItem('chessnoth_pending_rewards')
+          logger.info('localStorage cleared')
+        }
+        
+        // Update state immediately
+        setPendingRewards([])
+        setTotalPendingCHS(0)
+        
+        // Mark that we just claimed
+        justClaimedRef.current = true
+        setTimeout(() => {
+          justClaimedRef.current = false
+        }, 5000)
+        
+        toast({
+          title: 'CHS Claimed (Simulated)',
+          description: `Successfully claimed ${formatCHSAmount(parseCHSAmount(claimedAmount.toString()))} CHS tokens. Note: Backend not configured and not authorized minter - this is a simulation.`,
+        })
+        setIsClaiming(false)
+        return
+      }
+
       const response = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1057,16 +1294,28 @@ function ClaimSection() {
       })
 
       if (response.ok) {
-        const rewards = getPendingRewards()
-        const updatedRewards = rewards.map((r) => ({ ...r, chs: 0 }))
-        const filteredRewards = updatedRewards.filter((r) => r.exp > 0 || r.chs > 0)
+        // ELIMINAR TODAS LAS RECOMPENSAS DEL CLAIM
+        logger.info('Before claim - totalCHS:', totalPendingCHS)
+        
         if (typeof window !== 'undefined') {
-          localStorage.setItem('chessnoth_pending_rewards', JSON.stringify(filteredRewards))
+          // ELIMINAR COMPLETAMENTE del localStorage
+          localStorage.removeItem('chessnoth_pending_rewards')
+          logger.info('localStorage cleared')
         }
+        
+        // Update state immediately
+        setPendingRewards([])
         setTotalPendingCHS(0)
+        
+        // Mark that we just claimed
+        justClaimedRef.current = true
+        setTimeout(() => {
+          justClaimedRef.current = false
+        }, 5000)
+        
         toast({
-          title: 'CHS Reclamados',
-          description: `You have successfully claimed ${totalPendingCHS} CHS tokens!`,
+          title: 'CHS Claimed',
+          description: `You have successfully claimed ${formatCHSAmount(parseCHSAmount(claimedAmount.toString()))} CHS tokens!`,
         })
       } else {
         toast({
@@ -1076,7 +1325,7 @@ function ClaimSection() {
         })
       }
     } catch (error) {
-      logger.error('Error claiming CHS', { error })
+      logger.error('Error claiming CHS', error as Error)
       toast({
         title: 'Error',
         description: 'An error occurred while trying to claim CHS.',
@@ -1137,35 +1386,35 @@ function ClaimSection() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-yellow-500" />
-          Reclamar CHS
+          Claim CHS
         </CardTitle>
         <CardDescription className="text-purple-200/60">
-          Reclama los tokens CHS que has ganado en combate
+          Claim the CHS tokens you earned in combat
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
           <span className="text-lg font-medium text-purple-200">Total Pending:</span>
           <span className="text-3xl font-bold text-primary">
-            {formatCHSAmount(BigInt(totalPendingCHS))} CHS
+            {formatCHSAmount(totalPendingCHS)} CHS
           </span>
         </div>
         {totalPendingCHS > 0 ? (
           <Button
             onClick={handleClaimCHS}
-            disabled={isClaiming}
+            disabled={isClaiming || isMinting || isConfirmingMint}
             className="w-full"
             size="lg"
           >
-            {isClaiming ? (
+            {(isClaiming || isMinting || isConfirmingMint) ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Reclamando...
+                {isMinting || isConfirmingMint ? 'Processing Transaction...' : 'Claiming...'}
               </>
             ) : (
               <>
                 <Coins className="h-5 w-5 mr-2" />
-                Claim {formatCHSAmount(BigInt(totalPendingCHS))} CHS
+                Claim {formatCHSAmount(parseCHSAmount(totalPendingCHS.toString()))} CHS
               </>
             )}
           </Button>

@@ -26,12 +26,19 @@ interface CombatBoardProps {
 }
 
 /**
- * Get sprite path for a character class
+ * Get sprite path for a character
+ * For bosses, use their custom sprite, otherwise use class sprite
  * Handles various formats: "warrior", "Dark Mage", "dark_mage", etc.
  */
-function getCharacterSpritePath(characterClass: string): string {
+function getCharacterSpritePath(character: CombatCharacter): string {
+  // If this is a boss, use the boss sprite
+  if (character.isBoss && character.bossSprite) {
+    return character.bossSprite
+  }
+  
+  // Otherwise, use the class sprite
   // Normalize: lowercase, replace spaces/hyphens with underscores
-  const normalizedClass = characterClass
+  const normalizedClass = character.class
     .toLowerCase()
     .trim()
     .replace(/[\s-]+/g, '_')
@@ -120,20 +127,30 @@ export function CombatBoard({
                     (isValidMove || isValidAttack || isCurrentChar) && 'opacity-75'
                   )}
                 >
+                  {/* Subtle inner shadow for depth */}
+                  <div className="absolute inset-0 rounded-lg shadow-inner opacity-20" />
+                  
+                  {/* Terrain texture */}
                   <div
-                    className="w-full h-full"
+                    className="w-full h-full rounded-lg"
                     style={{
                       backgroundColor:
                         terrainConfig.solidColor || terrainConfig.bgColor || '#4ade80',
                       backgroundImage: terrainConfig.texturePath
                         ? `url(${terrainConfig.texturePath})`
                         : undefined,
-                      backgroundSize: '64px 64px',
+                      backgroundSize: 'cover',
                       backgroundPosition: 'center',
                       backgroundRepeat: 'no-repeat',
-                      imageRendering: 'crisp-edges',
+                      imageRendering: 'auto',
                     }}
                   />
+                  
+                  {/* Subtle border for definition */}
+                  <div className="absolute inset-0 rounded-lg border border-black/10" />
+                  
+                  {/* Light gradient overlay for depth */}
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/5 via-transparent to-black/10" />
                 </div>
 
                 {/* Overlay for valid moves - cyan/blue for better visibility */}
@@ -291,7 +308,7 @@ function CharacterSprite({ character }: { character: CombatCharacter }) {
         )}
       >
         <Image
-          src={getCharacterSpritePath(character.class)}
+          src={getCharacterSpritePath(character)}
           alt={character.name}
           width={48}
           height={48}

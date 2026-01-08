@@ -5,13 +5,16 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title CharacterNFT
  * @dev ERC-721 contract for character NFTs in the tactical RPG game
  * Supports minting, metadata updates, and ownership verification
+ * Includes pausable functionality for emergency stops
+ * Includes rate limiting to prevent spam minting
  */
-contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
+contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     // Mapping from token ID to IPFS hash
     mapping(uint256 => string) private _tokenURIs;
     
@@ -38,6 +41,10 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     
     // Counter for token IDs
     uint256 private _tokenIdCounter;
+    
+    // Rate limiting for minting (anti-spam)
+    mapping(address => uint256) public lastMintTime;
+    uint256 public constant MINT_COOLDOWN = 1 hours;
     
     // Events
     event CharacterMinted(
@@ -115,11 +122,18 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
         uint256 generation,
         string memory class,
         string memory name
-    ) external returns (uint256) {
+    ) external whenNotPaused returns (uint256) {
         require(to != address(0), "CharacterNFT: Cannot mint to zero address");
         require(bytes(ipfsHash).length > 0, "CharacterNFT: IPFS hash required");
         require(bytes(class).length > 0, "CharacterNFT: Class required");
         require(bytes(name).length > 0, "CharacterNFT: Name required");
+        
+        // Rate limiting: prevent spam minting
+        require(
+            block.timestamp >= lastMintTime[msg.sender] + MINT_COOLDOWN,
+            "CharacterNFT: Mint cooldown active"
+        );
+        lastMintTime[msg.sender] = block.timestamp;
         
         uint256 tokenId = _tokenIdCounter;
         _tokenIdCounter++;
@@ -166,7 +180,7 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     function upgradeCharacter(
         uint256 tokenId,
         uint256 expAmount
-    ) external {
+    ) external whenNotPaused {
         require(
             _isAuthorized(_ownerOf(tokenId), msg.sender, tokenId),
             "CharacterNFT: Not authorized to upgrade"
@@ -343,11 +357,38 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard {
     }
     
     /**
+     * @dev Pauses all token transfers and minting
+     * Can only be called by the contract owner
+     */
+    function pause() external onlyOwner {
+        _pause();
+    }
+    
+    /**
+     * @dev Unpauses all token transfers and minting
+     * Can only be called by the contract owner
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+    
+    /**
      * @dev Override supportsInterface to include ERC721Enumerable
      */
     function supportsInterface(
         bytes4 interfaceId
     ) public view override(ERC721Enumerable) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+    
+    /**
+     * @dev Override _update to include pausable check
+     */
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal override whenNotPaused returns (address) {
+        return super._update(to, tokenId, auth);
     }
 }

@@ -1,4 +1,7 @@
-// Skill points and learned skills management
+/**
+ * Skill points and learned skills management
+ * Handles localStorage persistence of character skill investments
+ */
 const STORAGE_KEY = 'chessnoth_skills'
 
 export interface CharacterSkills {
@@ -9,6 +12,11 @@ export interface CharacterSkills {
   }
 }
 
+/**
+ * Gets all skill data for a character
+ * @param tokenId - The NFT token ID of the character
+ * @returns Object containing skillPoints, usedSkillPoints, and equippedSkills
+ */
 export function getCharacterSkills(tokenId: string): {
   skillPoints: { [skillId: string]: number }
   usedSkillPoints: number
@@ -39,11 +47,23 @@ export function getCharacterSkills(tokenId: string): {
   return charSkills
 }
 
+/**
+ * Gets the number of points invested in a specific skill
+ * @param tokenId - The NFT token ID of the character
+ * @param skillId - The ID of the skill to check
+ * @returns Number of points invested (0 if not learned)
+ */
 export function getSkillPoints(tokenId: string, skillId: string): number {
   const characterSkills = getCharacterSkills(tokenId)
   return characterSkills.skillPoints[skillId] || 0
 }
 
+/**
+ * Adds skill points to a character's skill
+ * @param tokenId - The NFT token ID of the character
+ * @param skillId - The ID of the skill to upgrade
+ * @param spCost - The number of skill points to invest
+ */
 export function addSkillPoint(tokenId: string, skillId: string, spCost: number) {
   if (typeof window === 'undefined') return
   
@@ -76,6 +96,12 @@ export function addSkillPoint(tokenId: string, skillId: string, spCost: number) 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(skills))
 }
 
+/**
+ * Removes skill points from a character's skill (refund)
+ * @param tokenId - The NFT token ID of the character
+ * @param skillId - The ID of the skill to downgrade
+ * @param spCost - The number of skill points to refund
+ */
 export function removeSkillPoint(tokenId: string, skillId: string, spCost: number) {
   if (typeof window === 'undefined') return
   

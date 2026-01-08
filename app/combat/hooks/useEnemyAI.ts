@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   getValidMovePositions,
   getValidAttackTargets,
@@ -25,6 +25,7 @@ interface UseEnemyAIParams {
   nextTurn: () => void
   operationInProgressRef: React.MutableRefObject<boolean>
   timeoutRefsRef: React.MutableRefObject<Set<NodeJS.Timeout>>
+  combatLog: ReturnType<typeof import('./useCombatLog').useCombatLog>
 }
 
 /**
@@ -41,13 +42,27 @@ export function useEnemyAI({
   nextTurn,
   operationInProgressRef,
   timeoutRefsRef,
+  combatLog,
 }: UseEnemyAIParams) {
+  // Track logged turns to prevent duplicates
+  const loggedTurnsRef = useRef<Set<string>>(new Set())
+  
   // Auto-play enemy turns
   useEffect(() => {
     if (!combatState || combatState.gameOver) return
 
     const current = getCurrentCharacter()
     if (!current || current.team !== 'enemy') return
+
+    // Log enemy turn start (only once per turn)
+    if (!current.hasMoved && !current.hasActed) {
+      // Create a unique key for this turn (character ID + turn number)
+      const turnKey = `${current.id}-${combatState.turn}-${combatState.currentTurnIndex}`
+      if (!loggedTurnsRef.current.has(turnKey)) {
+        loggedTurnsRef.current.add(turnKey)
+        combatLog.addTurnLog(current.name)
+      }
+    }
 
     // If enemy already completed turn, advance
     if (current.hasMoved && current.hasActed) {
@@ -133,6 +148,13 @@ export function useEnemyAI({
             }
 
             logger.debug('Enemy moving', { row: bestMove.row, col: bestMove.col })
+            
+            // Log movement
+            combatLog.addLog({
+              type: 'move',
+              actor: currentChar.name,
+              message: `${currentChar.name} moves`,
+            })
 
             // Verify the target cell is not occupied by an enemy (allies can be passed through but not moved onto)
             const cellOccupant = currentBoard[bestMove.row]?.[bestMove.col]
@@ -338,6 +360,10 @@ export function useEnemyAI({
             const target = validTargets[0]
             const damage = calculateDamage(currentChar, target, true)
             logger.debug('Enemy attacking', { target: target.name, damage })
+
+            // Log attack and damage
+            combatLog.addAttackLog(currentChar.name, target.name)
+            combatLog.addDamageLog(currentChar.name, target.name, damage)
 
             // Set animation states
             const attackingEnemy = { ...currentChar, animationState: 'attacking' as AnimationState, hasActed: true }

@@ -126,6 +126,12 @@ export default function CharactersPage() {
               {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
+                functionName: 'getName' as const,
+                args: [tokenId],
+              },
+              {
+                address: CHARACTER_NFT_ADDRESS,
+                abi: CHARACTER_NFT_ABI,
                 functionName: 'getClass' as const,
                 args: [tokenId],
               },
@@ -171,17 +177,20 @@ export default function CharactersPage() {
     }
 
     return validTokenIds.map(({ tokenId, index }) => {
-      // Each token has 3 data points: URI (index*3), Class (index*3+1), Level (index*3+2)
-      const uriIndex = index * 3
-      const classIndex = index * 3 + 1
-      const levelIndex = index * 3 + 2
+      // Each token has 4 data points: URI (index*4), Name (index*4+1), Class (index*4+2), Level (index*4+3)
+      const uriIndex = index * 4
+      const nameIndex = index * 4 + 1
+      const classIndex = index * 4 + 2
+      const levelIndex = index * 4 + 3
 
       const uriResult = tokenDataResults[uriIndex]
+      const nameResult = tokenDataResults[nameIndex]
       const classResult = tokenDataResults[classIndex]
       const levelResult = tokenDataResults[levelIndex]
 
       // Extract and validate data using utility functions
       const uri = extractStringFromResult(uriResult)
+      const characterName = extractStringFromResult(nameResult, '')
       const characterClass = extractStringFromResult(classResult, 'warrior')
       const level = extractLevelFromResult(levelResult, 1)
       const formattedClass = formatClassName(characterClass)
@@ -190,7 +199,7 @@ export default function CharactersPage() {
         tokenId,
         uri,
         metadata: {
-          name: `Character #${tokenId}`,
+          name: characterName || 'Unknown Character',
           class: formattedClass,
           level,
           image: getNFTCharacterImage(characterClass) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tokenId}`,
@@ -283,7 +292,7 @@ export default function CharactersPage() {
                             {character.metadata?.image ? (
                               <Image
                                 src={character.metadata.image}
-                                alt={character.metadata.name || `Character #${character.tokenId}`}
+                                alt={character.metadata.name || 'Character'}
                                 fill
                                 className="object-cover transition-transform duration-300 group-hover:scale-110"
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -295,7 +304,7 @@ export default function CharactersPage() {
                             )}
                           </div>
                           <CardTitle className="mt-4 group-hover:text-purple-200 transition-colors">
-                            {character.metadata?.name || `Character #${character.tokenId}`}
+                            {character.metadata?.name || 'Unknown Character'}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-2">
                             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
@@ -376,7 +385,7 @@ export default function CharactersPage() {
                                               src={portrait}
                                               alt={
                                                 character.metadata?.name ||
-                                                `Character #${character.tokenId}`
+                                                'Character'
                                               }
                                               width={40}
                                               height={40}
@@ -391,7 +400,7 @@ export default function CharactersPage() {
                                       </div>
                                       <span className="font-medium">
                                         {character.metadata?.name ||
-                                          `Character #${character.tokenId}`}
+                                          'Character'}
                                       </span>
                                     </div>
                                   </td>
@@ -498,7 +507,7 @@ export default function CharactersPage() {
                                               src={portrait}
                                               alt={
                                                 character.metadata?.name ||
-                                                `Character #${character.tokenId}`
+                                                'Character'
                                               }
                                               width={40}
                                               height={40}
@@ -513,7 +522,7 @@ export default function CharactersPage() {
                                       </div>
                                       <span className="font-medium">
                                         {character.metadata?.name ||
-                                          `Character #${character.tokenId}`}
+                                          'Character'}
                                       </span>
                                     </div>
                                   </td>
@@ -666,11 +675,11 @@ function LevelUpTab() {
       const newTotal = getTotalPendingEXP()
       setPendingRewards(newTotal)
       toast({
-        title: 'Upgrade iniciado',
-        description: 'La transacción ha sido enviada. Espera la confirmación.',
+        title: 'Upgrade Started',
+        description: 'Transaction has been sent. Please wait for confirmation.',
       })
     } catch (error) {
-      logger.error('Error upgrading character', { tokenId, expAmount, error })
+      logger.error('Error upgrading character', error as Error, { tokenId, expAmount })
       toast({
         title: 'Error',
         description: 'No se pudo realizar el upgrade. Verifica que tengas suficiente gas.',
@@ -1076,7 +1085,7 @@ function ClaimSection() {
         })
       }
     } catch (error) {
-      logger.error('Error claiming CHS', { error })
+      logger.error('Error claiming CHS', error as Error)
       toast({
         title: 'Error',
         description: 'An error occurred while trying to claim CHS.',

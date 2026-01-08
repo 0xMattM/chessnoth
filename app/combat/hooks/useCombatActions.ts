@@ -16,6 +16,8 @@ import { logger } from '@/lib/logger'
 import { ERROR_MESSAGES, ANIMATION_DURATIONS } from '@/lib/constants'
 import { useToast } from '@/hooks/use-toast'
 import type { Skill, Item } from '@/lib/types'
+import { removeItem, getItemQuantity } from '@/lib/inventory'
+import type { useCombatLog } from './useCombatLog'
 
 interface UseCombatActionsParams {
   combatState: CombatState | null
@@ -27,6 +29,7 @@ interface UseCombatActionsParams {
   getValidMoves: () => Array<{ row: number; col: number }>
   getValidTargets: (selectedSkill: Skill | null) => CombatCharacter[]
   nextTurn: () => void
+  combatLog: ReturnType<typeof import('./useCombatLog').useCombatLog>
 }
 
 export interface UseCombatActionsReturn {
@@ -54,6 +57,7 @@ export function useCombatActions({
   getValidMoves,
   getValidTargets,
   nextTurn,
+  combatLog,
 }: UseCombatActionsParams): UseCombatActionsReturn {
   const { toast } = useToast()
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([])
@@ -159,11 +163,13 @@ export function useCombatActions({
       }
 
       if (action === 'item') {
-        // Load consumable items
+        // Load consumable items that are in inventory
         try {
           const itemsModule = await import('@/data/items.json')
           const allItems = itemsModule.default || itemsModule
-          const consumables = (allItems as Item[]).filter((item) => item.type === 'consumable')
+          const consumables = (allItems as Item[])
+            .filter((item) => item.type === 'consumable')
+            .filter((item) => getItemQuantity(item.id) > 0) // Only show items in inventory
           setAvailableItems(consumables)
           setSelectedItem(null)
         } catch (error) {
@@ -393,6 +399,10 @@ export function useCombatActions({
           const damage = calculateDamage(current, target, true)
           const newTargetHp = Math.max(0, target.stats.hp - damage)
 
+          // Log attack
+          combatLog.addAttackLog(current.name, target.name)
+          combatLog.addDamageLog(current.name, target.name, damage)
+
           // Create updated characters with animation states
           const updatedTarget = {
             ...target,
@@ -510,9 +520,19 @@ export function useCombatActions({
       // Check if clicking on a valid skill target
       if (combatState.selectedAction === 'skill' && selectedSkill) {
         const skillTargets = getValidSkillTargets(current, selectedSkill, combatState.characters)
-        const target = skillTargets.find((t) => t.position?.row === row && t.position?.col === col)
+        const target = skillTargets.find((t) => {
+          // For defeated characters (no position), check by ID
+          if (!t.position) {
+            return t.id === combatState.characters.find((c) => c.position?.row === row && c.position?.col === col)?.id
+          }
+          return t.position?.row === row && t.position?.col === col
+        })
 
-        if (target || (!selectedSkill.requiresTarget && current.position?.row === row && current.position?.col === col)) {
+        // Also allow clicking on self for self-targeting skills
+        const isSelfClick = current.position?.row === row && current.position?.col === col
+        const isSelfTargeting = !selectedSkill.requiresTarget || selectedSkill.range === 0
+
+        if (target || (isSelfTargeting && isSelfClick)) {
           const actualTarget = target || current
 
           // Check if character can use skills (not silenced)
@@ -535,84 +555,174 @@ export function useCombatActions({
             return
           }
 
+          // Handle AOE skills that target all allies
+          const isAllAlliesAOE = selectedSkill.aoeType === 'all_allies'
+          const targetsToAffect = isAllAlliesAOE
+            ? combatState.characters.filter((c) => c.team === 'player' && (c.id === current.id || c.team === current.team))
+            : [actualTarget]
+
           // Set animation states for casting
           const castingChar = { ...current, animationState: 'casting' as AnimationState }
-          const skillTarget = { ...actualTarget }
-          if (selectedSkill.damageType !== 'none' && actualTarget.team !== current.team) {
-            skillTarget.animationState = 'hit' as AnimationState
-          }
+          const updatedTargets = targetsToAffect.map((t) => {
+            const updated = { ...t }
+            // Set animation for damage skills on enemies
+            if (selectedSkill.damageType !== 'none' && selectedSkill.damageType !== 'healing' && t.team !== current.team) {
+              updated.animationState = 'hit' as AnimationState
+            }
+            // Set animation for healing skills on allies
+            if ((selectedSkill.damageType === 'healing' || selectedSkill.effects?.some((e) => e.type === 'heal')) && t.team === current.team) {
+              updated.animationState = 'heal' as AnimationState
+            }
+            return updated
+          })
 
-          // Use skill
+          // Use skill - consume mana
           castingChar.stats.mana -= selectedSkill.manaCost
 
-          if (selectedSkill.damageType !== 'none' && actualTarget.team !== current.team) {
-            // Damage skill
-            const isPhysical = selectedSkill.damageType === 'physical'
-            const damage = calculateDamage(current, actualTarget, isPhysical, selectedSkill.damageMultiplier || 1.0)
-            skillTarget.stats.hp = Math.max(0, actualTarget.stats.hp - damage)
+          // Log skill usage
+          const targetNames = updatedTargets.map((t) => t.name).join(', ')
+          combatLog.addSkillLog(current.name, selectedSkill.name, targetNames || undefined)
+          
+          // Update quest progress for skill usage
+          if (typeof window !== 'undefined') {
+            const { updateQuestProgress } = require('@/lib/daily-quests')
+            updateQuestProgress('use_skill', 1)
           }
 
-          // Apply skill effects
-          if (selectedSkill.effects) {
-            selectedSkill.effects.forEach((effect) => {
-              if (effect.type === 'heal' && effect.value !== undefined) {
-                skillTarget.stats.hp = Math.min(actualTarget.stats.maxHp, skillTarget.stats.hp + effect.value)
-              } else if (effect.type === 'mana' && effect.value !== undefined) {
-                skillTarget.stats.mana = Math.min(actualTarget.stats.maxMana, skillTarget.stats.mana + effect.value)
-              } else if (effect.type === 'buff' && effect.stat && effect.duration !== undefined) {
-                // Add status effect with statusId if provided
-                skillTarget.statusEffects.push({
-                  type: effect.stat,
-                  statusId: effect.statusId || effect.stat,
-                  duration: effect.duration,
-                  value: effect.value,
-                })
-              } else if (effect.type === 'debuff' && effect.stat && effect.duration !== undefined) {
-                // Add debuff status effect
-                skillTarget.statusEffects.push({
-                  type: effect.stat,
-                  statusId: effect.statusId || effect.stat,
-                  duration: effect.duration,
-                  value: effect.value,
-                })
-              } else if (effect.type === 'status' && effect.statusId && effect.duration !== undefined) {
-                // Add status effect (stun, freeze, etc.)
-                skillTarget.statusEffects.push({
-                  type: effect.statusId,
-                  statusId: effect.statusId,
-                  duration: effect.duration,
-                  value: effect.value,
-                })
+          // Apply damage or healing to all affected targets
+          updatedTargets.forEach((skillTarget) => {
+            const originalTarget = combatState.characters.find((c) => c.id === skillTarget.id)
+            if (!originalTarget) return
+
+            // Apply damage to enemies
+            if (selectedSkill.damageType === 'magical' || selectedSkill.damageType === 'physical') {
+              if (skillTarget.team !== current.team) {
+                const isPhysical = selectedSkill.damageType === 'physical'
+                const damage = calculateDamage(current, skillTarget, isPhysical, selectedSkill.damageMultiplier || 1.0)
+                skillTarget.stats.hp = Math.max(0, originalTarget.stats.hp - damage)
+                // Log damage
+                combatLog.addDamageLog(current.name, skillTarget.name, damage)
               }
+            }
+            
+            // Apply healing
+            if (selectedSkill.damageType === 'healing') {
+              if (skillTarget.team === current.team || skillTarget.id === current.id) {
+                const healAmount = Math.floor((current.stats.mag || 0) * (selectedSkill.damageMultiplier || 0.5))
+                const oldHp = originalTarget.stats.hp
+                skillTarget.stats.hp = Math.min(originalTarget.stats.maxHp, originalTarget.stats.hp + healAmount)
+                const actualHeal = skillTarget.stats.hp - oldHp
+                // Log healing
+                if (actualHeal > 0) {
+                  combatLog.addHealLog(current.name, skillTarget.name, actualHeal)
+                  
+                  // Update quest progress for healing
+                  if (typeof window !== 'undefined') {
+                    const { updateQuestProgress } = require('@/lib/daily-quests')
+                    updateQuestProgress('heal_character', 1)
+                  }
+                }
+                // Revive if defeated
+                if (originalTarget.stats.hp === 0 && skillTarget.stats.hp > 0 && !originalTarget.position) {
+                  // Find a valid position near the caster
+                  const casterPos = current.position
+                  if (casterPos) {
+                    // Try to place near caster (simplified - could be improved)
+                    skillTarget.position = { row: casterPos.row, col: casterPos.col + 1 }
+                  }
+                }
+              }
+            }
+          })
+
+          // Apply skill effects to all affected targets
+          if (selectedSkill.effects) {
+            updatedTargets.forEach((skillTarget) => {
+              const originalTarget = combatState.characters.find((c) => c.id === skillTarget.id)
+              if (!originalTarget) return
+
+              selectedSkill.effects?.forEach((effect) => {
+                if (effect.type === 'heal' && effect.value !== undefined) {
+                  const oldHp = skillTarget.stats.hp
+                  skillTarget.stats.hp = Math.min(originalTarget.stats.maxHp, skillTarget.stats.hp + effect.value)
+                  const actualHeal = skillTarget.stats.hp - oldHp
+                  if (actualHeal > 0) {
+                    combatLog.addHealLog(current.name, skillTarget.name, actualHeal)
+                  }
+                } else if (effect.type === 'mana' && effect.value !== undefined) {
+                  skillTarget.stats.mana = Math.min(originalTarget.stats.maxMana, skillTarget.stats.mana + effect.value)
+                } else if (effect.type === 'buff' && effect.stat && effect.duration !== undefined) {
+                  // Add status effect with statusId if provided
+                  skillTarget.statusEffects.push({
+                    type: effect.stat,
+                    statusId: effect.statusId || effect.stat,
+                    duration: effect.duration,
+                    value: effect.value,
+                  })
+                  // Log buff
+                  combatLog.addBuffLog(current.name, skillTarget.name, effect.stat, effect.duration)
+                } else if (effect.type === 'debuff' && effect.stat && effect.duration !== undefined) {
+                  // Add debuff status effect
+                  skillTarget.statusEffects.push({
+                    type: effect.stat,
+                    statusId: effect.statusId || effect.stat,
+                    duration: effect.duration,
+                    value: effect.value,
+                  })
+                  // Log debuff
+                  combatLog.addDebuffLog(current.name, skillTarget.name, effect.stat, effect.duration)
+                } else if (effect.type === 'status' && effect.statusId && effect.duration !== undefined) {
+                  // Add status effect (stun, freeze, etc.)
+                  skillTarget.statusEffects.push({
+                    type: effect.statusId,
+                    statusId: effect.statusId,
+                    duration: effect.duration,
+                    value: effect.value,
+                  })
+                  // Log status
+                  combatLog.addStatusLog(current.name, skillTarget.name, effect.statusId, effect.duration)
+                }
+              })
             })
           }
 
           castingChar.hasActed = true
 
-          // Update board incrementally (preserve animations)
+          // Update characters in combat state
+          const updatedCharacters = combatState.characters.map((c) => {
+            if (c.id === current.id) return castingChar
+            const updated = updatedTargets.find((t) => t.id === c.id)
+            return updated || c
+          })
+
+          // Update board with all changes
           setBoard((prevBoard) => {
             const newBoard = prevBoard.map((r) => [...r])
             if (current.position) {
               newBoard[current.position.row][current.position.col] = castingChar
             }
-            if (actualTarget.position) {
-              newBoard[actualTarget.position.row][actualTarget.position.col] = skillTarget
-            }
+            updatedTargets.forEach((skillTarget) => {
+              if (skillTarget.position) {
+                newBoard[skillTarget.position.row][skillTarget.position.col] = skillTarget
+              } else if (skillTarget.stats.hp === 0) {
+                // Remove defeated characters from board
+                const oldPos = combatState.characters.find((c) => c.id === skillTarget.id)?.position
+                if (oldPos) {
+                  newBoard[oldPos.row][oldPos.col] = null
+                }
+              }
+            })
             return newBoard
           })
 
-          // Check if target is defeated and update board
-          if (skillTarget.stats.hp === 0 && skillTarget.position) {
-            skillTarget.position = null
-            skillTarget.animationState = 'defeated' as AnimationState
-            setBoard((prevBoard) => {
-              const newBoard = prevBoard.map((r) => [...r])
-              if (actualTarget.position) {
-                newBoard[actualTarget.position.row][actualTarget.position.col] = null
-              }
-              return newBoard
-            })
-          }
+          // Update combat state
+          setCombatState({
+            ...combatState,
+            characters: updatedCharacters,
+            selectedAction: null,
+            selectedCharacter: castingChar,
+          })
+          setSelectedSkill(null)
 
           // Reset animation states after animation completes
           setTimeout(() => {
@@ -622,7 +732,8 @@ export function useCombatActions({
                 if (c.id === current.id && c.animationState === 'casting') {
                   return { ...c, animationState: 'idle' as AnimationState }
                 }
-                if (c.id === actualTarget.id && c.animationState === 'hit' && c.stats.hp > 0) {
+                const target = updatedTargets.find((t) => t.id === c.id)
+                if (target && (target.animationState === 'hit' || target.animationState === 'heal') && c.stats.hp > 0) {
                   return { ...c, animationState: 'idle' as AnimationState }
                 }
                 return c
@@ -641,7 +752,8 @@ export function useCombatActions({
                   if (c.id === current.id && c.animationState === 'casting') {
                     return { ...c, animationState: 'idle' as AnimationState }
                   }
-                  if (c.id === actualTarget.id && c.animationState === 'hit' && c.stats.hp > 0) {
+                  const target = updatedTargets.find((t) => t.id === c.id)
+                  if (target && (target.animationState === 'hit' || target.animationState === 'heal') && c.stats.hp > 0) {
                     return { ...c, animationState: 'idle' as AnimationState }
                   }
                   return c
@@ -651,14 +763,14 @@ export function useCombatActions({
             })
           }, ANIMATION_DURATIONS.SKILL) // Animation duration for skills (slightly longer)
 
-          // Check victory/defeat using centralized function
-          const combatEnd = checkCombatEnd(combatState.characters)
+          // Check victory/defeat using centralized function (use updated characters)
+          const combatEnd = checkCombatEnd(updatedCharacters)
           if (combatEnd.gameOver) {
             // Update board to remove all defeated characters
             setBoard((prevBoard) => {
               const newBoard = prevBoard.map((r) => r.map((c) => {
                 if (!c) return null
-                const char = combatState.characters.find((uc) => uc.id === c.id)
+                const char = updatedCharacters.find((uc) => uc.id === c.id)
                 if (!char || char.stats.hp === 0) return null
                 return char
               }))
@@ -666,6 +778,7 @@ export function useCombatActions({
             })
             setCombatState({
               ...combatState,
+              characters: updatedCharacters,
               gameOver: combatEnd.gameOver,
               victory: combatEnd.victory,
               selectedAction: null,
@@ -673,13 +786,6 @@ export function useCombatActions({
             setSelectedSkill(null)
             return
           }
-
-          setCombatState({
-            ...combatState,
-            selectedAction: null,
-            selectedCharacter: current,
-          })
-          setSelectedSkill(null)
 
           // Auto-advance turn after action
           setTimeout(() => {
@@ -691,32 +797,171 @@ export function useCombatActions({
 
       // Check if clicking on a valid item target (self or ally)
       if (combatState.selectedAction === 'item' && selectedItem) {
+        // Check if item is in inventory
+        const itemQuantity = getItemQuantity(selectedItem.id)
+        if (itemQuantity <= 0) {
+          toast({
+            variant: 'destructive',
+            title: 'Item Not Available',
+            description: 'You do not have this item in your inventory.',
+          })
+          setSelectedItem(null)
+          setCombatState({
+            ...combatState,
+            selectedAction: null,
+          })
+          return
+        }
+
+        // Find target (ally or self)
         const target = combatState.characters.find(
           (c) => c.position?.row === row && c.position?.col === col && c.team === 'player'
         )
 
+        // Allow clicking on self or ally
         if (target || (current.position?.row === row && current.position?.col === col)) {
           const actualTarget = target || current
+
+          // Log item usage
+          combatLog.addItemLog(current.name, selectedItem.name, actualTarget.name)
+
+          // Create updated target with animation
+          const updatedTarget = { ...actualTarget, animationState: 'heal' as AnimationState }
 
           // Apply item effects
           if (selectedItem.effects) {
             selectedItem.effects.forEach((effect) => {
               if (effect.type === 'heal' && effect.value !== undefined) {
-                actualTarget.stats.hp = Math.min(actualTarget.stats.maxHp, actualTarget.stats.hp + effect.value)
+                const oldHp = updatedTarget.stats.hp
+                updatedTarget.stats.hp = Math.min(actualTarget.stats.maxHp, actualTarget.stats.hp + effect.value)
+                const actualHeal = updatedTarget.stats.hp - oldHp
+                if (actualHeal > 0) {
+                  combatLog.addHealLog(current.name, actualTarget.name, actualHeal)
+                }
               } else if (effect.type === 'mana' && effect.value !== undefined) {
-                actualTarget.stats.mana = Math.min(actualTarget.stats.maxMana, actualTarget.stats.mana + effect.value)
+                updatedTarget.stats.mana = Math.min(actualTarget.stats.maxMana, actualTarget.stats.mana + effect.value)
+              } else if (effect.type === 'buff' && effect.stat && effect.duration !== undefined) {
+                // Add buff status effect
+                updatedTarget.statusEffects.push({
+                  type: effect.stat,
+                  statusId: effect.statusId || effect.stat,
+                  duration: effect.duration,
+                  value: effect.value,
+                })
+                // Log buff
+                combatLog.addBuffLog(current.name, actualTarget.name, effect.stat, effect.duration)
+              } else if (effect.type === 'status' && effect.statusId) {
+                // Handle status effects (cure_poison, etc.)
+                if (effect.statusId === 'cure_poison') {
+                  // Remove poison debuff
+                  updatedTarget.statusEffects = updatedTarget.statusEffects.filter(
+                    (se) => se.statusId !== 'poison' && se.type !== 'poison'
+                  )
+                  combatLog.addLog({
+                    type: 'status',
+                    actor: current.name,
+                    target: actualTarget.name,
+                    statusName: 'Poison Cured',
+                    message: `${current.name} cures poison on ${actualTarget.name}`,
+                  })
+                }
+              } else if (effect.type === 'revive' && effect.hpPercent !== undefined) {
+                // Revive defeated character
+                if (actualTarget.stats.hp === 0) {
+                  const reviveHp = Math.floor(actualTarget.stats.maxHp * (effect.hpPercent / 100))
+                  updatedTarget.stats.hp = reviveHp
+                  // Restore position if defeated
+                  if (!actualTarget.position && current.position) {
+                    // Try to place near caster
+                    updatedTarget.position = { row: current.position.row, col: current.position.col + 1 }
+                  }
+                  // Log revive
+                  combatLog.addHealLog(current.name, actualTarget.name, reviveHp)
+                }
               }
             })
           }
 
-          current.hasActed = true
+          // Consume item from inventory
+          const itemConsumed = removeItem(selectedItem.id, 1)
+          if (!itemConsumed) {
+            toast({
+              variant: 'destructive',
+              title: 'Failed to Use Item',
+              description: 'Could not consume item from inventory.',
+            })
+            return
+          }
 
+          // Update available items list (remove if quantity is now 0)
+          setAvailableItems((prev) => {
+            const remainingQuantity = getItemQuantity(selectedItem.id)
+            if (remainingQuantity <= 0) {
+              return prev.filter((item) => item.id !== selectedItem.id)
+            }
+            return prev
+          })
+
+          // Update current character (has acted)
+          const updatedCurrent = { ...current, hasActed: true }
+
+          // Update characters in combat state
+          const updatedCharacters = combatState.characters.map((c) => {
+            if (c.id === current.id) return updatedCurrent
+            if (c.id === actualTarget.id) return updatedTarget
+            return c
+          })
+
+          // Update board
+          setBoard((prevBoard) => {
+            const newBoard = prevBoard.map((r) => [...r])
+            if (current.position) {
+              newBoard[current.position.row][current.position.col] = updatedCurrent
+            }
+            if (updatedTarget.position) {
+              newBoard[updatedTarget.position.row][updatedTarget.position.col] = updatedTarget
+            }
+            return newBoard
+          })
+
+          // Update combat state
           setCombatState({
             ...combatState,
+            characters: updatedCharacters,
             selectedAction: null,
-            selectedCharacter: current,
+            selectedCharacter: updatedCurrent,
           })
           setSelectedItem(null)
+
+          // Reset animation after delay
+          setTimeout(() => {
+            setCombatState((prevState) => {
+              if (!prevState) return prevState
+              const resetCharacters = prevState.characters.map((c) => {
+                if (c.id === actualTarget.id && c.animationState === 'heal') {
+                  return { ...c, animationState: 'idle' as AnimationState }
+                }
+                return c
+              })
+              return {
+                ...prevState,
+                characters: resetCharacters,
+              }
+            })
+
+            setBoard((prevBoard) => {
+              const resetBoard = prevBoard.map((r) =>
+                r.map((c) => {
+                  if (!c) return null
+                  if (c.id === actualTarget.id && c.animationState === 'heal') {
+                    return { ...c, animationState: 'idle' as AnimationState }
+                  }
+                  return c
+                })
+              )
+              return resetBoard
+            })
+          }, ANIMATION_DURATIONS.SKILL)
 
           // Auto-advance turn after action
           setTimeout(() => {

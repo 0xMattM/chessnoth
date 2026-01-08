@@ -3,6 +3,8 @@
  * Ensures all required environment variables are present and valid
  */
 
+import { isAddress } from 'viem'
+
 interface EnvConfig {
   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID: string
   NEXT_PUBLIC_CONTRACT_ADDRESS: string
@@ -16,9 +18,12 @@ interface ValidationResult {
 
 /**
  * Validates that a contract address is a valid Ethereum address
+ * Uses viem's isAddress for proper checksum validation
+ * @param address - The address to validate
+ * @returns true if the address is valid, false otherwise
  */
 function isValidAddress(address: string): boolean {
-  return /^0x[a-fA-F0-9]{40}$/.test(address)
+  return isAddress(address)
 }
 
 /**

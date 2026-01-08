@@ -5,7 +5,7 @@ import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
-import { getTeam, addToTeam, removeFromTeam, isInTeam, type TeamMember } from '@/lib/team'
+import { getTeam, addToTeam, removeFromTeam, isInTeam, validateTeam, clearTeam, type TeamMember } from '@/lib/team'
 import {
   getEquippedSkills,
   setEquippedSkills,
@@ -98,6 +98,12 @@ export default function TeamPage() {
                 {
                   address: CHARACTER_NFT_ADDRESS,
                   abi: CHARACTER_NFT_ABI,
+                  functionName: 'getName' as const,
+                  args: [tokenId],
+                },
+                {
+                  address: CHARACTER_NFT_ADDRESS,
+                  abi: CHARACTER_NFT_ABI,
                   functionName: 'getClass' as const,
                   args: [tokenId],
                 },
@@ -136,20 +142,26 @@ export default function TeamPage() {
 
     if (validTokenIds.length === 0) {
       setCharacters([])
+      // Clear team if user has no NFTs
+      clearTeam()
+      setTeamMembers([])
       return
     }
 
     const chars: Character[] = validTokenIds.map(({ tokenId, index }) => {
-      // Each token has 3 data points: URI (index*3), Class (index*3+1), Level (index*3+2)
-      const uriIndex = index * 3
-      const classIndex = index * 3 + 1
-      const levelIndex = index * 3 + 2
+      // Each token has 4 data points: URI (index*4), Name (index*4+1), Class (index*4+2), Level (index*4+3)
+      const uriIndex = index * 4
+      const nameIndex = index * 4 + 1
+      const classIndex = index * 4 + 2
+      const levelIndex = index * 4 + 3
 
       const uriResult = tokenDataResults[uriIndex]
+      const nameResult = tokenDataResults[nameIndex]
       const classResult = tokenDataResults[classIndex]
       const levelResult = tokenDataResults[levelIndex]
 
       const uri = uriResult?.status === 'success' ? (uriResult.result as string) : ''
+      const characterName = nameResult?.status === 'success' ? (nameResult.result as string) : ''
       const characterClass =
         classResult?.status === 'success' ? (classResult.result as string) : 'warrior'
       const level = levelResult?.status === 'success' ? Number(levelResult.result as bigint) : 1
@@ -164,7 +176,7 @@ export default function TeamPage() {
         tokenId,
         uri,
         metadata: {
-          name: `Character #${tokenId}`,
+          name: characterName || 'Unknown Character',
           class: formattedClass,
           level,
           image: getNFTCharacterImage(characterClass) || `https://api.dicebear.com/7.x/avataaars/svg?seed=${tokenId}`,
@@ -173,7 +185,19 @@ export default function TeamPage() {
     })
 
     setCharacters(chars)
-  }, [tokenIdsData, tokenDataResults])
+    
+    // Validate team against owned NFTs and clean up invalid entries
+    const ownedTokenIds = chars.map(c => c.tokenId.toString())
+    const wasClean = validateTeam(ownedTokenIds)
+    if (wasClean) {
+      // Team was cleaned, force update
+      setTeamMembers(getTeam())
+      toast({
+        title: 'Team Updated',
+        description: 'Removed characters you no longer own from your team.',
+      })
+    }
+  }, [tokenIdsData, tokenDataResults, toast])
 
   // Get team characters with full metadata
   const getTeamCharacters = (): Character[] => {
@@ -256,8 +280,26 @@ export default function TeamPage() {
                   </div>
                   Your Team ({teamMembers.length}/4)
                 </CardTitle>
-                <CardDescription className="text-emerald-200/60">
-                  Your selected battle team
+                <CardDescription className="text-emerald-200/60 flex items-center justify-between">
+                  <span>Your selected battle team</span>
+                  {teamMembers.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        clearTeam()
+                        setTeamMembers([])
+                        setTeamUpdate(prev => prev + 1)
+                        toast({
+                          title: 'Team Cleared',
+                          description: 'All characters removed from team.',
+                        })
+                      }}
+                      className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    >
+                      Clear Team
+                    </Button>
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -297,7 +339,7 @@ export default function TeamPage() {
                             )}
                           </div>
                           <h3 className="font-semibold text-emerald-100 group-hover:text-emerald-200 transition-colors">
-                            {character.metadata?.name || `Character #${character.tokenId}`}
+                                {character.metadata?.name || 'Unknown Character'}
                           </h3>
                           <p className="text-sm text-emerald-200/60 flex items-center gap-2 mt-1">
                             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
@@ -394,7 +436,7 @@ export default function TeamPage() {
                                 return portrait ? (
                                   <img
                                     src={portrait}
-                                    alt={character.metadata?.name || `Character #${character.tokenId}`}
+                                    alt={character.metadata?.name || 'Character'}
                                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                   />
                                 ) : (
@@ -406,7 +448,7 @@ export default function TeamPage() {
                             </div>
                             <div className="flex-1">
                               <h3 className="font-semibold text-emerald-100 group-hover:text-emerald-200 transition-colors">
-                                {character.metadata?.name || `Character #${character.tokenId}`}
+                                {character.metadata?.name || 'Unknown Character'}
                               </h3>
                               <p className="text-sm text-emerald-200/60 flex items-center gap-2 mt-0.5">
                                 <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30">
@@ -536,7 +578,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            Equip Skills - {character.metadata?.name || `Character #${character.tokenId}`}
+            Equip Skills - {character.metadata?.name || 'Unknown Character'}
           </DialogTitle>
           <DialogDescription>
             Select up to 4 skills to equip for combat. Equipped skills can be used with hotkeys

@@ -30,6 +30,12 @@ export function getCharacterEquipment(tokenId: string): CharacterEquipment[strin
   return equipment[tokenId] || {}
 }
 
+/**
+ * Equips or unequips an item in a specific slot
+ * @param tokenId - The NFT token ID of the character
+ * @param slot - The equipment slot to modify
+ * @param itemId - The item ID to equip, or null to unequip
+ */
 export function setCharacterEquipment(tokenId: string, slot: EquipmentSlot, itemId: string | null) {
   if (typeof window === 'undefined') return
   

@@ -44,6 +44,18 @@ export const STORAGE_KEYS = {
   TEAM: 'team',
 } as const
 
+// Combat Calculation Constants
+export const COMBAT_CALCULATIONS = {
+  DEFENSE_FACTOR: 1.5,
+  MIN_DAMAGE_FACTOR: 0.2,
+  CRIT_MULTIPLIER: 2.0,
+  BASE_HIT_CHANCE: 0.95,
+  EVASION_DIVISOR: 200,
+  LEVEL_EXP_DIVISOR: 100,
+  BASE_LEVEL: 1,
+  STATUS_EFFECT_MODIFIER: 0.2, // 20% increase/decrease for status effects
+} as const
+
 // Error Messages
 export const ERROR_MESSAGES = {
   WALLET_NOT_CONNECTED: 'Please connect your wallet',

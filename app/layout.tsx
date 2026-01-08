@@ -6,12 +6,18 @@ import { ErrorBoundary } from '@/components/error-boundary'
 import { Toaster } from '@/components/toaster'
 import { WalletConflictWarning } from '@/components/wallet-conflict-warning'
 import Script from 'next/script'
+import '@/lib/clear-storage' // Initialize clear storage functions
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Chessnoth - NFT Game',
   description: 'Tactical RPG NFT Game',
+  icons: {
+    icon: '/chessnothlogo.svg',
+    shortcut: '/chessnothlogo.svg',
+    apple: '/chessnothlogo.svg',
+  },
 }
 
 export default function RootLayout({

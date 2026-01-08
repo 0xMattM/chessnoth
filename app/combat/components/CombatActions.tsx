@@ -41,22 +41,12 @@ export function CombatActions({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Actions</CardTitle>
-        <CardDescription>
-          {current.team === 'enemy'
-            ? 'Enemy turn (auto-playing)'
-            : 'Select an action (movement is optional)'}
-        </CardDescription>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Actions</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="space-y-1.5 pt-2">
         {current.team === 'player' && !current.hasActed && (
           <>
-            {!current.hasMoved && validMoves.length > 0 && (
-              <p className="text-sm text-muted-foreground mb-2">
-                Click on a highlighted cell to move ({validMoves.length} positions available)
-              </p>
-            )}
             <Button
               className="w-full justify-start"
               variant={combatState.selectedAction === 'attack' ? 'default' : 'outline'}
@@ -98,18 +88,18 @@ export function CombatActions({
           </>
         )}
         {current.team === 'enemy' && (
-          <p className="text-sm text-muted-foreground text-center py-4">Enemy is thinking...</p>
+          <p className="text-xs text-muted-foreground text-center py-2">Enemy is thinking...</p>
         )}
         {current.hasActed && current.team === 'player' && (
-          <p className="text-sm text-muted-foreground text-center py-4">
+          <p className="text-xs text-muted-foreground text-center py-2">
             {current.name} has completed their turn
           </p>
         )}
         {/* Skills Selection */}
         {combatState.selectedAction === 'skill' && availableSkills.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <p className="text-sm font-semibold">Select a skill:</p>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
+          <div className="mt-2 space-y-1.5">
+            <p className="text-xs font-semibold">Select a skill:</p>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
               {availableSkills.map((skill: Skill, index: number) => {
                 const canUse = current.stats.mana >= skill.manaCost
                 const hotkeyNumber = current.equippedSkills?.indexOf(skill.id) ?? index
@@ -137,7 +127,7 @@ export function CombatActions({
               })}
             </div>
             {selectedSkill && (
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-[10px] text-muted-foreground mt-1">
                 Click on a target to use {selectedSkill.name}
               </p>
             )}
@@ -146,9 +136,9 @@ export function CombatActions({
 
         {/* Items Selection */}
         {combatState.selectedAction === 'item' && availableItems.length > 0 && (
-          <div className="mt-4 space-y-2">
-            <p className="text-sm font-semibold">Select an item:</p>
-            <div className="space-y-1 max-h-48 overflow-y-auto">
+          <div className="mt-2 space-y-1.5">
+            <p className="text-xs font-semibold">Select an item:</p>
+            <div className="space-y-1 max-h-32 overflow-y-auto">
               {availableItems.map((item: Item) => (
                 <Button
                   key={item.id}
@@ -165,23 +155,13 @@ export function CombatActions({
               ))}
             </div>
             {selectedItem && (
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-[10px] text-muted-foreground mt-1">
                 Click on yourself or an ally to use {selectedItem.name}
               </p>
             )}
           </div>
         )}
 
-        {/* Debug info */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-4 p-2 bg-muted rounded text-xs space-y-1">
-            <div>Selected Action: {combatState.selectedAction || 'none'}</div>
-            <div>Has Moved: {current.hasMoved ? 'yes' : 'no'}</div>
-            <div>Has Acted: {current.hasActed ? 'yes' : 'no'}</div>
-            <div>Valid Moves: {validMoves.length}</div>
-            <div>Valid Targets: {validTargets.length}</div>
-          </div>
-        )}
       </CardContent>
     </Card>
   )

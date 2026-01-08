@@ -56,22 +56,41 @@ export async function getCHSAllowance(
 /**
  * Formats CHS token amount from wei to human-readable format
  * CHS uses 18 decimals (standard ERC20)
- * @param amount Amount in wei
+ * @param amount Amount in wei (bigint) or regular number (will be converted to wei)
  * @param decimals Number of decimals (default 18)
  * @returns Formatted string
  */
-export function formatCHSAmount(amount: bigint, decimals: number = 18): string {
+export function formatCHSAmount(amount: bigint | number, decimals: number = 18): string {
+  // Convert number to bigint in wei if needed
+  let amountInWei: bigint
+  if (typeof amount === 'number') {
+    // If it's a regular number, assume it's already in CHS units and convert to wei
+    // Use string manipulation to avoid floating point precision issues
+    const amountStr = amount.toString()
+    const [whole, fraction = ''] = amountStr.split('.')
+    const wholePart = BigInt(whole || '0')
+    const fractionPart = BigInt((fraction || '').padEnd(decimals, '0').slice(0, decimals))
+    const divisor = BigInt(10 ** decimals)
+    amountInWei = wholePart * divisor + fractionPart
+  } else {
+    amountInWei = amount
+  }
+
   const divisor = BigInt(10 ** decimals)
-  const whole = amount / divisor
-  const fraction = amount % divisor
+  const whole = amountInWei / divisor
+  const fraction = amountInWei % divisor
 
   if (fraction === 0n) {
     return whole.toString()
   }
 
   const fractionStr = fraction.toString().padStart(decimals, '0')
+  // Trim trailing zeros but keep at least 2 decimal places for readability
   const trimmedFraction = fractionStr.replace(/0+$/, '')
-  return `${whole}.${trimmedFraction}`
+  // Limit to 6 decimal places for display
+  const displayFraction = trimmedFraction.slice(0, 6)
+  
+  return `${whole}.${displayFraction}`
 }
 
 /**

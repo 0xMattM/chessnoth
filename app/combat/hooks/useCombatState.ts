@@ -159,17 +159,42 @@ export function useCombatState(): UseCombatStateReturn {
       }
 
       // Place enemies on the right side (rows 2-5, col 6-7)
+      // Improved distribution for up to 6 enemies
       let enemyIndex = 0
       const enemies = characters.filter((c) => c.team === 'enemy')
-      for (let row = 2; row <= 5 && enemyIndex < enemies.length; row++) {
-        for (let col = 6; col < 8 && enemyIndex < enemies.length; col++) {
-          const char = enemies[enemyIndex]
-          if (char) {
-            char.position = { row, col }
-            enemyIndex++
+      
+      // Distribute enemies evenly across available positions
+      // For 5-6 enemies, use a more spread out pattern
+      const enemyPositions: Array<{ row: number; col: number }> = []
+      
+      if (enemies.length <= 4) {
+        // Standard 2x2 grid for 1-4 enemies
+        for (let row = 2; row <= 5 && enemyPositions.length < enemies.length; row++) {
+          for (let col = 6; col < 8 && enemyPositions.length < enemies.length; col++) {
+            enemyPositions.push({ row, col })
           }
         }
+      } else {
+        // Spread out pattern for 5-6 enemies
+        // Use all 8 positions (2 cols x 4 rows) and distribute evenly
+        const positions = [
+          { row: 2, col: 6 }, { row: 2, col: 7 },
+          { row: 3, col: 6 }, { row: 3, col: 7 },
+          { row: 4, col: 6 }, { row: 4, col: 7 },
+          { row: 5, col: 6 }, { row: 5, col: 7 },
+        ]
+        // Take first N positions for N enemies
+        for (let i = 0; i < enemies.length; i++) {
+          enemyPositions.push(positions[i])
+        }
       }
+      
+      // Assign positions to enemies
+      enemies.forEach((char, index) => {
+        if (enemyPositions[index]) {
+          char.position = enemyPositions[index]
+        }
+      })
 
       // Calculate turn order
       const turnOrder = calculateTurnOrder(characters)

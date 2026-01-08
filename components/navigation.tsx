@@ -5,11 +5,13 @@ import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
 import { Sword, Users, Package, Zap, Home, Menu, X, TrendingUp, ShoppingCart, Coins } from 'lucide-react'
+import Image from 'next/image'
 import { useState } from 'react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Users },
   { name: 'Marketplace', href: '/marketplace', icon: ShoppingCart },
+  { name: 'Shop', href: '/shop', icon: Package },
   { name: 'Team', href: '/team', icon: Sword },
   { name: 'Battle', href: '/battle', icon: Zap },
 ]
@@ -21,18 +23,22 @@ export function Navigation() {
   return (
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-20 items-center justify-between gap-4">
           {/* Logo */}
           <Link 
             href="/" 
-            className="group flex items-center space-x-3 transition-all hover:scale-105"
+            className="group flex items-center transition-all hover:scale-105 flex-shrink-0"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/60 shadow-lg shadow-primary/25 transition-all group-hover:shadow-xl group-hover:shadow-primary/40">
-              <Sword className="h-5 w-5 text-primary-foreground" />
+            <div className="relative h-14 flex items-center">
+              <Image
+                src="/chessnoth.svg"
+                alt="Chessnoth"
+                width={240}
+                height={64}
+                className="h-full w-auto object-contain transition-transform duration-200 group-hover:scale-105"
+                priority
+              />
             </div>
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
-              Chessnoth
-            </span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -65,8 +71,10 @@ export function Navigation() {
           </div>
 
           {/* Connect Button (Desktop) */}
-          <div className="hidden md:block">
-            <ConnectButton />
+          <div className="hidden md:flex md:items-center flex-shrink-0">
+            <div className="[&>div]:flex [&>div]:items-center [&>div]:h-full">
+              <ConnectButton />
+            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -108,8 +116,10 @@ export function Navigation() {
                 </Link>
               )
             })}
-            <div className="pt-4">
-              <ConnectButton />
+            <div className="pt-4 flex items-center justify-center">
+              <div className="w-full [&>div]:w-full [&>div]:flex [&>div]:items-center [&>div]:justify-center">
+                <ConnectButton />
+              </div>
             </div>
           </div>
         </div>

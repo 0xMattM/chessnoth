@@ -31,6 +31,9 @@ contract Marketplace is Ownable, ReentrancyGuard {
     // Mapping from listing ID to Listing
     mapping(uint256 => Listing) public listings;
     
+    // Mapping from token ID to active listing ID (0 if not listed)
+    mapping(uint256 => uint256) private tokenIdToActiveListingId;
+    
     // Counter for listing IDs
     uint256 private _listingIdCounter;
     
@@ -121,6 +124,9 @@ contract Marketplace is Ownable, ReentrancyGuard {
             createdAt: block.timestamp
         });
         
+        // Store mapping for efficient lookup
+        tokenIdToActiveListingId[tokenId] = listingId;
+        
         emit NFTListed(listingId, tokenId, msg.sender, price, paymentToken);
     }
     
@@ -175,8 +181,9 @@ contract Marketplace is Ownable, ReentrancyGuard {
         // Transfer NFT to buyer
         characterNFT.transferFrom(address(this), msg.sender, listing.tokenId);
         
-        // Mark listing as inactive
+        // Mark listing as inactive and clear mapping
         listing.active = false;
+        delete tokenIdToActiveListingId[listing.tokenId];
         
         emit NFTSold(listingId, listing.tokenId, listing.seller, msg.sender, listing.price, listing.paymentToken);
     }
@@ -193,8 +200,9 @@ contract Marketplace is Ownable, ReentrancyGuard {
         // Transfer NFT back to seller
         characterNFT.transferFrom(address(this), msg.sender, listing.tokenId);
         
-        // Mark listing as inactive
+        // Mark listing as inactive and clear mapping
         listing.active = false;
+        delete tokenIdToActiveListingId[listing.tokenId];
         
         emit ListingCancelled(listingId, listing.tokenId);
     }
@@ -240,18 +248,13 @@ contract Marketplace is Ownable, ReentrancyGuard {
     
     /**
      * @dev Emergency function to recover NFTs stuck in contract (owner only)
+     * Optimized to use mapping instead of loop for gas efficiency
      * @param tokenId Token ID to recover
      */
     function emergencyRecoverNFT(uint256 tokenId) external onlyOwner {
-        // Only recover if not in an active listing
-        bool inActiveListing = false;
-        for (uint256 i = 1; i < _listingIdCounter; i++) {
-            if (listings[i].tokenId == tokenId && listings[i].active) {
-                inActiveListing = true;
-                break;
-            }
-        }
-        require(!inActiveListing, "Marketplace: NFT is in active listing");
+        // Check if NFT is in an active listing using mapping (O(1) instead of O(n))
+        uint256 activeListingId = tokenIdToActiveListingId[tokenId];
+        require(activeListingId == 0, "Marketplace: NFT is in active listing");
         
         characterNFT.transferFrom(address(this), owner(), tokenId);
     }

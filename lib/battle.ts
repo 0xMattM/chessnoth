@@ -69,7 +69,7 @@ export function loadBattleTeam(
 
     battleCharacters.push({
       tokenId,
-      name: character.metadata?.name || `Character #${tokenId}`,
+      name: character.metadata?.name || 'Unknown Character',
       class: character.metadata?.class || 'Unknown',
       level: character.metadata?.level || 1,
       equipment,
@@ -122,9 +122,53 @@ export function isStageUnlocked(stage: number): boolean {
 }
 
 /**
- * Check if stage is a boss stage (every 10 stages)
+ * Boss data for each boss stage
+ */
+export interface BossData {
+  name: string
+  sprite: string
+  description: string
+}
+
+export const BOSS_DATA: Record<number, BossData> = {
+  10: {
+    name: 'Moro',
+    sprite: '/bosses/Moro.svg',
+    description: 'A fierce warrior with unmatched speed',
+  },
+  20: {
+    name: 'Dorito',
+    sprite: '/bosses/Dorito.svg',
+    description: 'The triangular terror that strikes fear',
+  },
+  30: {
+    name: 'Hardy',
+    sprite: '/bosses/Hardy.svg',
+    description: 'An impenetrable fortress of defense',
+  },
+  40: {
+    name: 'Kroggor',
+    sprite: '/bosses/Kroggor.svg',
+    description: 'A beast of pure destruction',
+  },
+  50: {
+    name: 'Izzy',
+    sprite: '/bosses/Izzy.svg',
+    description: 'The ultimate challenge - master of all elements',
+  },
+}
+
+/**
+ * Check if stage is a boss stage (every 10 stages: 10, 20, 30, 40, 50)
  */
 export function isBossStage(stage: number): boolean {
   return stage % 10 === 0
+}
+
+/**
+ * Get boss data for a stage
+ */
+export function getBossData(stage: number): BossData | null {
+  return BOSS_DATA[stage] || null
 }
 

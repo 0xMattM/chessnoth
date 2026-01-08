@@ -1,110 +1,110 @@
-# Chessnoth - Planificación de Contratos y Sistema NFT
+# Chessnoth - Contracts and NFT System Planning
 
-## Resumen Ejecutivo
+## Executive Summary
 
-Este documento planifica la implementación completa del sistema de NFTs, tokens, experiencia y marketplace para Chessnoth. El sistema permite que los personajes sean NFTs minteables, ganen experiencia peleando, suban de nivel on-chain, y se intercambien en un marketplace.
+This document plans the complete implementation of the NFT system, tokens, experience, and marketplace for Chessnoth. The system allows characters to be mintable NFTs, gain experience through combat, level up on-chain, and be traded on a marketplace.
 
-## Arquitectura del Sistema
+## System Architecture
 
-### Flujo General
+### General Flow
 
-1. **Minting**: Usuario mintea NFT de personaje desde la app
-2. **Combate**: Usuario pelea con sus personajes, gana recompensas (pseudomoneda in-game)
-3. **Distribución de EXP**: Usuario distribuye experiencia ganada entre sus personajes
-4. **Upgrade On-Chain**: Usuario firma transacción para agregar EXP al NFT (cada 100 EXP = 1 nivel)
-5. **Stats Calculation**: El juego lee clase, nombre y nivel del NFT para calcular stats
-6. **Token CHS**: Se gana CHS peleando, se usa para comprar items o intercambiar NFTs
+1. **Minting**: User mints character NFT from the app
+2. **Combat**: User fights with their characters, earns rewards (in-game pseudocurrency)
+3. **EXP Distribution**: User distributes earned experience among their characters
+4. **On-Chain Upgrade**: User signs transaction to add EXP to NFT (every 100 EXP = 1 level)
+5. **Stats Calculation**: Game reads class, name, and level from NFT to calculate stats
+6. **CHS Token**: CHS is earned through combat, used to buy items or trade NFTs
 
-## Contratos Necesarios
+## Required Contracts
 
-### 1. CharacterNFT.sol (Actualizar)
+### 1. CharacterNFT.sol (Update)
 
-**Estado Actual**: Ya existe con estructura básica (nivel, EXP, clase, generación)
+**Current Status**: Already exists with basic structure (level, EXP, class, generation)
 
-**Cambios Necesarios**:
+**Required Changes**:
 
-1. **Agregar campo `name`**:
+1. **Add `name` field**:
    ```solidity
    mapping(uint256 => string) private _names;
    ```
 
-2. **Actualizar función `mintCharacter`**:
-   - Agregar parámetro `name`
-   - Almacenar nombre en `_names[tokenId]`
+2. **Update `mintCharacter` function**:
+   - Add `name` parameter
+   - Store name in `_names[tokenId]`
 
-3. **Implementar función `upgradeCharacter`** (reemplaza `addExperience`):
+3. **Implement `upgradeCharacter` function** (replaces `addExperience`):
    ```solidity
    function upgradeCharacter(uint256 tokenId, uint256 expAmount) external {
-       // Validar ownership
-       // Agregar EXP
-       // Calcular nuevo nivel (EXP / 100)
-       // Si subió de nivel, emitir evento CharacterLevelUp
-       // Emitir evento ExperienceGained
+       // Validate ownership
+       // Add EXP
+       // Calculate new level (EXP / 100)
+       // If leveled up, emit CharacterLevelUp event
+       // Emit ExperienceGained event
    }
    ```
 
-4. **Función `getName`**:
+4. **`getName` function**:
    ```solidity
    function getName(uint256 tokenId) external view returns (string memory)
    ```
 
-5. **Cálculo automático de nivel**:
-   - Nivel = floor(EXP / 100) + 1
-   - Ejemplo: 0 EXP = Nivel 1, 100 EXP = Nivel 2, 250 EXP = Nivel 3
+5. **Automatic level calculation**:
+   - Level = floor(EXP / 100) + 1
+   - Example: 0 EXP = Level 1, 100 EXP = Level 2, 250 EXP = Level 3
 
-**Estructura de Datos del NFT**:
-- `class`: string (ej: "Warrior", "Mage")
-- `name`: string (nombre personalizado del personaje)
-- `level`: uint256 (calculado automáticamente: floor(EXP / 100) + 1)
-- `experience`: uint256 (EXP total acumulada)
-- `generation`: uint256 (para futuras expansiones)
+**NFT Data Structure**:
+- `class`: string (e.g., "Warrior", "Mage")
+- `name`: string (custom character name)
+- `level`: uint256 (automatically calculated: floor(EXP / 100) + 1)
+- `experience`: uint256 (total accumulated EXP)
+- `generation`: uint256 (for future expansions)
 
-**Eventos**:
+**Events**:
 - `CharacterMinted(tokenId, owner, class, name, generation, ipfsHash)`
 - `CharacterUpgraded(tokenId, oldLevel, newLevel, expAdded, totalExp)`
 - `CharacterLevelUp(tokenId, oldLevel, newLevel, totalExp)`
 
-### 2. CHSToken.sol (Nuevo)
+### 2. CHSToken.sol (New)
 
-**Tipo**: ERC20 estándar con funciones de minting controladas
+**Type**: Standard ERC20 with controlled minting functions
 
-**Funcionalidades**:
-- Minting controlado (solo direcciones autorizadas)
-- Transferencias estándar ERC20
-- Burning opcional (para quemar tokens)
+**Features**:
+- Controlled minting (only authorized addresses)
+- Standard ERC20 transfers
+- Optional burning (to burn tokens)
 
-**Funciones Principales**:
+**Main Functions**:
 ```solidity
 function mint(address to, uint256 amount) external onlyAuthorized
 function burn(uint256 amount) external
 function setAuthorizedMinter(address minter) external onlyOwner
 ```
 
-**Uso**:
-- Recompensas de combate: `mint(playerAddress, rewardAmount)`
-- Compras en ItemShop: Transferir CHS al contrato
-- Marketplace: Pagar con CHS o MNT
+**Usage**:
+- Combat rewards: `mint(playerAddress, rewardAmount)`
+- ItemShop purchases: Transfer CHS to contract
+- Marketplace: Pay with CHS or MNT
 
-### 3. Marketplace.sol (Nuevo)
+### 3. Marketplace.sol (New)
 
-**Funcionalidades**:
-- Listar NFTs para venta (precio en CHS o MNT)
-- Comprar NFTs listados
-- Cancelar listados propios
-- Comisiones opcionales (ej: 2.5% para el contrato)
+**Features**:
+- List NFTs for sale (price in CHS or MNT)
+- Buy listed NFTs
+- Cancel own listings
+- Optional fees (e.g., 2.5% for contract)
 
-**Estructura de Listado**:
+**Listing Structure**:
 ```solidity
 struct Listing {
     uint256 tokenId;
     address seller;
     uint256 price;
-    address paymentToken; // address(0) para MNT, dirección CHS para CHS
+    address paymentToken; // address(0) for MNT, CHS address for CHS
     bool active;
 }
 ```
 
-**Funciones Principales**:
+**Main Functions**:
 ```solidity
 function listNFT(uint256 tokenId, uint256 price, address paymentToken) external
 function buyNFT(uint256 listingId) external payable
@@ -112,120 +112,120 @@ function cancelListing(uint256 listingId) external
 function getListing(uint256 listingId) external view returns (Listing memory)
 ```
 
-**Flujo**:
-1. Usuario aprueba NFT al contrato (ERC721 approve)
-2. Usuario llama `listNFT` con precio y token de pago
-3. Comprador llama `buyNFT` (paga con CHS o MNT)
-4. NFT se transfiere al comprador, fondos al vendedor
+**Flow**:
+1. User approves NFT to contract (ERC721 approve)
+2. User calls `listNFT` with price and payment token
+3. Buyer calls `buyNFT` (pays with CHS or MNT)
+4. NFT transfers to buyer, funds to seller
 
-### 4. ItemShop.sol (Nuevo - Opcional)
+### 4. ItemShop.sol (New - Optional)
 
-**Alternativa**: Items pueden ser solo datos off-chain, no necesitan ser NFTs
+**Alternative**: Items can be off-chain data only, don't need to be NFTs
 
-**Si se implementa**:
-- Items como NFTs ERC1155 (múltiples copias del mismo item)
-- O items como registros on-chain simples
+**If implemented**:
+- Items as ERC1155 NFTs (multiple copies of same item)
+- Or items as simple on-chain records
 
-**Funciones**:
+**Functions**:
 ```solidity
 function buyItem(uint256 itemId, uint256 quantity) external
 function getItemPrice(uint256 itemId) external view returns (uint256)
 ```
 
-**Nota**: Por ahora, los items pueden quedarse como datos off-chain. El ItemShop puede implementarse más adelante si es necesario.
+**Note**: For now, items can remain as off-chain data. ItemShop can be implemented later if needed.
 
-## Sistema de Experiencia y Nivel
+## Experience and Level System
 
-### Flujo Off-Chain → On-Chain
+### Off-Chain → On-Chain Flow
 
-1. **Combate (Off-Chain)**:
-   - Usuario pelea y gana recompensas
-   - Recompensas se almacenan como "pseudomoneda in-game" (off-chain)
-   - Usuario puede distribuir esta pseudomoneda como EXP entre sus personajes
+1. **Combat (Off-Chain)**:
+   - User fights and earns rewards
+   - Rewards stored as "in-game pseudocurrency" (off-chain)
+   - User can distribute this pseudocurrency as EXP among their characters
 
-2. **Distribución de EXP (Off-Chain)**:
-   - Usuario elige personajes y cantidad de EXP para cada uno
-   - La app calcula cuánta EXP se puede asignar
+2. **EXP Distribution (Off-Chain)**:
+   - User chooses characters and EXP amount for each
+   - App calculates how much EXP can be assigned
 
-3. **Upgrade On-Chain**:
-   - Usuario firma transacción `upgradeCharacter(tokenId, expAmount)`
-   - El contrato:
-     - Valida ownership
-     - Agrega EXP al NFT
-     - Calcula nuevo nivel automáticamente
-     - Emite eventos
+3. **On-Chain Upgrade**:
+   - User signs transaction `upgradeCharacter(tokenId, expAmount)`
+   - Contract:
+     - Validates ownership
+     - Adds EXP to NFT
+     - Automatically calculates new level
+     - Emits events
 
-### Cálculo de Nivel
+### Level Calculation
 
 ```
-Nivel = floor(EXP / 100) + 1
+Level = floor(EXP / 100) + 1
 ```
 
-**Ejemplos**:
-- 0 EXP → Nivel 1
-- 50 EXP → Nivel 1
-- 100 EXP → Nivel 2
-- 150 EXP → Nivel 2
-- 200 EXP → Nivel 3
-- 999 EXP → Nivel 10
-- 1000 EXP → Nivel 11
+**Examples**:
+- 0 EXP → Level 1
+- 50 EXP → Level 1
+- 100 EXP → Level 2
+- 150 EXP → Level 2
+- 200 EXP → Level 3
+- 999 EXP → Level 10
+- 1000 EXP → Level 11
 
-### Bonificador de Stats por Nivel
+### Stats Bonus by Level
 
-**Fórmula Lineal**:
+**Linear Formula**:
 ```
-StatFinal = StatBase + (GrowthRate * (Nivel - 1))
+FinalStat = BaseStat + (GrowthRate * (Level - 1))
 ```
 
-Esto ya está implementado en el código actual (`lib/combat.ts` y `components/character-inventory.tsx`).
+This is already implemented in the current code (`lib/combat.ts` and `components/character-inventory.tsx`).
 
-## Sistema de Stats
+## Stats System
 
-### Lectura desde NFT
+### Reading from NFT
 
-El juego solo necesita leer del contrato:
-- `class`: Para cargar stats base y growth rates
-- `name`: Para mostrar nombre del personaje
-- `level`: Para calcular stats finales (o `experience` y calcular nivel)
+The game only needs to read from the contract:
+- `class`: To load base stats and growth rates
+- `name`: To display character name
+- `level`: To calculate final stats (or `experience` and calculate level)
 
-**Cálculo de Stats**:
-1. Leer `class` del NFT
-2. Cargar `baseStats` y `growthRates` desde archivo JSON de clase
-3. Leer `level` del NFT (o calcular desde `experience`)
-4. Aplicar fórmula: `Stat = BaseStat + (GrowthRate * (Level - 1))`
-5. Agregar bonificadores de equipamiento (off-chain)
+**Stats Calculation**:
+1. Read `class` from NFT
+2. Load `baseStats` and `growthRates` from class JSON file
+3. Read `level` from NFT (or calculate from `experience`)
+4. Apply formula: `Stat = BaseStat + (GrowthRate * (Level - 1))`
+5. Add equipment bonuses (off-chain)
 
-### Equipamiento
+### Equipment
 
-Los items y equipamiento pueden quedarse off-chain por ahora:
-- Se almacenan en localStorage o base de datos
-- No necesitan ser NFTs (a menos que se quiera un marketplace de items)
-- Los stats de items se aplican después de calcular stats base + nivel
+Items and equipment can remain off-chain for now:
+- Stored in localStorage or database
+- Don't need to be NFTs (unless you want an item marketplace)
+- Item stats are applied after calculating base stats + level
 
-## Imágenes de NFTs
+## NFT Images
 
-### Estructura de Imágenes
+### Image Structure
 
-Cada clase tiene una imagen única en `contracts/NFTsimages/`:
+Each class has a unique image in `contracts/NFTsimages/`:
 - `Warrior.png`
 - `Mage.png`
 - `Paladin.png`
 - `Archer.png`
-- `Assassin.png` (Assasin.png en el archivo)
+- `Assassin.png` (Assasin.png in file)
 - `Healer.png`
 - `Monk.png`
 - `DarkMage.png`
 - `Dwarf.png`
-- `AxeThower.png` (AxeThower.png en el archivo)
+- `AxeThower.png` (AxeThower.png in file)
 
-### Metadata IPFS
+### IPFS Metadata
 
-Cada NFT debe tener metadata JSON en IPFS con:
+Each NFT must have JSON metadata on IPFS with:
 ```json
 {
-  "name": "Nombre del Personaje",
+  "name": "Character Name",
   "description": "Character NFT for Chessnoth",
-  "image": "ipfs://Qm...", // Imagen de la clase
+  "image": "ipfs://Qm...", // Class image
   "attributes": [
     { "trait_type": "Class", "value": "Warrior" },
     { "trait_type": "Level", "value": 5 },
@@ -234,13 +234,13 @@ Cada NFT debe tener metadata JSON en IPFS con:
 }
 ```
 
-## Integración con el Juego
+## Game Integration
 
-### Flujo de Lectura de NFTs
+### NFT Reading Flow
 
-1. **Cargar Personajes del Usuario**:
+1. **Load User Characters**:
    ```typescript
-   // Obtener todos los NFTs del usuario
+   // Get all user NFTs
    const balance = await contract.read.balanceOf([userAddress])
    const tokenIds = await Promise.all(
      Array.from({ length: balance }).map((_, i) =>
@@ -248,7 +248,7 @@ Cada NFT debe tener metadata JSON en IPFS con:
      )
    )
    
-   // Leer datos de cada NFT
+   // Read data from each NFT
    const characters = await Promise.all(
      tokenIds.map(async (tokenId) => {
        const [class, name, level, experience] = await Promise.all([
@@ -262,142 +262,141 @@ Cada NFT debe tener metadata JSON en IPFS con:
    )
    ```
 
-2. **Calcular Stats para Combate**:
-   - Usar `class` para cargar datos de clase
-   - Usar `level` para calcular stats base
-   - Agregar equipamiento (off-chain)
+2. **Calculate Stats for Combat**:
+   - Use `class` to load class data
+   - Use `level` to calculate base stats
+   - Add equipment (off-chain)
 
-### Flujo de Upgrade
+### Upgrade Flow
 
-1. **Usuario gana recompensas** (off-chain)
-2. **Usuario distribuye EXP** (off-chain, UI)
-3. **Usuario confirma upgrade**:
+1. **User earns rewards** (off-chain)
+2. **User distributes EXP** (off-chain, UI)
+3. **User confirms upgrade**:
    ```typescript
    await contract.write.upgradeCharacter([tokenId, expAmount])
    ```
-4. **App escucha eventos**:
-   - `CharacterUpgraded`: Actualizar UI
-   - `CharacterLevelUp`: Mostrar notificación
+4. **App listens to events**:
+   - `CharacterUpgraded`: Update UI
+   - `CharacterLevelUp`: Show notification
 
-## Tokenomics CHS
+## CHS Tokenomics
 
-### Distribución
+### Distribution
 
-- **Recompensas de Combate**: 50-200 CHS por batalla (dependiendo de dificultad)
-- **Quests Diarias**: 100-500 CHS
-- **Logros**: 500-2000 CHS
-- **Staking** (futuro): Recompensas por staking NFTs
+- **Combat Rewards**: 50-200 CHS per battle (depending on difficulty)
+- **Daily Quests**: 100-500 CHS
+- **Achievements**: 500-2000 CHS
+- **Staking** (future): Rewards for staking NFTs
 
-### Uso
+### Usage
 
-- **Comprar Items**: 50-500 CHS por item
-- **Upgrade NFTs**: Costo de gas + posible fee (opcional)
-- **Marketplace**: Comprar/vender NFTs
-- **Intercambio**: CHS ↔ MNT (DEX futuro)
+- **Buy Items**: 50-500 CHS per item
+- **Upgrade NFTs**: Gas cost + possible fee (optional)
+- **Marketplace**: Buy/sell NFTs
+- **Exchange**: CHS ↔ MNT (future DEX)
 
-## Seguridad y Consideraciones
+## Security and Considerations
 
-### Validaciones
+### Validations
 
 1. **CharacterNFT**:
-   - Solo owner puede upgrade su NFT
-   - Validar que EXP > 0
-   - Validar que token existe
+   - Only owner can upgrade their NFT
+   - Validate that EXP > 0
+   - Validate that token exists
 
 2. **CHSToken**:
-   - Solo direcciones autorizadas pueden mint
-   - Validar que amount > 0
+   - Only authorized addresses can mint
+   - Validate that amount > 0
 
 3. **Marketplace**:
-   - Validar ownership antes de listar
-   - Validar que listing está activo antes de comprar
-   - Validar que comprador tiene fondos suficientes
-   - Usar ReentrancyGuard
+   - Validate ownership before listing
+   - Validate that listing is active before buying
+   - Validate that buyer has sufficient funds
+   - Use ReentrancyGuard
 
 ### Gas Optimization
 
-- Usar `uint256` para EXP (ya que puede ser grande)
-- Emitir eventos solo cuando sea necesario
-- Agrupar múltiples upgrades en una transacción (si es posible)
+- Use `uint256` for EXP (since it can be large)
+- Emit events only when necessary
+- Batch multiple upgrades in one transaction (if possible)
 
-## Plan de Implementación
+## Implementation Plan
 
-### Fase 1: Actualizar CharacterNFT
-- [ ] Agregar campo `name`
-- [ ] Implementar `upgradeCharacter` con cálculo automático de nivel
-- [ ] Agregar función `getName`
-- [ ] Actualizar eventos
-- [ ] Tests unitarios
+### Phase 1: Update CharacterNFT
+- [ ] Add `name` field
+- [ ] Implement `upgradeCharacter` with automatic level calculation
+- [ ] Add `getName` function
+- [ ] Update events
+- [ ] Unit tests
 
-### Fase 2: Crear CHSToken
-- [ ] Implementar contrato ERC20
-- [ ] Agregar funciones de minting controladas
-- [ ] Tests unitarios
-- [ ] Deploy en testnet
+### Phase 2: Create CHSToken
+- [ ] Implement ERC20 contract
+- [ ] Add controlled minting functions
+- [ ] Unit tests
+- [ ] Deploy to testnet
 
-### Fase 3: Crear Marketplace
-- [ ] Implementar estructura de listados
-- [ ] Implementar funciones de listar/comprar/cancelar
-- [ ] Agregar soporte para CHS y MNT
-- [ ] Tests unitarios
-- [ ] Deploy en testnet
+### Phase 3: Create Marketplace
+- [ ] Implement listing structure
+- [ ] Implement list/buy/cancel functions
+- [ ] Add support for CHS and MNT
+- [ ] Unit tests
+- [ ] Deploy to testnet
 
-### Fase 4: Integración Frontend
-- [ ] Actualizar ABI en `lib/contract.ts`
-- [ ] Crear hooks para leer NFTs
-- [ ] Crear UI para distribuir EXP
-- [ ] Crear UI para upgrade NFTs
-- [ ] Crear UI para marketplace
-- [ ] Integrar con sistema de combate
+### Phase 4: Frontend Integration
+- [ ] Update ABI in `lib/contract.ts`
+- [ ] Create hooks to read NFTs
+- [ ] Create UI to distribute EXP
+- [ ] Create UI to upgrade NFTs
+- [ ] Create UI for marketplace
+- [ ] Integrate with combat system
 
-### Fase 5: Testing y Optimización
-- [ ] Tests end-to-end
-- [ ] Optimización de gas
-- [ ] Auditoría de seguridad (opcional)
-- [ ] Deploy en mainnet
+### Phase 5: Testing and Optimization
+- [ ] End-to-end tests
+- [ ] Gas optimization
+- [ ] Security audit (optional)
+- [ ] Deploy to mainnet
 
-## Archivos a Crear/Modificar
+## Files to Create/Modify
 
-### Contratos
-- `contracts/CharacterNFT.sol` (modificar)
-- `contracts/CHSToken.sol` (nuevo)
-- `contracts/Marketplace.sol` (nuevo)
+### Contracts
+- `contracts/CharacterNFT.sol` (modify)
+- `contracts/CHSToken.sol` (new)
+- `contracts/Marketplace.sol` (new)
 
 ### Frontend
-- `lib/contract.ts` (actualizar ABIs)
-- `lib/nft.ts` (nuevo - utilidades para NFTs)
-- `lib/chs-token.ts` (nuevo - utilidades para CHS)
-- `app/upgrade/page.tsx` (nuevo - UI para upgrade)
-- `app/marketplace/page.tsx` (nuevo - UI para marketplace)
-- `hooks/useCharacterNFT.ts` (nuevo - hook para leer NFTs)
-- `hooks/useUpgrade.ts` (nuevo - hook para upgrade)
+- `lib/contract.ts` (update ABIs)
+- `lib/nft.ts` (new - NFT utilities)
+- `lib/chs-token.ts` (new - CHS utilities)
+- `app/upgrade/page.tsx` (new - upgrade UI)
+- `app/marketplace/page.tsx` (new - marketplace UI)
+- `hooks/useCharacterNFT.ts` (new - hook to read NFTs)
+- `hooks/useUpgrade.ts` (new - upgrade hook)
 
 ### Tests
-- `contracts/test/CharacterNFT.test.js` (actualizar)
-- `contracts/test/CHSToken.test.js` (nuevo)
-- `contracts/test/Marketplace.test.js` (nuevo)
+- `contracts/test/CharacterNFT.test.js` (update)
+- `contracts/test/CHSToken.test.js` (new)
+- `contracts/test/Marketplace.test.js` (new)
 
-## Preguntas y Decisiones Pendientes
+## Questions and Pending Decisions
 
-1. **ItemShop**: ¿Implementar ahora o más adelante?
-   - **Decisión**: Implementar más adelante, items pueden ser off-chain por ahora
+1. **ItemShop**: Implement now or later?
+   - **Decision**: Implement later, items can be off-chain for now
 
-2. **Comisiones Marketplace**: ¿Qué porcentaje?
-   - **Sugerencia**: 2.5% para el contrato, 0% para el vendedor (o configurable)
+2. **Marketplace Fees**: What percentage?
+   - **Suggestion**: 2.5% for contract, 0% for seller (or configurable)
 
-3. **Límite de EXP por transacción**: ¿Hay límite?
-   - **Sugerencia**: No hay límite, pero validar que no cause overflow
+3. **EXP Limit per Transaction**: Is there a limit?
+   - **Suggestion**: No limit, but validate that it doesn't cause overflow
 
-4. **Imágenes IPFS**: ¿Quién sube las imágenes?
-   - **Sugerencia**: Backend o servicio de pinning (Pinata, NFT.Storage)
+4. **IPFS Images**: Who uploads the images?
+   - **Suggestion**: Backend or pinning service (Pinata, NFT.Storage)
 
-5. **Precio de Minting**: ¿Gratis o con costo?
-   - **Sugerencia**: Gratis para usuarios, costo de gas cubierto por el juego (o usuario paga gas)
+5. **Minting Price**: Free or with cost?
+   - **Suggestion**: Free for users, gas cost covered by game (or user pays gas)
 
-## Notas Adicionales
+## Additional Notes
 
-- Los stats base y growth rates se mantienen off-chain (archivos JSON)
-- El equipamiento se mantiene off-chain (localStorage o base de datos)
-- Solo clase, nombre, nivel y EXP están on-chain
-- El cálculo de stats finales se hace en el frontend usando datos on-chain + off-chain
-
+- Base stats and growth rates remain off-chain (JSON files)
+- Equipment remains off-chain (localStorage or database)
+- Only class, name, level, and EXP are on-chain
+- Final stats calculation is done in frontend using on-chain + off-chain data

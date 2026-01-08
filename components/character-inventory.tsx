@@ -6,8 +6,10 @@ import { Sword, Shield, Shirt, Package, X, Heart, Zap, Shield as ShieldIcon, Dro
 import itemsData from '@/data/items.json'
 import { getCharacterEquipment, setCharacterEquipment, type EquipmentSlot } from '@/lib/equipment'
 import { getItemImageFromData } from '@/lib/item-images'
+import { getInventory, getItemQuantity } from '@/lib/inventory'
 import { useState, useEffect } from 'react'
 import { logger } from '@/lib/logger'
+import { type Item } from '@/lib/types'
 import Image from 'next/image'
 
 interface Character {
@@ -18,17 +20,6 @@ interface Character {
     level?: number
     image?: string
   }
-}
-
-interface Item {
-  id: string
-  name: string
-  type: string
-  equipmentSlot?: string
-  rarity: string
-  description: string
-  statBonuses?: Record<string, number>
-  allowedClasses?: string[]
 }
 
 interface CharacterInventoryProps {
@@ -154,12 +145,14 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
     // Add equipment bonuses
     Object.values(equipment).forEach((itemId) => {
       if (itemId) {
-        const item = itemsData.find((i: Item) => i.id === itemId) as Item | undefined
+        const item = itemsData.find((i) => i.id === itemId) as Item | undefined
         if (item?.statBonuses) {
           Object.entries(item.statBonuses).forEach(([stat, value]) => {
-            const statKey = stat.toLowerCase() as keyof CharacterStats
-            if (statKey in stats) {
-              stats[statKey] += value
+            if (typeof value === 'number') {
+              const statKey = stat.toLowerCase() as keyof CharacterStats
+              if (statKey in stats) {
+                stats[statKey] += value
+              }
             }
           })
         }
@@ -173,11 +166,13 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
 
   // Get available items for this character's class
   const characterClass = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
-  const availableItems = itemsData.filter((item: Item) => {
+  // Only show items that the user actually owns (quantity > 0)
+  const availableItems = (itemsData as Item[]).filter((item) => {
     if (item.type === 'consumable') return false
+    if (getItemQuantity(item.id) === 0) return false // User doesn't own this item
     if (!item.allowedClasses) return true
     return item.allowedClasses.includes(characterClass)
-  }) as Item[]
+  })
 
   // Get items for a specific slot
   const _getItemsForSlot = (slot: EquipmentSlot) => {
@@ -193,6 +188,12 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
     setEquipment((prev) => ({ ...prev, [slot]: itemId }))
     onEquipmentChange?.()
     setSelectedItem(null)
+    
+    // Update quest progress for equipping item
+    if (typeof window !== 'undefined') {
+      const { updateQuestProgress } = require('@/lib/daily-quests')
+      updateQuestProgress('equip_item', 1)
+    }
   }
 
   const handleUnequip = (slot: EquipmentSlot) => {
@@ -227,7 +228,7 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
 
   const getItemById = (itemId: string | undefined): Item | undefined => {
     if (!itemId) return undefined
-    return itemsData.find((item: Item) => item.id === itemId) as Item | undefined
+    return (itemsData as Item[]).find((item) => item.id === itemId)
   }
 
   const EquipmentSlotButton = ({ slot }: { slot: EquipmentSlot }) => {
@@ -298,7 +299,7 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
         <CardHeader className="flex flex-row items-center justify-between border-b">
           <div>
             <CardTitle>
-              {character.metadata?.name || `Character #${character.tokenId}`} - Inventory
+              {character.metadata?.name || 'Unknown Character'} - Inventory
             </CardTitle>
             <CardDescription>
               {character.metadata?.class} • Level {character.metadata?.level || 1}
@@ -311,7 +312,7 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
         <CardContent className="flex-1 overflow-y-auto p-6">
           <div className="grid grid-cols-12 gap-6 h-full">
             {/* Left Column - Stats */}
-            <div className="col-span-3 space-y-4 overflow-y-auto">
+            <div className="col-span-3 space-y-4">
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Stats</CardTitle>
@@ -384,8 +385,8 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
               </Card>
             </div>
 
-            {/* Center Column - Equipment Slots in Cross Layout */}
-            <div className="col-span-5 flex items-center justify-center">
+            {/* Center Column - Equipment Slots in Cross Layout - FIXED POSITION */}
+            <div className="col-span-5 flex items-start justify-center sticky top-0 self-start">
               <Card className="w-full max-w-xl p-8 bg-muted/20">
                 <div className="w-full max-w-sm mx-auto">
                   {/* Using CSS Grid with equal row heights for perfect spacing */}
@@ -450,126 +451,148 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
             </div>
 
             {/* Right Column - Inventory */}
-            <div className="col-span-4 space-y-4 overflow-y-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Inventory</CardTitle>
-                  <CardDescription>Click items to equip</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {availableItems.length === 0 ? (
-                    <div className="py-8 text-center text-muted-foreground">
-                      <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No items available</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-4 gap-3">
-                      {availableItems.map((item) => {
-                        const isEquipped = Object.values(equipment).includes(item.id)
-                        const itemImage = getItemImageFromData(item)
-                        return (
-                          <button
-                            key={item.id}
-                            onClick={() => handleItemClick(item)}
-                            className={`relative aspect-square rounded-lg border-2 overflow-hidden transition-all hover:scale-110 hover:z-10 ${
-                              isEquipped
-                                ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
-                                : selectedItem?.id === item.id
-                                  ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20'
-                                  : `${rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common} hover:shadow-md`
-                            }`}
-                            title={item.name}
-                          >
-                            {itemImage ? (
-                              <Image
-                                src={itemImage}
-                                alt={item.name}
-                                fill
-                                className="object-cover"
-                                sizes="(max-width: 768px) 25vw, 80px"
-                              />
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-full">
-                                <Package className="h-8 w-8 text-muted-foreground/50" />
-                              </div>
-                            )}
-                            {isEquipped && (
-                              <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background shadow-sm" />
-                            )}
-                            {/* Rarity indicator */}
-                            <div
-                              className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
-                                rarityTextColors[item.rarity as keyof typeof rarityTextColors]?.replace('text-', 'bg-') || 'bg-gray-500'
-                              }`}
-                            />
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Selected Item Details */}
-              {selectedItem && (() => {
-                const itemImage = getItemImageFromData(selectedItem)
-                return (
-                  <Card>
-                    <CardHeader>
-                      {itemImage && (
-                        <div className="aspect-square w-full max-w-xs mx-auto mb-4 overflow-hidden rounded-lg bg-slate-900/50 border border-border/40 relative">
-                          <Image
-                            src={itemImage}
-                            alt={selectedItem.name}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 768px) 100vw, 300px"
-                          />
-                        </div>
-                      )}
-                      <CardTitle className="text-lg">{selectedItem.name}</CardTitle>
-                      <CardDescription
-                        className={rarityTextColors[selectedItem.rarity as keyof typeof rarityTextColors] || rarityTextColors.common}
-                      >
-                        {selectedItem.rarity.toUpperCase()}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <p className="text-sm text-muted-foreground">{selectedItem.description}</p>
-                    {selectedItem.statBonuses && (
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold">Bonuses:</p>
-                        {Object.entries(selectedItem.statBonuses).map(([stat, value]) => (
-                          <div key={stat} className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">{stat.toUpperCase()}:</span>
-                            <span className="text-green-500">+{value}</span>
-                          </div>
-                        ))}
+            <div className="col-span-4 space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Inventory</CardTitle>
+                    <CardDescription>Click items to equip</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {availableItems.length === 0 ? (
+                      <div className="py-8 text-center text-muted-foreground">
+                        <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p className="text-sm">No items available</p>
+                        <p className="text-xs mt-2">Buy or obtain items to equip your character</p>
                       </div>
-                    )}
-                    {selectedItem.equipmentSlot && (
-                      <Button
-                        className="w-full"
-                        onClick={() => handleEquipFromInventory(selectedItem)}
-                        disabled={Object.values(equipment).includes(selectedItem.id)}
-                      >
-                        {Object.values(equipment).includes(selectedItem.id) ? 'Equipped' : 'Equip'}
-                      </Button>
-                    )}
-                    {Object.values(equipment).includes(selectedItem.id) && (
-                      <Button
-                        variant="destructive"
-                        className="w-full"
-                        onClick={() => {
-                          const slot = Object.entries(equipment).find(([_, id]) => id === selectedItem.id)?.[0] as EquipmentSlot
-                          if (slot) handleUnequip(slot)
-                        }}
-                      >
-                        Unequip
-                      </Button>
+                    ) : (
+                      <div className="grid grid-cols-4 gap-3">
+                        {availableItems.map((item) => {
+                          const isEquipped = Object.values(equipment).includes(item.id)
+                          const itemImage = getItemImageFromData(item)
+                          const quantity = getItemQuantity(item.id)
+                          return (
+                            <button
+                              key={item.id}
+                              onClick={() => handleItemClick(item)}
+                              className={`relative aspect-square rounded-lg border-2 overflow-hidden transition-all hover:scale-110 hover:z-10 ${
+                                isEquipped
+                                  ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
+                                  : selectedItem?.id === item.id
+                                    ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20'
+                                    : `${rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common} hover:shadow-md`
+                              }`}
+                              title={item.name}
+                            >
+                              {itemImage ? (
+                                <Image
+                                  src={itemImage}
+                                  alt={item.name}
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 25vw, 80px"
+                                />
+                              ) : (
+                                <div className="flex flex-col items-center justify-center h-full">
+                                  <Package className="h-8 w-8 text-muted-foreground/50" />
+                                </div>
+                              )}
+                              {isEquipped && (
+                                <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background shadow-sm" />
+                              )}
+                              {/* Quantity badge */}
+                              {quantity > 1 && (
+                                <div className="absolute bottom-1 right-1 bg-background/90 text-foreground text-xs font-bold px-1.5 py-0.5 rounded">
+                                  {quantity}
+                                </div>
+                              )}
+                              {/* Rarity indicator */}
+                              <div
+                                className={`absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+                                  rarityTextColors[item.rarity as keyof typeof rarityTextColors]?.replace('text-', 'bg-') || 'bg-gray-500'
+                                }`}
+                              />
+                            </button>
+                          )
+                        })}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Selected Item Details */}
+                {selectedItem && (() => {
+                const itemImage = getItemImageFromData(selectedItem)
+                return (
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        {/* Image on the left */}
+                        {itemImage && (
+                          <div className="flex-shrink-0">
+                            <div className="w-24 h-24 overflow-hidden rounded-lg bg-slate-900/50 border border-border/40 relative">
+                              <Image
+                                src={itemImage}
+                                alt={selectedItem.name}
+                                fill
+                                className="object-contain"
+                                sizes="96px"
+                              />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Info and button on the right */}
+                        <div className="flex-1 space-y-3">
+                          <div>
+                            <h3 className={`font-semibold text-lg ${rarityTextColors[selectedItem.rarity as keyof typeof rarityTextColors] || 'text-foreground'}`}>
+                              {selectedItem.name}
+                            </h3>
+                            <p className="text-xs uppercase text-muted-foreground">
+                              {selectedItem.rarity}
+                            </p>
+                          </div>
+                          
+                          <p className="text-sm text-muted-foreground">{selectedItem.description}</p>
+                          
+                          {selectedItem.statBonuses && (
+                            <div className="space-y-1">
+                              <p className="text-xs font-semibold">Bonuses:</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                {Object.entries(selectedItem.statBonuses).map(([stat, value]) => (
+                                  <div key={stat} className="flex items-center justify-between text-xs">
+                                    <span className="text-muted-foreground uppercase">{stat}:</span>
+                                    <span className="text-green-500 font-semibold">+{value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {selectedItem.equipmentSlot && (
+                            <Button
+                              className="w-full"
+                              onClick={() => handleEquipFromInventory(selectedItem)}
+                              disabled={Object.values(equipment).includes(selectedItem.id)}
+                            >
+                              {Object.values(equipment).includes(selectedItem.id) ? 'Equipped' : 'Equip'}
+                            </Button>
+                          )}
+                          {Object.values(equipment).includes(selectedItem.id) && (
+                            <Button
+                              variant="destructive"
+                              className="w-full"
+                              onClick={() => {
+                                const slot = Object.entries(equipment).find(([_, id]) => id === selectedItem.id)?.[0] as EquipmentSlot
+                                if (slot) handleUnequip(slot)
+                              }}
+                            >
+                              Unequip
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )
               })()}
             </div>

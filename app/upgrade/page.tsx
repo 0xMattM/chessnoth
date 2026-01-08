@@ -94,14 +94,14 @@ export default function UpgradePage() {
       setPendingRewards(newTotal)
       
       toast({
-        title: 'Upgrade iniciado',
-        description: 'La transacción ha sido enviada. Espera la confirmación.',
+        title: 'Upgrade Started',
+        description: 'Transaction has been sent. Please wait for confirmation.',
       })
     } catch (error) {
       logger.error('Error upgrading character', { tokenId, expAmount, error })
       toast({
         title: 'Error',
-        description: 'No se pudo realizar el upgrade. Verifica que tengas suficiente gas.',
+        description: 'Failed to perform upgrade. Please verify you have sufficient gas.',
         variant: 'destructive',
       })
     }
@@ -118,7 +118,7 @@ export default function UpgradePage() {
       <div className="container mx-auto p-6">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Conecta tu wallet para ver tus personajes</p>
+            <p className="text-muted-foreground">Connect your wallet to view your characters</p>
           </CardContent>
         </Card>
       </div>
@@ -131,7 +131,7 @@ export default function UpgradePage() {
         <Card>
           <CardContent className="py-12 text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-muted-foreground">Cargando personajes...</p>
+            <p className="text-muted-foreground">Loading characters...</p>
           </CardContent>
         </Card>
       </div>
@@ -143,7 +143,7 @@ export default function UpgradePage() {
       <div className="container mx-auto p-6">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-destructive">Error al cargar personajes: {error.message}</p>
+            <p className="text-destructive">Error loading characters: {error.message}</p>
           </CardContent>
         </Card>
       </div>
@@ -155,9 +155,9 @@ export default function UpgradePage() {
       <div className="container mx-auto p-6">
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">No tienes personajes NFT todavía</p>
+            <p className="text-muted-foreground">You don't have any NFT characters yet</p>
             <Button className="mt-4" onClick={() => window.location.href = '/'}>
-              Mintear un personaje
+              Mint a Character
             </Button>
           </CardContent>
         </Card>
@@ -170,9 +170,9 @@ export default function UpgradePage() {
       <Navigation />
       <div className="container mx-auto p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Upgrade de Personajes</h1>
+          <h1 className="text-3xl font-bold mb-2">Character Upgrade</h1>
           <p className="text-muted-foreground">
-            Distribuye experiencia ganada en combate y mejora tus personajes NFT
+            Distribute experience earned in combat and upgrade your NFT characters
           </p>
         </div>
 
@@ -181,12 +181,12 @@ export default function UpgradePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Zap className="h-5 w-5" />
-            Experiencia Disponible
+            Available Experience
           </CardTitle>
           <CardDescription>
             {pendingRewards > 0
-              ? `Tienes ${pendingRewards} EXP pendientes de combates ganados`
-              : 'Ingresa la cantidad de experiencia que ganaste en combate'}
+              ? `You have ${pendingRewards} EXP pending from won battles`
+              : 'Enter the amount of experience you earned in combat'}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -195,18 +195,18 @@ export default function UpgradePage() {
               <div className="flex items-center gap-2 mb-2">
                 <Gift className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                  Recompensas Pendientes
+                  Pending Rewards
                 </span>
               </div>
               <p className="text-sm text-blue-700 dark:text-blue-300">
-                Tienes {pendingRewards} EXP disponibles de combates ganados. Esta experiencia ya
-                está cargada y lista para distribuir.
+                You have {pendingRewards} EXP available from won battles. This experience is already
+                loaded and ready to distribute.
               </p>
             </div>
           )}
 
           <div>
-            <Label htmlFor="availableExp">Experiencia Total Disponible</Label>
+            <Label htmlFor="availableExp">Total Available Experience</Label>
             <Input
               id="availableExp"
               type="number"
@@ -224,19 +224,19 @@ export default function UpgradePage() {
                   setAvailableExp(pendingRewards.toString())
                 }}
               >
-                Usar Recompensas Pendientes ({pendingRewards} EXP)
+                Use Pending Rewards ({pendingRewards} EXP)
               </Button>
             )}
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Total Distribuido:</span>
+            <span className="text-muted-foreground">Total Distributed:</span>
             <span className={isValidDistribution ? 'text-green-600' : 'text-red-600'}>
               {totalDistributed} / {parseFloat(availableExp || '0')}
             </span>
           </div>
           {!isValidDistribution && totalDistributed > 0 && (
             <p className="text-sm text-red-600">
-              ⚠️ Has distribuido más experiencia de la disponible
+              ⚠️ You have distributed more experience than available
             </p>
           )}
         </CardContent>
@@ -258,22 +258,22 @@ export default function UpgradePage() {
               <CardHeader>
                 <CardTitle className="text-lg">{character.name}</CardTitle>
                 <CardDescription>
-                  {character.class} • Nivel {currentLevel}
+                  {character.class} • Level {currentLevel}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Current Stats */}
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Experiencia Actual:</span>
+                    <span className="text-muted-foreground">Current Experience:</span>
                     <span className="font-medium">{currentExp}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Nivel Actual:</span>
+                    <span className="text-muted-foreground">Current Level:</span>
                     <span className="font-medium">{currentLevel}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">EXP para Siguiente Nivel:</span>
+                    <span className="text-muted-foreground">EXP for Next Level:</span>
                     <span className="font-medium">{expForNextLevel}</span>
                   </div>
                 </div>
@@ -281,7 +281,7 @@ export default function UpgradePage() {
                 {/* Experience Distribution Input */}
                 <div className="space-y-2">
                   <Label htmlFor={`exp-${character.tokenId}`}>
-                    Experiencia a Agregar
+                    Experience to Add
                   </Label>
                   <Input
                     id={`exp-${character.tokenId}`}
@@ -298,15 +298,15 @@ export default function UpgradePage() {
                   <div className="p-3 bg-muted rounded-lg space-y-1">
                     <div className="flex items-center gap-2 text-sm font-medium">
                       <TrendingUp className="h-4 w-4" />
-                      Después del Upgrade:
+                      After Upgrade:
                     </div>
                     <div className="text-sm space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Nueva EXP:</span>
+                        <span className="text-muted-foreground">New EXP:</span>
                         <span className="font-medium">{Math.floor(newExp)}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Nuevo Nivel:</span>
+                        <span className="text-muted-foreground">New Level:</span>
                         <span className={`font-medium ${willLevelUp ? 'text-green-600' : ''}`}>
                           {newLevel} {willLevelUp && '⬆️'}
                         </span>
@@ -333,7 +333,7 @@ export default function UpgradePage() {
                   {isUpgrading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Procesando...
+                      Processing...
                     </>
                   ) : (
                     <>
@@ -352,7 +352,7 @@ export default function UpgradePage() {
       {totalDistributed > 0 && (
         <div className="flex justify-center">
           <Button variant="outline" onClick={clearDistribution}>
-            Limpiar Distribución
+            Clear Distribution
           </Button>
         </div>
       )}
@@ -362,7 +362,7 @@ export default function UpgradePage() {
         <Card className="border-green-500 bg-green-50 dark:bg-green-950">
           <CardContent className="py-4">
             <p className="text-green-700 dark:text-green-300 text-center">
-              ✅ Upgrade completado exitosamente! Los datos se actualizarán en breve.
+              ✅ Upgrade completed successfully! Data will update shortly.
             </p>
           </CardContent>
         </Card>

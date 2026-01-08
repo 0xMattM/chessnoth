@@ -3,15 +3,22 @@
  * Replaces console.log with structured logging
  */
 
-export enum LogLevel {
-  DEBUG = 0,
-  INFO = 1,
-  WARN = 2,
-  ERROR = 3,
-}
+/**
+ * Log level constants
+ * Using const object instead of enum following project style guide
+ */
+export const LogLevel = {
+  DEBUG: 0,
+  INFO: 1,
+  WARN: 2,
+  ERROR: 3,
+} as const
+
+export type LogLevelValue = typeof LogLevel[keyof typeof LogLevel]
+export type LogLevelName = keyof typeof LogLevel
 
 interface LogEntry {
-  level: LogLevel
+  level: LogLevelValue
   message: string
   timestamp: string
   context?: Record<string, unknown>
@@ -19,7 +26,7 @@ interface LogEntry {
 }
 
 class Logger {
-  private minLevel: LogLevel
+  private minLevel: LogLevelValue
 
   constructor() {
     // In production, only show WARN and ERROR
@@ -27,12 +34,15 @@ class Logger {
       process.env.NODE_ENV === 'production' ? LogLevel.WARN : LogLevel.DEBUG
   }
 
-  private shouldLog(level: LogLevel): boolean {
+  private shouldLog(level: LogLevelValue): boolean {
     return level >= this.minLevel
   }
 
   private formatMessage(entry: LogEntry): string {
-    const levelName = LogLevel[entry.level]
+    // Find the level name by value
+    const levelName = (Object.keys(LogLevel) as LogLevelName[]).find(
+      key => LogLevel[key] === entry.level
+    ) as LogLevelName
     const contextStr = entry.context
       ? ` ${JSON.stringify(entry.context)}`
       : ''
@@ -40,7 +50,7 @@ class Logger {
     return `[${entry.timestamp}] [${levelName}] ${entry.message}${contextStr}${errorStr}`
   }
 
-  private log(level: LogLevel, message: string, context?: Record<string, unknown>, error?: Error) {
+  private log(level: LogLevelValue, message: string, context?: Record<string, unknown>, error?: Error) {
     if (!this.shouldLog(level)) return
 
     const entry: LogEntry = {

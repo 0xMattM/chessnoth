@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
 import { publicProvider } from 'wagmi/providers/public'
+import { fallback, http, createPublicClient } from 'viem'
 import { RainbowKitProvider, getDefaultWallets } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 import { defaultChain } from '@/lib/chains'
@@ -13,7 +14,27 @@ import { initializeWalletHandler } from '@/lib/wallet-provider-handler'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertCircle } from 'lucide-react'
 
-const { chains, publicClient } = configureChains([defaultChain], [publicProvider()])
+// Create a custom transport with fallback RPCs and retry logic
+// This helps handle rate limiting (429 errors) by automatically trying alternative RPCs
+const transport = fallback(
+  defaultChain.rpcUrls.public.http.map((url) =>
+    http(url, {
+      retryCount: 3,
+      retryDelay: ({ attemptCount }) => Math.min(attemptCount * 1000, 5000), // Exponential backoff: 1s, 2s, 5s
+      timeout: 30000, // 30 second timeout
+    })
+  )
+)
+
+// Create a custom public client with fallback transport
+const customPublicClient = createPublicClient({
+  chain: defaultChain,
+  transport,
+})
+
+// Configure chains - use publicProvider for wallet connections, but override publicClient
+// with our custom client that has fallback RPCs
+const { chains } = configureChains([defaultChain], [publicProvider()])
 
 // Validate environment variables on client side
 let envValidation: ReturnType<typeof validateEnv> | null = null
@@ -39,7 +60,7 @@ const { connectors } = getDefaultWallets({
 const wagmiConfig = createConfig({
   autoConnect: true, // Enable auto-connect for better UX
   connectors,
-  publicClient,
+  publicClient: customPublicClient, // Use custom client with fallback RPCs
 })
 
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -51,7 +72,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
             refetchOnWindowFocus: false,
             staleTime: 5 * 60 * 1000, // 5 minutes
             cacheTime: 10 * 60 * 1000, // 10 minutes
-            retry: 2,
+            retry: (failureCount, error: any) => {
+              // Retry on rate limiting (429) or network errors
+              if (error?.status === 429 || error?.code === 'NETWORK_ERROR') {
+                return failureCount < 3 // Retry up to 3 times for rate limits
+              }
+              return failureCount < 2 // Default retry for other errors
+            },
+            retryDelay: (attemptIndex) => Math.min(attemptIndex * 1000, 5000), // Exponential backoff
           },
         },
       })

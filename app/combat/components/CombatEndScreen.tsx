@@ -5,6 +5,8 @@ import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { calculateCombatRewards, addPendingReward } from '@/lib/rewards'
+import { getHighestStageCompleted, setHighestStageCompleted, isBossStage } from '@/lib/battle'
+import { updateQuestProgress } from '@/lib/daily-quests'
 import { formatCHSAmount } from '@/lib/chs-token'
 import { useToast } from '@/hooks/use-toast'
 import { logger } from '@/lib/logger'
@@ -47,12 +49,29 @@ export function CombatEndScreen({
       const calculatedRewards = calculateCombatRewards(stage, turn, playerCharactersAlive)
       setRewards({ chs: calculatedRewards.chs, exp: calculatedRewards.exp })
 
-      // Add to pending rewards (both CHS and EXP stored off-chain as pseudocurrency)
+      // Add both CHS and EXP to pending rewards
       addPendingReward(calculatedRewards)
+      
+      // Update highest stage completed to unlock next stage
+      const currentHighest = getHighestStageCompleted()
+      if (stage > currentHighest) {
+        setHighestStageCompleted(stage)
+        logger.info('Stage completed, unlocking next stage', { stage, newHighest: stage })
+      }
+      
+      // Update quest progress
+      if (isBossStage(stage)) {
+        updateQuestProgress('win_boss', 1)
+        logger.info('Boss quest progress updated')
+      } else {
+        updateQuestProgress('win_battle', 1)
+        logger.info('Battle quest progress updated')
+      }
+      updateQuestProgress('complete_stage', 1, stage)
       
       toast({
         title: 'Rewards Earned',
-        description: `You earned ${calculatedRewards.chs} CHS and ${calculatedRewards.exp} EXP! Go to the Claim page to claim your CHS.`,
+        description: `You earned ${calculatedRewards.chs} CHS and ${calculatedRewards.exp} EXP! Go to Claim page for CHS and Upgrade page to distribute EXP.`,
       })
       
       rewardsProcessedRef.current = true
@@ -94,7 +113,7 @@ export function CombatEndScreen({
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  CHS and EXP have been added to your pending rewards. Go to the Claim page to claim your CHS and to Upgrade to distribute EXP among your characters.
+                  CHS and EXP have been added to your pending rewards. Go to the Claim page to claim your CHS, and go to the Upgrade page to distribute EXP to your characters.
                 </p>
               </div>
 

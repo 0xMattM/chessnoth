@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CombatBoard } from '@/components/combat-board'
 import { useCombatState } from './hooks/useCombatState'
 import { useEnemyAI } from './hooks/useEnemyAI'
@@ -13,6 +13,8 @@ import { useCombatActions } from './hooks/useCombatActions'
 import { CombatActions } from './components/CombatActions'
 import { CombatErrorBoundary } from '@/components/combat-error-boundary'
 import { CombatEndScreen } from './components/CombatEndScreen'
+import { CombatLog } from './components/CombatLog'
+import { useCombatLog } from './hooks/useCombatLog'
 import type { CombatCharacter } from '@/lib/combat'
 
 type MovingCharacterData = {
@@ -43,6 +45,12 @@ export default function CombatPage() {
     new Map()
   )
 
+  // Use combat log hook
+  const combatLog = useCombatLog()
+  
+  // Track logged turns to prevent duplicates
+  const loggedTurnsRef = useRef<Set<string>>(new Set())
+
   // Use enemy AI hook
   useEnemyAI({
     combatState,
@@ -54,6 +62,7 @@ export default function CombatPage() {
     nextTurn,
     operationInProgressRef,
     timeoutRefsRef,
+    combatLog,
   })
 
   // Use combat actions hook
@@ -76,6 +85,7 @@ export default function CombatPage() {
     getValidMoves,
     getValidTargets,
     nextTurn,
+    combatLog,
   })
 
   // Setup hotkeys
@@ -140,6 +150,20 @@ export default function CombatPage() {
     }
   }, [combatState, handleAction, getCurrentCharacter, getValidTargets, selectedSkill])
 
+  // Log player turn start (only once per turn)
+  useEffect(() => {
+    if (!combatState) return
+    const currentForLog = getCurrentCharacter()
+    if (currentForLog && currentForLog.team === 'player' && !currentForLog.hasMoved && !currentForLog.hasActed) {
+      // Create a unique key for this turn (character ID + turn number)
+      const turnKey = `${currentForLog.id}-${combatState.turn}-${combatState.currentTurnIndex}`
+      if (!loggedTurnsRef.current.has(turnKey)) {
+        loggedTurnsRef.current.add(turnKey)
+        combatLog.addTurnLog(currentForLog.name)
+      }
+    }
+  }, [combatState?.currentTurnIndex, combatState?.turn, combatState, getCurrentCharacter, combatLog])
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
@@ -197,54 +221,41 @@ export default function CombatPage() {
               onReturn={() => router.push('/battle')}
             />
           ) : (
-            <div className="grid gap-6 lg:grid-cols-3">
-              {/* Combat Board */}
-              <div className="lg:col-span-2">
-                <CombatBoard
-                  board={board}
-                  terrainMap={combatState.terrainMap}
-                  selectedPosition={current?.position || null}
-                  validMovePositions={validMoves}
-                  validAttackTargets={validTargets}
-                  onCellClick={handleCellClick}
-                  currentCharacter={current}
-                  movingCharacters={movingCharacters}
-                />
-              </div>
-
-              {/* Action Panel */}
-              <div className="space-y-6">
+            <div className="grid gap-4 lg:grid-cols-12 h-[calc(100vh-180px)]">
+              {/* Left Panel - Stats and Actions */}
+              <div className="lg:col-span-3 space-y-3">
                 {/* Current Character Info */}
                 {current && (
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Current Turn</CardTitle>
-                      <CardDescription>{current.name}</CardDescription>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">{current.name}</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span>HP:</span>
-                        <span>
-                          {current.stats.hp}/{current.stats.maxHp}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Mana:</span>
-                        <span>
-                          {current.stats.mana}/{current.stats.maxMana}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Speed:</span>
-                        <span>{current.stats.spd}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>ATK:</span>
-                        <span>{current.stats.atk}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>DEF:</span>
-                        <span>{current.stats.def}</span>
+                    <CardContent className="space-y-1 text-xs pt-2">
+                      <div className="grid grid-cols-2 gap-1">
+                        <div className="flex justify-between">
+                          <span>HP:</span>
+                          <span>
+                            {current.stats.hp}/{current.stats.maxHp}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Mana:</span>
+                          <span>
+                            {current.stats.mana}/{current.stats.maxMana}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Speed:</span>
+                          <span>{current.stats.spd}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>ATK:</span>
+                          <span>{current.stats.atk}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>DEF:</span>
+                          <span>{current.stats.def}</span>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -265,29 +276,50 @@ export default function CombatPage() {
                   onItemSelect={setSelectedItem}
                 />
 
+              </div>
+
+              {/* Combat Board - Center */}
+              <div className="lg:col-span-6">
+                <CombatBoard
+                  board={board}
+                  terrainMap={combatState.terrainMap}
+                  selectedPosition={current?.position || null}
+                  validMovePositions={validMoves}
+                  validAttackTargets={validTargets}
+                  onCellClick={handleCellClick}
+                  currentCharacter={current}
+                  movingCharacters={movingCharacters}
+                />
+              </div>
+
+              {/* Right Panel - Turn Order and Combat Log */}
+              <div className="lg:col-span-3 space-y-3">
                 {/* Turn Order */}
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Turn Order</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">Turn Order</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-1 text-sm">
+                    <div className="space-y-1 text-xs max-h-[calc(50vh-200px)] overflow-y-auto">
                       {combatState.turnOrder.map((char, idx) => (
                         <div
                           key={char.id}
-                          className={`flex items-center justify-between p-2 rounded ${
+                          className={`flex items-center justify-between p-1.5 rounded ${
                             idx === combatState.currentTurnIndex
                               ? 'bg-primary text-primary-foreground'
                               : 'bg-muted'
                           }`}
                         >
-                          <span>{char.name}</span>
-                          <span className="text-xs opacity-75">SPD: {char.stats.spd}</span>
+                          <span className="truncate">{char.name}</span>
+                          <span className="text-[10px] opacity-75 ml-1">SPD: {char.stats.spd}</span>
                         </div>
                       ))}
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Combat Log */}
+                <CombatLog logs={combatLog.logs} />
               </div>
             </div>
           )}

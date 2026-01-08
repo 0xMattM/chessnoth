@@ -7,7 +7,7 @@ import { Crown, Lock, Users, AlertCircle, Sword } from 'lucide-react'
 import { useAccount, useContractReads } from 'wagmi'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
 import { getTeam } from '@/lib/team'
-import { loadBattleTeam, isTeamReady, isStageUnlocked, isBossStage } from '@/lib/battle'
+import { loadBattleTeam, isTeamReady, isStageUnlocked, isBossStage, getBossData } from '@/lib/battle'
 import {
   formatClassName,
   extractStringFromResult,
@@ -355,6 +355,7 @@ export default function BattlePage() {
                 {stages.map((stage, index) => {
                   const unlocked = isStageUnlocked(stage)
                   const isBoss = isBossStage(stage)
+                  const bossData = isBoss ? getBossData(stage) : null
                   const completed = stage <= highestStage
 
                   return (
@@ -392,7 +393,7 @@ export default function BattlePage() {
                                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500/20 border border-yellow-500/40">
                                   <Crown className="h-4 w-4 text-yellow-400 animate-float" />
                                 </div>
-                                <span>Boss</span>
+                                <span>{bossData?.name || 'Boss'}</span>
                               </span>
                             ) : (
                               <span className="flex items-center gap-2">
@@ -425,7 +426,7 @@ export default function BattlePage() {
                             isBoss ? 'text-yellow-200/70' : 'text-red-200/70'
                           }`}>
                             {isBoss
-                              ? 'Face a powerful boss enemy'
+                              ? `Face the powerful boss: ${bossData?.name || 'Boss'}`
                               : `Battle against stage ${stage} enemies`}
                           </p>
                           <Button

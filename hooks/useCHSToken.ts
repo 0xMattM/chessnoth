@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAccount, useContractWrite, useWaitForTransaction } from 'wagmi'
 import { CHS_TOKEN_ABI, CHS_TOKEN_ADDRESS } from '@/lib/contract'
@@ -148,6 +149,72 @@ export function useTransferCHS() {
 
   return {
     transfer,
+    isLoading: isPending || isConfirming,
+    isSuccess,
+    error,
+    hash,
+  }
+}
+
+/**
+ * Hook to burn CHS tokens
+ */
+export function useBurnCHS() {
+  const queryClient = useQueryClient()
+  const [onSuccessCallback, setOnSuccessCallback] = useState<((hash: string) => void) | null>(null)
+  
+  const {
+    write,
+    data: hash,
+    isLoading: isPending,
+    error,
+  } = useContractWrite({
+    address: CHS_TOKEN_ADDRESS,
+    abi: CHS_TOKEN_ABI,
+    functionName: 'burn',
+    onError: (error) => {
+      logger.error('Error burning CHS', { error })
+    },
+  })
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransaction({
+    hash,
+    enabled: !!hash,
+    onSuccess: (receipt) => {
+      const txHash = receipt.transactionHash || hash
+      logger.info('CHS burn transaction confirmed', { hash: txHash, receipt })
+      // Invalidate queries
+      queryClient.invalidateQueries({ queryKey: ['chsBalance'] })
+      queryClient.invalidateQueries({ queryKey: ['chsBalanceRaw'] })
+      // Call custom callback if provided
+      if (txHash && onSuccessCallback) {
+        onSuccessCallback(txHash)
+        setOnSuccessCallback(null) // Clear callback after use
+      }
+    },
+    onError: (error) => {
+      logger.error('CHS burn transaction failed', { hash, error })
+      setOnSuccessCallback(null) // Clear callback on error
+    },
+  })
+
+  const burn = async (amount: bigint, onSuccess?: (hash: string) => void) => {
+    try {
+      if (onSuccess) {
+        setOnSuccessCallback(() => onSuccess)
+      }
+      write({
+        args: [amount],
+      })
+    } catch (error) {
+      logger.error('Error burning CHS', { amount, error })
+      setOnSuccessCallback(null)
+      throw error
+    }
+  }
+
+  return {
+    burn,
     isLoading: isPending || isConfirming,
     isSuccess,
     error,

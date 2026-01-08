@@ -322,6 +322,20 @@ export default function MarketplacePage() {
     address: CHARACTER_NFT_ADDRESS,
     abi: CHARACTER_NFT_ABI,
     functionName: 'mintCharacter',
+    onError: (error) => {
+      logger.error('Error in mintCharacter transaction', { error })
+      // Check if it's a rate limiting error (429)
+      const errorMessage = error.message || ''
+      const isRateLimit = errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('Too Many Requests')
+      
+      toast({
+        variant: 'destructive',
+        title: isRateLimit ? 'Rate Limit Exceeded' : 'Minting Failed',
+        description: isRateLimit
+          ? 'Too many requests. Please wait a few seconds and try again. The system will automatically retry with alternative RPCs.'
+          : errorMessage || 'Failed to mint character NFT. Please try again.',
+      })
+    },
   })
   const { isLoading: isConfirmingMint, isSuccess: isMintSuccess } = useWaitForTransaction({
     hash: mintHash,
@@ -625,8 +639,8 @@ export default function MarketplacePage() {
       })
 
       toast({
-        title: 'Compra iniciada',
-        description: 'La transacción ha sido enviada. Espera la confirmación.',
+        title: 'Purchase Started',
+        description: 'Transaction has been sent. Please wait for confirmation.',
       })
     } catch (error) {
       logger.error('Error buying NFT', { listingId: targetListing.listingId, error })
@@ -657,8 +671,8 @@ export default function MarketplacePage() {
       })
 
       toast({
-        title: 'Cancelación iniciada',
-        description: 'La transacción ha sido enviada. Espera la confirmación.',
+        title: 'Cancellation Started',
+        description: 'Transaction has been sent. Please wait for confirmation.',
       })
     } catch (error) {
       logger.error('Error cancelling listing', { listingId: idToCancel, error })
@@ -773,7 +787,7 @@ export default function MarketplacePage() {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-6">
         <div>
           <h1 className="text-3xl font-bold mb-2">Marketplace</h1>
           <p className="text-muted-foreground">

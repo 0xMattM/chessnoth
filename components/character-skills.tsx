@@ -202,7 +202,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
         <CardHeader className="flex flex-row items-center justify-between border-b">
           <div>
             <CardTitle>
-              {character.metadata?.name || `Character #${character.tokenId}`} - Skill Tree
+              {character.metadata?.name || 'Unknown Character'} - Skill Tree
             </CardTitle>
             <CardDescription>
               {character.metadata?.class} • Level {characterLevel} • {availableSkillPoints} SP available
@@ -450,7 +450,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Equip Skills - {character.metadata?.name || `Character #${character.tokenId}`}</DialogTitle>
+          <DialogTitle>Equip Skills - {character.metadata?.name || 'Unknown Character'}</DialogTitle>
           <DialogDescription>
             Select up to 4 skills to equip for combat. Equipped skills can be used with hotkeys W+1-4.
           </DialogDescription>

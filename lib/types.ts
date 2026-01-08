@@ -7,11 +7,12 @@
  * Skill effect definition
  */
 export interface SkillEffect {
-  type: 'heal' | 'mana' | 'buff' | 'debuff' | 'status' | string
+  type: 'heal' | 'mana' | 'buff' | 'debuff' | 'status' | 'revive' | string
   value?: number
   stat?: string // For buff/debuff effects
   duration?: number // For buff/debuff effects
   statusId?: string // For status effects
+  hpPercent?: number // For revive effects
 }
 
 /**

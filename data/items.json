@@ -34,6 +34,112 @@
     "cooldown": 0
   },
   {
+    "id": "greater_health_potion",
+    "name": "Greater Health Potion",
+    "description": "Restores 150 HP",
+    "type": "consumable",
+    "rarity": "uncommon",
+    "stackable": true,
+    "maxStack": 99,
+    "value": 50,
+    "effects": [
+      {
+        "type": "heal",
+        "value": 150
+      }
+    ],
+    "cooldown": 0
+  },
+  {
+    "id": "greater_mana_potion",
+    "name": "Greater Mana Potion",
+    "description": "Restores 100 Mana",
+    "type": "consumable",
+    "rarity": "uncommon",
+    "stackable": true,
+    "maxStack": 99,
+    "value": 50,
+    "effects": [
+      {
+        "type": "mana",
+        "value": 100
+      }
+    ],
+    "cooldown": 0
+  },
+  {
+    "id": "elixir_of_strength",
+    "name": "Elixir of Strength",
+    "description": "Temporarily increases ATK by 20%",
+    "type": "consumable",
+    "rarity": "rare",
+    "stackable": true,
+    "maxStack": 10,
+    "value": 200,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "atk",
+        "value": 20,
+        "duration": 5
+      }
+    ],
+    "cooldown": 3
+  },
+  {
+    "id": "elixir_of_magic",
+    "name": "Elixir of Magic",
+    "description": "Temporarily increases MAG by 20%",
+    "type": "consumable",
+    "rarity": "rare",
+    "stackable": true,
+    "maxStack": 10,
+    "value": 200,
+    "effects": [
+      {
+        "type": "buff",
+        "stat": "mag",
+        "value": 20,
+        "duration": 5
+      }
+    ],
+    "cooldown": 3
+  },
+  {
+    "id": "antidote",
+    "name": "Antidote",
+    "description": "Cures poison status",
+    "type": "consumable",
+    "rarity": "common",
+    "stackable": true,
+    "maxStack": 99,
+    "value": 15,
+    "effects": [
+      {
+        "type": "status",
+        "statusId": "cure_poison"
+      }
+    ],
+    "cooldown": 0
+  },
+  {
+    "id": "revive_crystal",
+    "name": "Revive Crystal",
+    "description": "Revives a fallen character with 50% HP",
+    "type": "consumable",
+    "rarity": "epic",
+    "stackable": true,
+    "maxStack": 5,
+    "value": 500,
+    "effects": [
+      {
+        "type": "revive",
+        "hpPercent": 50
+      }
+    ],
+    "cooldown": 0
+  },
+  {
     "id": "iron_sword",
     "name": "Iron Sword",
     "description": "A basic iron sword",
@@ -48,7 +154,7 @@
     "allowedClasses": ["warrior", "paladin"]
   },
   {
- "id": "steel_sword",
+    "id": "steel_sword",
     "name": "Steel Sword",
     "description": "A sturdy steel sword",
     "type": "weapon",
@@ -61,6 +167,167 @@
       "crit": 2
     },
     "allowedClasses": ["warrior", "paladin"]
+  },
+  {
+    "id": "silver_sword",
+    "name": "Silver Sword",
+    "description": "A polished silver blade",
+    "type": "weapon",
+    "rarity": "rare",
+    "stackable": false,
+    "value": 400,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 18,
+      "crit": 5,
+      "spd": 3
+    },
+    "allowedClasses": ["warrior", "paladin"]
+  },
+  {
+    "id": "dragon_blade",
+    "name": "Dragon Blade",
+    "description": "A legendary sword forged from dragon scales",
+    "type": "weapon",
+    "rarity": "legendary",
+    "stackable": false,
+    "value": 2000,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 35,
+      "crit": 10,
+      "spd": 5,
+      "mag": 5
+    },
+    "allowedClasses": ["warrior", "paladin"]
+  },
+  {
+    "id": "iron_dagger",
+    "name": "Iron Dagger",
+    "description": "A small but deadly blade",
+    "type": "weapon",
+    "rarity": "common",
+    "stackable": false,
+    "value": 40,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 4,
+      "spd": 3,
+      "crit": 3
+    },
+    "allowedClasses": ["assassin"]
+  },
+  {
+    "id": "shadow_blade",
+    "name": "Shadow Blade",
+    "description": "A dagger that moves like shadow",
+    "type": "weapon",
+    "rarity": "rare",
+    "stackable": false,
+    "value": 450,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 15,
+      "spd": 8,
+      "crit": 8,
+      "eva": 5
+    },
+    "allowedClasses": ["assassin"]
+  },
+  {
+    "id": "hunting_bow",
+    "name": "Hunting Bow",
+    "description": "A reliable bow for ranged combat",
+    "type": "weapon",
+    "rarity": "common",
+    "stackable": false,
+    "value": 45,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 4,
+      "spd": 2
+    },
+    "allowedClasses": ["archer"]
+  },
+  {
+    "id": "composite_bow",
+    "name": "Composite Bow",
+    "description": "A powerful composite bow",
+    "type": "weapon",
+    "rarity": "uncommon",
+    "stackable": false,
+    "value": 180,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 9,
+      "spd": 4,
+      "crit": 3
+    },
+    "allowedClasses": ["archer"]
+  },
+  {
+    "id": "windrider_bow",
+    "name": "Windrider Bow",
+    "description": "A legendary bow that never misses",
+    "type": "weapon",
+    "rarity": "epic",
+    "stackable": false,
+    "value": 1200,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "atk": 28,
+      "spd": 10,
+      "crit": 12,
+      "eva": 8
+    },
+    "allowedClasses": ["archer"]
+  },
+  {
+    "id": "wooden_staff",
+    "name": "Wooden Staff",
+    "description": "A simple wooden staff",
+    "type": "weapon",
+    "rarity": "common",
+    "stackable": false,
+    "value": 30,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "mag": 5
+    },
+    "allowedClasses": ["mage", "healer", "dark_mage"]
+  },
+  {
+    "id": "crystal_staff",
+    "name": "Crystal Staff",
+    "description": "A staff imbued with crystal magic",
+    "type": "weapon",
+    "rarity": "rare",
+    "stackable": false,
+    "value": 500,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "mag": 20,
+      "mana": 30,
+      "res": 5
+    },
+    "allowedClasses": ["mage", "healer", "dark_mage"]
+  },
+  {
+    "id": "archmage_staff",
+    "name": "Archmage Staff",
+    "description": "The staff of legendary archmages",
+    "type": "weapon",
+    "rarity": "legendary",
+    "stackable": false,
+    "value": 2500,
+    "equipmentSlot": "weapon",
+    "statBonuses": {
+      "mag": 40,
+      "mana": 50,
+      "res": 10,
+      "crit": 8
+    },
+    "allowedClasses": ["mage", "healer", "dark_mage"]
   },
   {
     "id": "leather_armor",
@@ -94,18 +361,37 @@
     "allowedClasses": ["warrior", "paladin", "dwarf"]
   },
   {
-    "id": "wooden_staff",
-    "name": "Wooden Staff",
-    "description": "A simple wooden staff",
-    "type": "weapon",
-    "rarity": "common",
+    "id": "plate_armor",
+    "name": "Plate Armor",
+    "description": "Heavy plate armor for maximum protection",
+    "type": "armor",
+    "rarity": "rare",
     "stackable": false,
-    "value": 30,
-    "equipmentSlot": "weapon",
+    "value": 600,
+    "equipmentSlot": "armor",
     "statBonuses": {
-      "mag": 5
+      "def": 15,
+      "hp": 50,
+      "res": 5
     },
-    "allowedClasses": ["mage", "healer", "dark_mage"]
+    "allowedClasses": ["warrior", "paladin", "dwarf"]
+  },
+  {
+    "id": "dragon_scale_armor",
+    "name": "Dragon Scale Armor",
+    "description": "Armor crafted from dragon scales",
+    "type": "armor",
+    "rarity": "legendary",
+    "stackable": false,
+    "value": 3000,
+    "equipmentSlot": "armor",
+    "statBonuses": {
+      "def": 30,
+      "hp": 100,
+      "res": 15,
+      "spd": 5
+    },
+    "allowedClasses": ["warrior", "paladin", "dwarf"]
   },
   {
     "id": "apprentice_robe",
@@ -123,35 +409,207 @@
     "allowedClasses": ["mage", "healer", "dark_mage", "monk"]
   },
   {
-    "id": "hunting_bow",
-    "name": "Hunting Bow",
-    "description": "A reliable bow for ranged combat",
-    "type": "weapon",
-    "rarity": "common",
+    "id": "wizard_robe",
+    "name": "Wizard Robe",
+    "description": "A robe enchanted with protective magic",
+    "type": "armor",
+    "rarity": "rare",
     "stackable": false,
-    "value": 45,
-    "equipmentSlot": "weapon",
+    "value": 550,
+    "equipmentSlot": "armor",
     "statBonuses": {
-      "atk": 4,
-      "spd": 2
+      "res": 12,
+      "mana": 40,
+      "mag": 5
     },
-    "allowedClasses": ["archer"]
+    "allowedClasses": ["mage", "healer", "dark_mage", "monk"]
   },
   {
-    "id": "antidote",
-    "name": "Antidote",
-    "description": "Cures poison status",
-    "type": "consumable",
+    "id": "leather_helmet",
+    "name": "Leather Helmet",
+    "description": "Basic head protection",
+    "type": "armor",
     "rarity": "common",
-    "stackable": true,
-    "maxStack": 99,
-    "value": 15,
-    "effects": [
-      {
-        "type": "status",
-        "statusId": "cure_poison"
-      }
-    ],
-    "cooldown": 0
+    "stackable": false,
+    "value": 25,
+    "equipmentSlot": "helmet",
+    "statBonuses": {
+      "def": 2,
+      "hp": 5
+    },
+    "allowedClasses": ["warrior", "archer", "assassin", "paladin", "dwarf", "axe_thrower"]
+  },
+  {
+    "id": "iron_helmet",
+    "name": "Iron Helmet",
+    "description": "Sturdy iron head protection",
+    "type": "armor",
+    "rarity": "uncommon",
+    "stackable": false,
+    "value": 80,
+    "equipmentSlot": "helmet",
+    "statBonuses": {
+      "def": 4,
+      "hp": 15,
+      "res": 1
+    },
+    "allowedClasses": ["warrior", "paladin", "dwarf"]
+  },
+  {
+    "id": "crown_of_wisdom",
+    "name": "Crown of Wisdom",
+    "description": "A crown that enhances magical abilities",
+    "type": "armor",
+    "rarity": "epic",
+    "stackable": false,
+    "value": 1500,
+    "equipmentSlot": "helmet",
+    "statBonuses": {
+      "mag": 15,
+      "mana": 30,
+      "res": 8
+    },
+    "allowedClasses": ["mage", "healer", "dark_mage", "monk"]
+  },
+  {
+    "id": "leather_boots",
+    "name": "Leather Boots",
+    "description": "Basic foot protection",
+    "type": "armor",
+    "rarity": "common",
+    "stackable": false,
+    "value": 20,
+    "equipmentSlot": "boots",
+    "statBonuses": {
+      "def": 1,
+      "spd": 2
+    },
+    "allowedClasses": ["warrior", "archer", "assassin", "monk", "paladin", "axe_thrower"]
+  },
+  {
+    "id": "steel_boots",
+    "name": "Steel Boots",
+    "description": "Heavy boots for protection",
+    "type": "armor",
+    "rarity": "uncommon",
+    "stackable": false,
+    "value": 70,
+    "equipmentSlot": "boots",
+    "statBonuses": {
+      "def": 3,
+      "hp": 10,
+      "spd": 1
+    },
+    "allowedClasses": ["warrior", "paladin", "dwarf"]
+  },
+  {
+    "id": "windwalkers",
+    "name": "Windwalkers",
+    "description": "Boots that grant incredible speed",
+    "type": "armor",
+    "rarity": "epic",
+    "stackable": false,
+    "value": 1800,
+    "equipmentSlot": "boots",
+    "statBonuses": {
+      "spd": 15,
+      "eva": 10,
+      "def": 5
+    },
+    "allowedClasses": ["warrior", "archer", "assassin", "monk", "paladin", "axe_thrower"]
+  },
+  {
+    "id": "leather_pants",
+    "name": "Leather Pants",
+    "description": "Basic leg protection",
+    "type": "armor",
+    "rarity": "common",
+    "stackable": false,
+    "value": 22,
+    "equipmentSlot": "pants",
+    "statBonuses": {
+      "def": 2,
+      "hp": 5
+    },
+    "allowedClasses": ["warrior", "archer", "assassin", "monk", "paladin", "axe_thrower"]
+  },
+  {
+    "id": "chain_pants",
+    "name": "Chain Pants",
+    "description": "Chain mail leg protection",
+    "type": "armor",
+    "rarity": "uncommon",
+    "stackable": false,
+    "value": 65,
+    "equipmentSlot": "pants",
+    "statBonuses": {
+      "def": 4,
+      "hp": 12,
+      "res": 1
+    },
+    "allowedClasses": ["warrior", "paladin", "dwarf"]
+  },
+  {
+    "id": "power_ring",
+    "name": "Power Ring",
+    "description": "A ring that increases physical power",
+    "type": "armor",
+    "rarity": "rare",
+    "stackable": false,
+    "value": 400,
+    "equipmentSlot": "accessory",
+    "statBonuses": {
+      "atk": 8,
+      "crit": 3
+    },
+    "allowedClasses": ["warrior", "archer", "assassin", "paladin", "dwarf", "axe_thrower"]
+  },
+  {
+    "id": "magic_ring",
+    "name": "Magic Ring",
+    "description": "A ring that enhances magical abilities",
+    "type": "armor",
+    "rarity": "rare",
+    "stackable": false,
+    "value": 400,
+    "equipmentSlot": "accessory",
+    "statBonuses": {
+      "mag": 8,
+      "mana": 20
+    },
+    "allowedClasses": ["mage", "healer", "dark_mage", "monk"]
+  },
+  {
+    "id": "ring_of_protection",
+    "name": "Ring of Protection",
+    "description": "A ring that provides defensive bonuses",
+    "type": "armor",
+    "rarity": "rare",
+    "stackable": false,
+    "value": 450,
+    "equipmentSlot": "accessory",
+    "statBonuses": {
+      "def": 6,
+      "res": 6,
+      "hp": 25
+    },
+    "allowedClasses": ["warrior", "paladin", "dwarf", "healer"]
+  },
+  {
+    "id": "amulet_of_vitality",
+    "name": "Amulet of Vitality",
+    "description": "An amulet that increases health and mana",
+    "type": "armor",
+    "rarity": "epic",
+    "stackable": false,
+    "value": 2000,
+    "equipmentSlot": "accessory",
+    "statBonuses": {
+      "hp": 80,
+      "mana": 60,
+      "def": 5,
+      "res": 5
+    },
+    "allowedClasses": ["warrior", "mage", "archer", "assassin", "healer", "paladin", "dark_mage", "monk", "dwarf", "axe_thrower"]
   }
 ]

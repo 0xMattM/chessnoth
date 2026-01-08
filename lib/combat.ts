@@ -1,7 +1,10 @@
 // Combat system utilities
 import type { BattleCharacter } from './battle'
+import { isBossStage, getBossData } from './battle'
 import type { TerrainType } from './terrain'
 import { TERRAIN_CONFIGS } from './terrain'
+import { logger } from './logger'
+import { COMBAT_CALCULATIONS } from './constants'
 
 export interface CombatStats {
   hp: number
@@ -17,7 +20,7 @@ export interface CombatStats {
   crit: number
 }
 
-export type AnimationState = 'idle' | 'moving' | 'attacking' | 'casting' | 'hit' | 'defeated'
+export type AnimationState = 'idle' | 'moving' | 'attacking' | 'casting' | 'hit' | 'defeated' | 'heal'
 
 export interface StatusEffect {
   type: string
@@ -44,6 +47,8 @@ export interface CombatCharacter {
     [skillId: string]: number // Points invested in each skill
   }
   equippedSkills?: string[] // Up to 4 skill IDs equipped for combat (max length 4)
+  bossSprite?: string // For boss enemies, path to boss sprite
+  isBoss?: boolean // Flag to identify boss characters
 }
 
 export interface CombatState {
@@ -61,15 +66,43 @@ export interface CombatState {
 
 /**
  * Calculate character stats from base stats, level, equipment, and skills
+ * @param character - The battle character to calculate stats for
+ * @returns Combat stats with level growth and equipment bonuses applied
+ * @throws Error if class data cannot be loaded or is invalid
  */
 export async function calculateCombatStats(
   character: BattleCharacter
 ): Promise<CombatStats> {
-  // Load class data
-  const classData = await import(`@/data/classes/${character.class.toLowerCase().replace(' ', '_')}.json`)
-  
-  const baseStats = classData.default?.baseStats || classData.baseStats
-  const growthRates = classData.default?.growthRates || classData.growthRates
+  try {
+    // Normalize class name for file lookup
+    const normalizedClass = character.class
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '_')
+    
+    // Load class data with error handling
+    const classData = await import(
+      `@/data/classes/${normalizedClass}.json`
+    ).catch((error) => {
+      logger.error(`Failed to load class data for ${character.class}`, error, {
+        characterId: character.tokenId,
+        characterClass: character.class,
+        normalizedClass,
+      })
+      throw new Error(`Invalid character class: ${character.class}`)
+    })
+    
+    const baseStats = classData.default?.baseStats || classData.baseStats
+    const growthRates = classData.default?.growthRates || classData.growthRates
+    
+    if (!baseStats || !growthRates) {
+      logger.error('Invalid class data structure', undefined, {
+        characterClass: character.class,
+        hasBaseStats: !!baseStats,
+        hasGrowthRates: !!growthRates,
+      })
+      throw new Error(`Invalid class data structure for ${character.class}`)
+    }
   
   // Calculate base stats with level growth
   const stats: CombatStats = {
@@ -86,36 +119,48 @@ export async function calculateCombatStats(
     crit: Math.floor(baseStats.crit + growthRates.crit * (character.level - 1)),
   }
   
-  // Add equipment bonuses
-  const itemsData = await import('@/data/items.json')
-  const items = itemsData.default || itemsData
-  
-  Object.entries(character.equipment).forEach(([, itemId]) => {
-    if (itemId) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const item = items.find((i: any) => i.id === itemId)
-      if (item?.statBonuses) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Object.entries(item.statBonuses).forEach(([stat, value]: [string, any]) => {
-          const statKey = stat.toLowerCase() as keyof CombatStats
-          if (statKey in stats) {
-            const bonus = value as number
-            if (statKey === 'hp' || statKey === 'maxHp') {
-              stats.hp += bonus
-              stats.maxHp += bonus
-            } else if (statKey === 'mana' || statKey === 'maxMana') {
-              stats.mana += bonus
-              stats.maxMana += bonus
-            } else {
-              stats[statKey] += bonus
-            }
-          }
-        })
-      }
+    // Add equipment bonuses
+    const itemsData = await import('@/data/items.json')
+    const items = itemsData.default || itemsData
+    
+    // Define item interface for type safety
+    interface ItemData {
+      id: string
+      statBonuses?: Record<string, number>
     }
-  })
-  
-  return stats
+    
+    Object.entries(character.equipment).forEach(([, itemId]) => {
+      if (itemId) {
+        const item = items.find((i: ItemData) => i.id === itemId)
+        if (item?.statBonuses) {
+          Object.entries(item.statBonuses).forEach(([stat, value]) => {
+            const statKey = stat.toLowerCase() as keyof CombatStats
+            if (statKey in stats && typeof value === 'number') {
+              const bonus = value
+              if (statKey === 'hp' || statKey === 'maxHp') {
+                stats.hp += bonus
+                stats.maxHp += bonus
+              } else if (statKey === 'mana' || statKey === 'maxMana') {
+                stats.mana += bonus
+                stats.maxMana += bonus
+              } else {
+                stats[statKey] += bonus
+              }
+            }
+          })
+        }
+      }
+    })
+    
+    return stats
+  } catch (error) {
+    logger.error('Error calculating combat stats', error as Error, {
+      characterId: character.tokenId,
+      characterClass: character.class,
+      characterLevel: character.level,
+    })
+    throw error
+  }
 }
 
 /**
@@ -149,46 +194,117 @@ export async function initializeCombatCharacters(
     })
   }
   
-  // Generate enemies based on stage
-  const enemyCount = Math.min(4, Math.floor(stage / 5) + 2) // 2-4 enemies
-  const enemyClasses = ['warrior', 'mage', 'archer', 'assassin']
+  // Check if this is a boss stage
+  const isBoss = isBossStage(stage)
+  const bossData = isBoss ? getBossData(stage) : null
   
-  for (let i = 0; i < enemyCount; i++) {
-    const enemyClass = enemyClasses[i % enemyClasses.length]
-    const enemyLevel = Math.max(1, stage - 2 + Math.floor(i / 2))
+  if (isBoss && bossData) {
+    // Boss stage: create a single powerful boss enemy
+    const bossClass = 'warrior' // Bosses use warrior as base class
+    const bossLevel = stage * 2 // Boss is significantly higher level
     
-    const classData = await import(`@/data/classes/${enemyClass}.json`)
+    const classData = await import(`@/data/classes/${bossClass}.json`)
     const baseStats = classData.default?.baseStats || classData.baseStats
     const growthRates = classData.default?.growthRates || classData.growthRates
     
+    // Boss gets enhanced stats (2.5x multiplier)
     const stats: CombatStats = {
-      hp: Math.floor(baseStats.hp + growthRates.hp * (enemyLevel - 1)),
-      maxHp: Math.floor(baseStats.hp + growthRates.hp * (enemyLevel - 1)),
-      mana: Math.floor(baseStats.mana + growthRates.mana * (enemyLevel - 1)),
-      maxMana: Math.floor(baseStats.mana + growthRates.mana * (enemyLevel - 1)),
-      atk: Math.floor(baseStats.atk + growthRates.atk * (enemyLevel - 1)),
-      mag: Math.floor(baseStats.mag + growthRates.mag * (enemyLevel - 1)),
-      def: Math.floor(baseStats.def + growthRates.def * (enemyLevel - 1)),
-      res: Math.floor(baseStats.res + growthRates.res * (enemyLevel - 1)),
-      spd: Math.floor(baseStats.spd + growthRates.spd * (enemyLevel - 1)),
-      eva: Math.floor(baseStats.eva + growthRates.eva * (enemyLevel - 1)),
-      crit: Math.floor(baseStats.crit + growthRates.crit * (enemyLevel - 1)),
+      hp: Math.floor((baseStats.hp + growthRates.hp * (bossLevel - 1)) * 2.5),
+      maxHp: Math.floor((baseStats.hp + growthRates.hp * (bossLevel - 1)) * 2.5),
+      mana: Math.floor((baseStats.mana + growthRates.mana * (bossLevel - 1)) * 2.5),
+      maxMana: Math.floor((baseStats.mana + growthRates.mana * (bossLevel - 1)) * 2.5),
+      atk: Math.floor((baseStats.atk + growthRates.atk * (bossLevel - 1)) * 2),
+      mag: Math.floor((baseStats.mag + growthRates.mag * (bossLevel - 1)) * 2),
+      def: Math.floor((baseStats.def + growthRates.def * (bossLevel - 1)) * 1.5),
+      res: Math.floor((baseStats.res + growthRates.res * (bossLevel - 1)) * 1.5),
+      spd: Math.floor((baseStats.spd + growthRates.spd * (bossLevel - 1)) * 1.5),
+      eva: Math.floor((baseStats.eva + growthRates.eva * (bossLevel - 1)) * 1.5),
+      crit: Math.floor((baseStats.crit + growthRates.crit * (bossLevel - 1)) * 1.5),
     }
     
     combatCharacters.push({
-      id: `enemy-${i}`,
-      tokenId: `enemy-${i}`,
-      name: `${enemyClass.charAt(0).toUpperCase() + enemyClass.slice(1)} ${i + 1}`,
-      class: enemyClass,
-      level: enemyLevel,
+      id: 'boss-0',
+      tokenId: 'boss-0',
+      name: bossData.name,
+      class: bossClass,
+      level: bossLevel,
       stats,
-      baseStats: { ...stats }, // Store base stats without terrain modifiers
+      baseStats: { ...stats },
       position: null,
       team: 'enemy',
       hasMoved: false,
       hasActed: false,
       statusEffects: [],
+      bossSprite: bossData.sprite,
+      isBoss: true,
     })
+  } else {
+    // Normal stage: generate multiple enemies
+    // Progressive enemy count: 2 -> 3 -> 4 -> 5 -> 6 enemies
+    let enemyCount: number
+    if (stage <= 2) {
+      enemyCount = 2
+    } else if (stage <= 4) {
+      enemyCount = 3
+    } else if (stage <= 6) {
+      enemyCount = 4
+    } else if (stage <= 8) {
+      enemyCount = 5
+    } else {
+      enemyCount = 6 // Maximum 6 enemies
+    }
+    
+    // Varied enemy classes for more interesting battles
+    // Mix of melee, ranged, magic, and support classes
+    const enemyClasses = ['warrior', 'mage', 'archer', 'assassin', 'healer', 'paladin']
+    
+    for (let i = 0; i < enemyCount; i++) {
+      // Cycle through classes, ensuring variety
+      const enemyClass = enemyClasses[i % enemyClasses.length]
+      
+      // Progressive level scaling: enemies get stronger as stage increases
+      // Base level increases with stage, and later enemies in the same stage are slightly stronger
+      // Formula ensures enemies scale appropriately with stage progression
+      // Early stages: enemies are weaker, later stages: enemies are stronger
+      const stageMultiplier = Math.min(1.0, 0.7 + (stage - 1) * 0.05) // 70% to 100% scaling
+      const baseLevel = Math.floor(stage * stageMultiplier)
+      const positionBonus = Math.floor(i / 2) // Every 2 enemies get +1 level bonus
+      const variance = i % 2 === 0 ? 0 : 1 // Alternate enemies get slight variance
+      const enemyLevel = Math.max(1, baseLevel + positionBonus + variance)
+      
+      const classData = await import(`@/data/classes/${enemyClass}.json`)
+      const baseStats = classData.default?.baseStats || classData.baseStats
+      const growthRates = classData.default?.growthRates || classData.growthRates
+      
+      const stats: CombatStats = {
+        hp: Math.floor(baseStats.hp + growthRates.hp * (enemyLevel - 1)),
+        maxHp: Math.floor(baseStats.hp + growthRates.hp * (enemyLevel - 1)),
+        mana: Math.floor(baseStats.mana + growthRates.mana * (enemyLevel - 1)),
+        maxMana: Math.floor(baseStats.mana + growthRates.mana * (enemyLevel - 1)),
+        atk: Math.floor(baseStats.atk + growthRates.atk * (enemyLevel - 1)),
+        mag: Math.floor(baseStats.mag + growthRates.mag * (enemyLevel - 1)),
+        def: Math.floor(baseStats.def + growthRates.def * (enemyLevel - 1)),
+        res: Math.floor(baseStats.res + growthRates.res * (enemyLevel - 1)),
+        spd: Math.floor(baseStats.spd + growthRates.spd * (enemyLevel - 1)),
+        eva: Math.floor(baseStats.eva + growthRates.eva * (enemyLevel - 1)),
+        crit: Math.floor(baseStats.crit + growthRates.crit * (enemyLevel - 1)),
+      }
+      
+      combatCharacters.push({
+        id: `enemy-${i}`,
+        tokenId: `enemy-${i}`,
+        name: `${enemyClass.charAt(0).toUpperCase() + enemyClass.slice(1)} ${i + 1}`,
+        class: enemyClass,
+        level: enemyLevel,
+        stats,
+        baseStats: { ...stats }, // Store base stats without terrain modifiers
+        position: null,
+        team: 'enemy',
+        hasMoved: false,
+        hasActed: false,
+        statusEffects: [],
+      })
+    }
   }
   
   return combatCharacters
@@ -429,14 +545,13 @@ export function calculateDamage(
   const baseDamage = attackStat * damageMultiplier
   
   // Defense reduces damage by a percentage
-  // Formula: damage = baseDamage * (attackStat / (attackStat + defenseStat * 1.5))
+  // Formula: damage = baseDamage * (attackStat / (attackStat + defenseStat * DEFENSE_FACTOR))
   // This ensures defense is always useful but never completely negates damage
-  const defenseFactor = 1.5 // How much defense matters (higher = defense is stronger)
-  const damageReduction = defenseStat * defenseFactor
+  const damageReduction = defenseStat * COMBAT_CALCULATIONS.DEFENSE_FACTOR
   const damageAfterDefense = baseDamage * (attackStat / (attackStat + damageReduction))
   
-  // Minimum damage is 20% of base damage (ensures attacks always do meaningful damage)
-  const minDamage = baseDamage * 0.2
+  // Minimum damage is MIN_DAMAGE_FACTOR of base damage (ensures attacks always do meaningful damage)
+  const minDamage = baseDamage * COMBAT_CALCULATIONS.MIN_DAMAGE_FACTOR
   
   // Critical hit chance (using effective crit)
   const critRoll = Math.random() * 100
@@ -461,34 +576,80 @@ export function getValidSkillTargets(
   const { row, col } = character.position
   const targets: CombatCharacter[] = []
   
+  // Check if skill is healing/buff type
+  const isHealingSkill = skill.damageType === 'healing'
+  const hasHealEffect = skill.effects?.some((e: { type: string }) => e.type === 'heal')
+  const hasBuffEffect = skill.effects?.some((e: { type: string }) => e.type === 'buff')
+  const isSupportSkill = isHealingSkill || hasHealEffect || hasBuffEffect
+  
+  // Check if skill is damage type
+  const isDamageSkill = skill.damageType === 'magical' || skill.damageType === 'physical'
+  
+  // Check if skill targets all allies (AOE)
+  const isAllAlliesAOE = skill.aoeType === 'all_allies'
+  
   allCharacters.forEach((target) => {
-    if (!target.position) return
+    // Skip if target has no position (defeated)
+    if (!target.position && !isAllAlliesAOE) return
     
-    const distance = Math.abs(target.position.row - row) + Math.abs(target.position.col - col)
+    const distance = target.position 
+      ? Math.abs(target.position.row - row) + Math.abs(target.position.col - col)
+      : 0
     
+    const isEnemy = target.team !== character.team
+    const isAlly = target.team === character.team && target !== character
+    const isSelf = target === character
+    
+    // Handle skills that don't require a target (self-targeting or AOE)
     if (skill.requiresTarget === false) {
-      // Self-targeting skill
-      if (target === character) {
-        targets.push(target)
-      }
-    } else if (skill.range === 0) {
-      // Self-targeting
-      if (target === character) {
-        targets.push(target)
-      }
-    } else {
-      // Target enemies or allies based on skill type
-      const isEnemy = target.team !== character.team
-      const isAlly = target.team === character.team && target !== character
-      
-      if (distance <= skill.range) {
-        // For damage skills, target enemies
-        if (skill.damageType !== 'none' && isEnemy) {
+      if (isAllAlliesAOE) {
+        // AOE skill that targets all allies - include all allies (even defeated ones for revive)
+        if (isAlly || isSelf) {
           targets.push(target)
         }
-        // For healing/buff skills, target allies
-        if (skill.effects && skill.effects.some((e: { type: string }) => e.type === 'heal' || e.type === 'buff') && (isAlly || target === character)) {
+      } else {
+        // Self-targeting skill
+        if (isSelf) {
           targets.push(target)
+        }
+      }
+      return
+    }
+    
+    // Handle skills with range 0 (self-targeting)
+    if (skill.range === 0) {
+      if (isSelf) {
+        targets.push(target)
+      }
+      return
+    }
+    
+    // Handle skills with range > 0
+    if (target.position && distance <= skill.range) {
+      // Damage skills target enemies
+      if (isDamageSkill && isEnemy) {
+        targets.push(target)
+        return
+      }
+      
+      // Healing/support skills target allies and self
+      if (isSupportSkill && (isAlly || isSelf)) {
+        targets.push(target)
+        return
+      }
+      
+      // Skills with no damage type but with effects - check effect types
+      if (skill.damageType === 'none' && skill.effects) {
+        const hasDebuffEffect = skill.effects.some((e: { type: string }) => e.type === 'debuff' || e.type === 'status')
+        // Debuff/status skills target enemies
+        if (hasDebuffEffect && isEnemy) {
+          targets.push(target)
+          return
+        }
+        // Other effects (like cure) target allies
+        if (!hasDebuffEffect && (isAlly || isSelf)) {
+          targets.push(target)
+          return
         }
       }
     }

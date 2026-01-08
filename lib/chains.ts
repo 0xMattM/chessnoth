@@ -47,10 +47,18 @@ export const mantleSepoliaTestnet: Chain = {
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.sepolia.mantle.xyz'],
+      http: [
+        'https://mantle-sepolia.drpc.org',
+        'https://rpc.sepolia.mantle.xyz',
+        'https://mantle-sepolia.publicnode.com',
+      ],
     },
     public: {
-      http: ['https://rpc.sepolia.mantle.xyz'],
+      http: [
+        'https://mantle-sepolia.drpc.org',
+        'https://rpc.sepolia.mantle.xyz',
+        'https://mantle-sepolia.publicnode.com',
+      ],
     },
   },
   blockExplorers: {

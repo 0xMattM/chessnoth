@@ -2,10 +2,11 @@ import { logger } from './logger'
 
 /**
  * Reward structure for combat victories
+ * Both CHS and EXP are stored as pending rewards
  */
 export interface CombatRewards {
-  chs: number // CHS tokens earned
-  exp: number // Experience points earned (pseudomoneda in-game)
+  chs: number // CHS tokens earned (stored as pending for claim)
+  exp: number // Experience points earned (stored as pending for distribution)
   timestamp: number // When rewards were earned
   stage: number // Stage number
   battleId?: string // Optional battle identifier
@@ -28,25 +29,36 @@ export function getPendingRewards(): CombatRewards[] {
     if (!stored) return []
     return JSON.parse(stored) as CombatRewards[]
   } catch (error) {
-    logger.error('Error reading pending rewards', { error })
+    logger.error('Error reading pending rewards', error instanceof Error ? error : undefined)
     return []
   }
 }
 
 /**
  * Adds a new reward to pending rewards
- * @param reward Reward to add
+ * @param reward Reward to add (both CHS and EXP)
  */
 export function addPendingReward(reward: CombatRewards): void {
   if (typeof window === 'undefined') return
 
   try {
     const rewards = getPendingRewards()
-    rewards.push(reward)
+    // Store both CHS and EXP as pending rewards
+    const pendingReward = {
+      chs: reward.chs,
+      exp: reward.exp, // Store EXP to be distributed later in Upgrade page
+      timestamp: reward.timestamp,
+      stage: reward.stage,
+      battleId: reward.battleId,
+    }
+    rewards.push(pendingReward)
     localStorage.setItem(REWARDS_STORAGE_KEY, JSON.stringify(rewards))
-    logger.info('Reward added', { reward })
+    logger.info('Rewards added to pending', { chs: reward.chs, exp: reward.exp, totalRewards: rewards.length })
+    
+    // Dispatch custom event to notify components of the update
+    window.dispatchEvent(new CustomEvent('chessnoth-rewards-updated'))
   } catch (error) {
-    logger.error('Error adding pending reward', { reward, error })
+    logger.error('Error adding pending reward', error instanceof Error ? error : undefined)
   }
 }
 
@@ -65,7 +77,7 @@ export function removePendingReward(index: number): void {
       logger.info('Reward removed', { index })
     }
   } catch (error) {
-    logger.error('Error removing pending reward', { index, error })
+    logger.error('Error removing pending reward', error instanceof Error ? error : undefined, { index })
   }
 }
 
@@ -78,8 +90,11 @@ export function clearPendingRewards(): void {
   try {
     localStorage.removeItem(REWARDS_STORAGE_KEY)
     logger.info('All pending rewards cleared')
+    
+    // Dispatch custom event to notify components of the update
+    window.dispatchEvent(new CustomEvent('chessnoth-rewards-updated'))
   } catch (error) {
-    logger.error('Error clearing pending rewards', { error })
+    logger.error('Error clearing pending rewards', error instanceof Error ? error : undefined)
   }
 }
 
@@ -94,7 +109,7 @@ export function getTotalPendingCHS(): number {
 
 /**
  * Gets total pending EXP rewards
- * @returns Total EXP points pending
+ * @returns Total EXP points pending to be distributed
  */
 export function getTotalPendingEXP(): number {
   const rewards = getPendingRewards()
@@ -117,8 +132,11 @@ export function removeCHSFromPendingRewards(): void {
     }))
     localStorage.setItem(REWARDS_STORAGE_KEY, JSON.stringify(updatedRewards))
     logger.info('CHS removed from pending rewards')
+    
+    // Dispatch custom event to notify components of the update
+    window.dispatchEvent(new CustomEvent('chessnoth-rewards-updated'))
   } catch (error) {
-    logger.error('Error removing CHS from pending rewards', { error })
+    logger.error('Error removing CHS from pending rewards', error instanceof Error ? error : undefined)
   }
 }
 

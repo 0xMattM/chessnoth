@@ -156,3 +156,114 @@
   }
 }
 
+/* RainbowKit ConnectButton custom styles */
+@layer base {
+  /* Override RainbowKit button styles to match dark theme - only target RainbowKit buttons */
+  [data-rk] > button,
+  [data-rk] button[data-testid="rk-connect-button"],
+  [data-rk] button[data-testid="rk-account-button"] {
+    background: hsl(var(--muted) / 0.5) !important;
+    color: hsl(var(--muted-foreground)) !important;
+    border: 1px solid hsl(var(--border) / 0.5) !important;
+    border-radius: var(--radius) !important;
+    padding: 0.625rem 1.25rem !important;
+    font-weight: 500 !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1) !important;
+    height: auto !important;
+    min-height: 2.75rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+
+  [data-rk] > button:hover,
+  [data-rk] button[data-testid="rk-connect-button"]:hover,
+  [data-rk] button[data-testid="rk-account-button"]:hover {
+    background: hsl(var(--accent)) !important;
+    border-color: hsl(var(--border)) !important;
+    color: hsl(var(--accent-foreground)) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  }
+
+  [data-rk] > button:active,
+  [data-rk] button[data-testid="rk-connect-button"]:active,
+  [data-rk] button[data-testid="rk-account-button"]:active {
+    transform: translateY(0) !important;
+  }
+
+  /* Fix RainbowKit modal and dropdown styles - only for RainbowKit modals */
+  [data-rk] [role="dialog"][id^="rk"],
+  [data-rk] [role="menu"][id^="rk"],
+  [data-rk] [role="dialog"][class*="rk"],
+  [data-rk] [role="menu"][class*="rk"] {
+    background: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: var(--radius) !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+  }
+
+  /* Only target text elements inside RainbowKit modals */
+  [data-rk] [role="dialog"][id^="rk"] p,
+  [data-rk] [role="dialog"][id^="rk"] span:not([data-radix-tabs-trigger]),
+  [data-rk] [role="menu"][id^="rk"] p,
+  [data-rk] [role="menu"][id^="rk"] span:not([data-radix-tabs-trigger]) {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Fix account button styles when connected - more specific */
+  [data-rk] button[aria-expanded="true"][data-testid="rk-account-button"],
+  [data-rk] button[aria-haspopup="true"][data-testid="rk-account-button"] {
+    background: hsl(var(--accent)) !important;
+    color: hsl(var(--accent-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Fix RainbowKit account address display - very specific */
+  [data-rk] [data-testid="rk-account-button"] {
+    background: hsl(var(--muted) / 0.5) !important;
+    color: hsl(var(--muted-foreground)) !important;
+    border: 1px solid hsl(var(--border) / 0.5) !important;
+  }
+
+  [data-rk] [data-testid="rk-account-button"]:hover {
+    background: hsl(var(--accent)) !important;
+    color: hsl(var(--accent-foreground)) !important;
+    border-color: hsl(var(--border)) !important;
+  }
+
+  /* Ensure proper container alignment - only for RainbowKit root */
+  [data-rk]:has(> button) {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* Fix button text alignment - only direct children of buttons */
+  [data-rk] > button > span,
+  [data-rk] button[data-testid] > span,
+  [data-rk] > button > div,
+  [data-rk] button[data-testid] > div {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+  }
+
+  /* Ensure text inside wallet button is visible */
+  [data-rk] button * {
+    color: inherit !important;
+  }
+
+  /* Fix wallet balance and address text visibility */
+  [data-rk] button span[style*="color"] {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  [data-rk] button:hover span[style*="color"] {
+    color: hsl(var(--accent-foreground)) !important;
+  }
+}
+

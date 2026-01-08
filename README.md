@@ -2,6 +2,79 @@
 
 A modern React/Next.js interface for the Chessnoth NFT game, featuring character minting, management, team selection, and item previews.
 
+## 🚀 Quick Start - Deployment Guide
+
+### Prerequisites
+
+1. **Node.js 18+** and npm installed
+2. **Wallet with funds**:
+   - Testnet: Get MNT from [Mantle Sepolia Faucet](https://faucet.testnet.mantle.xyz)
+   - Mainnet: Have sufficient MNT for gas (~0.1-0.2 MNT)
+
+### Deploy Contracts to Testnet
+
+1. **Install dependencies and compile contracts**:
+   ```bash
+   npm install
+   npm run compile
+   ```
+
+2. **Configure environment variables**:
+   Create `.env.local` in the project root:
+   ```env
+   # Deployment (Hardhat)
+   PRIVATE_KEY=your_private_key_here_without_0x
+   
+   # Frontend (after deployment)
+   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
+   NEXT_PUBLIC_CONTRACT_ADDRESS=CharacterNFT_address_after_deploy
+   NEXT_PUBLIC_CHS_TOKEN_ADDRESS=CHSToken_address_after_deploy
+   NEXT_PUBLIC_MARKETPLACE_ADDRESS=Marketplace_address_after_deploy
+   ```
+
+3. **Deploy all contracts**:
+   ```bash
+   npm run deploy-all:testnet
+   ```
+
+   This deploys:
+   - **CharacterNFT** - Main NFT contract
+   - **CHSToken** - Game ERC20 token
+   - **Marketplace** - Trading marketplace
+
+4. **Configure authorized minters**:
+   ```bash
+   npm run set-minter:testnet
+   ```
+
+5. **Update `.env.local`** with the deployed contract addresses from the output
+
+6. **Verify contracts** in [Mantle Sepolia Explorer](https://explorer.sepolia.mantle.xyz)
+
+### Deploy to Mainnet
+
+⚠️ **Before deploying to mainnet**:
+- Run security audit: `slither contracts/`
+- Test everything thoroughly on testnet
+- Consider using multi-sig for contract ownership
+
+```bash
+# Deploy to mainnet
+npm run deploy-all:mainnet
+npm run set-minter:mainnet
+```
+
+### Post-Deployment
+
+1. **Update frontend environment variables** with mainnet addresses
+2. **Build and deploy frontend**:
+   ```bash
+   npm run build
+   vercel --prod  # or your preferred platform
+   ```
+
+For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)
+
 ## Features
 
 - **Mint NFT**: Mint new character NFTs with custom metadata
@@ -22,41 +95,55 @@ A modern React/Next.js interface for the Chessnoth NFT game, featuring character
 
 ## Setup
 
-1. Install dependencies:
-```bash
-npm install
-```
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-2. Copy `.env.example` to `.env.local` and fill in your values:
-```bash
-cp .env.example .env.local
-```
-
-3. Create `.env.local` file in the root directory and add:
+2. **Configure environment variables**:
+   Create `.env.local` file in the root directory:
    ```env
+   # WalletConnect (required)
    NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
-   NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourDeployedContractAddress
+   
+   # Contract Addresses (after deployment)
+   NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourDeployedCharacterNFTAddress
+   NEXT_PUBLIC_CHS_TOKEN_ADDRESS=0xYourDeployedCHSTokenAddress
+   NEXT_PUBLIC_MARKETPLACE_ADDRESS=0xYourDeployedMarketplaceAddress
+   
+   # Deployment (Hardhat - optional, only for deploying contracts)
+   PRIVATE_KEY=your_private_key_for_deployment
    ```
    
    **Important**: 
    - Get `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` from [WalletConnect Cloud](https://cloud.walletconnect.com)
-   - Replace `0xYourDeployedContractAddress` with your actual deployed CharacterNFT contract address on Mantle Network
-   - Without the contract address, minting will not work!
+   - Deploy contracts first (see [Deployment Guide](#-quick-start---deployment-guide) above)
+   - Replace contract addresses with your deployed contract addresses on Mantle Network
+   - Without contract addresses, minting and other features will not work!
 
-4. Run the development server:
-```bash
-npm run dev
-```
+3. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser
+4. **Open** [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Contract Integration
 
-The app connects to the `CharacterNFT.sol` contract deployed on **Mantle Network**. Make sure:
+The app connects to three smart contracts deployed on **Mantle Network**:
 
-1. The contract is deployed to Mantle Sepolia Testnet (Chain ID: 5003) or Mantle Mainnet (Chain ID: 5000)
-2. Update `NEXT_PUBLIC_CONTRACT_ADDRESS` in `.env.local` with your deployed contract address
-3. The contract ABI matches the one in `lib/contract.ts`
+1. **CharacterNFT.sol** - Main NFT contract for character NFTs
+2. **CHSToken.sol** - ERC20 token for in-game rewards
+3. **Marketplace.sol** - NFT trading marketplace
+
+### Requirements
+
+1. Contracts must be deployed to Mantle Sepolia Testnet (Chain ID: 5003) or Mantle Mainnet (Chain ID: 5000)
+2. Update all contract addresses in `.env.local` with your deployed contract addresses
+3. Configure authorized minters for CharacterNFT and CHSToken contracts
+4. Contract ABIs must match the ones in `lib/contract.ts`
+
+For contract setup and configuration, see [CONTRACT_SETUP.md](./CONTRACT_SETUP.md)
 
 ### Mantle Network Configuration
 
@@ -203,12 +290,20 @@ This project focuses on:
 - Consumer-facing apps integrating RWA or yield logic
 - Token incentive design and user retention tools
 
+## Additional Documentation
+
+- **[DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md)** - Complete deployment guide for contracts and frontend
+- **[CONTRACT_SETUP.md](./CONTRACT_SETUP.md)** - Contract configuration and setup guide
+- **[CONTRACTS_PLANNING.md](./CONTRACTS_PLANNING.md)** - Detailed planning for contracts and NFT system
+- **[PLANNING.md](./PLANNING.md)** - Project architecture and development principles
+- **[TASKS.md](./TASKS.md)** - Current tasks and progress tracking
+
 ## Notes
 
-- The Characters page currently uses placeholder data. You'll need to implement proper contract calls to fetch user's NFTs
-- Team selection is client-side only (no contract integration yet)
+- The Characters page fetches NFTs from the deployed CharacterNFT contract
+- Team selection is client-side (localStorage)
 - Items are preview-only (no contract integration yet)
-- Battle system is coming soon
+- Battle system is fully implemented with tactical combat
 
 ## Professional Improvements
 

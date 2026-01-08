@@ -4,6 +4,41 @@
  */
 
 /**
+ * Maps specific item IDs to their exact image filenames (SVG files)
+ * These take priority over generic name-based mappings
+ */
+const ITEM_ID_TO_IMAGE: Record<string, string> = {
+  // Consumables with specific SVG images
+  greater_health_potion: '/Items/greater_health_potion.svg',
+  greater_mana_potion: '/Items/greater_mana_potion.svg',
+  elixir_of_strength: '/Items/elixir_of_strength.svg',
+  elixir_of_magic: '/Items/elixir_of_magic.svg',
+  antidote: '/Items/antidote.svg',
+  revive_crystal: '/Items/revive_crystal.svg',
+  
+  // Weapons with specific SVG images
+  dragon_blade: '/Items/dragon_blade.svg',
+  shadow_blade: '/Items/shadow_blade.svg',
+  
+  // Armor with specific SVG images
+  chain_mail: '/Items/chainmail.svg',
+  leather_pants: '/Items/leather_pants.svg',
+  chain_pants: '/Items/chain_pants.svg',
+  
+  // Headgear with specific SVG images
+  crown_of_wisdom: '/Items/crown_of_wisdom.svg',
+  
+  // Footwear with specific SVG images
+  windwalkers: '/Items/windwalkers.svg',
+  
+  // Accessories with specific SVG images
+  power_ring: '/Items/power_ring.svg',
+  magic_ring: '/Items/magic_ring.svg',
+  ring_of_protection: '/Items/ring_of_protection.svg',
+  amulet_of_vitality: '/Items/amulet_of_vitality.svg',
+}
+
+/**
  * Maps item names to their base image filenames
  * The keys match item names (normalized) and the values match the filenames in public/Items/
  */
@@ -153,6 +188,11 @@ export function getItemImageFromData(item: {
 }): string | null {
   if (!item) {
     return null
+  }
+
+  // First, check if there's a specific image mapping for this item ID
+  if (item.id && ITEM_ID_TO_IMAGE[item.id]) {
+    return ITEM_ID_TO_IMAGE[item.id]
   }
 
   // For consumables, use the consumable-specific function

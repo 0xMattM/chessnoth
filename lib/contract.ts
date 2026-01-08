@@ -168,6 +168,13 @@ export const CHS_TOKEN_ABI = [
     type: 'function',
   },
   {
+    inputs: [{ name: 'minter', type: 'address' }],
+    name: 'authorizedMinters',
+    outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
     inputs: [
       { name: 'owner', type: 'address' },
       { name: 'spender', type: 'address' },
@@ -194,6 +201,13 @@ export const CHS_TOKEN_ABI = [
     ],
     name: 'transfer',
     outputs: [{ name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'amount', type: 'uint256' }],
+    name: 'burn',
+    outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',
   },
