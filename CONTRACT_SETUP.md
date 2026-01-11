@@ -120,3 +120,115 @@ If `0x0010570DEd5d0be94A14Fc53B4B4411605C0d9c7` is actually the CHS Token:
    node scripts/setMinter.js 0x0010570DEd5d0be94A14Fc53B4B4411605C0d9c7 YOUR_WALLET_ADDRESS
    ```
 
+---
+
+## Adding Multiple Authorized Minters
+
+### For CHSToken (Multiple Minters Supported)
+
+CHSToken supports **multiple authorized minters** simultaneously. You can add as many as needed:
+
+**Method 1: Using the script**
+```bash
+# Add a new minter for CHS Token
+node scripts/setCHSMinter.js <CHS_TOKEN_ADDRESS> <NEW_MINTER_ADDRESS>
+
+# Example:
+node scripts/setCHSMinter.js 0x3808b1b4D64bBbE734A91caB45CEbC359c604cd2 0xYourNewMinterAddress
+```
+
+**Method 2: Using Hardhat console**
+```bash
+npx hardhat console --network mantleSepolia
+```
+```javascript
+const CHSToken = await ethers.getContractAt('CHSToken', 'YOUR_CHS_TOKEN_ADDRESS')
+const tx = await CHSToken.addAuthorizedMinter('NEW_MINTER_ADDRESS')
+await tx.wait()
+console.log('✅ New minter added!')
+
+// Verify it was added
+const isAuthorized = await CHSToken.authorizedMinters('NEW_MINTER_ADDRESS')
+console.log('Is authorized:', isAuthorized) // Should be true
+```
+
+**To remove a minter**:
+```javascript
+const tx = await CHSToken.removeAuthorizedMinter('MINTER_ADDRESS_TO_REMOVE')
+await tx.wait()
+console.log('✅ Minter removed!')
+```
+
+### For CharacterNFT (Multiple Minters Supported)
+
+CharacterNFT now supports **multiple authorized minters** simultaneously, just like CHSToken.
+
+**Method 1: Using the script**
+```bash
+# Add a new minter for CharacterNFT
+node scripts/setMinter.js <CHARACTER_NFT_ADDRESS> <NEW_MINTER_ADDRESS>
+
+# Example:
+node scripts/setMinter.js 0x0A1A35519167ba58b5b408418D97ac3eeFDDc3c1 0xYourNewMinterAddress
+```
+
+**Method 2: Using Hardhat console**
+```bash
+npx hardhat console --network mantleSepolia
+```
+```javascript
+const CharacterNFT = await ethers.getContractAt('CharacterNFT', 'YOUR_CHARACTER_NFT_ADDRESS')
+
+// Add a new minter
+const tx = await CharacterNFT.addAuthorizedMinter('NEW_MINTER_ADDRESS')
+await tx.wait()
+console.log('✅ New minter added!')
+
+// Verify it was added
+const isAuthorized = await CharacterNFT.authorizedMinters('NEW_MINTER_ADDRESS')
+console.log('Is authorized:', isAuthorized) // Should be true
+
+// Remove a minter
+const tx2 = await CharacterNFT.removeAuthorizedMinter('MINTER_ADDRESS_TO_REMOVE')
+await tx2.wait()
+console.log('✅ Minter removed!')
+```
+
+**Important Notes**:
+- ✅ CharacterNFT now supports multiple minters (updated in latest version)
+- ✅ Use `addAuthorizedMinter()` to add more minters
+- ✅ Use `removeAuthorizedMinter()` to remove a minter
+- ⚠️ The old `setAuthorizedMinter()` function still exists for backward compatibility but is deprecated
+
+### Common Use Cases
+
+**Adding a backend server as minter**:
+```bash
+# Add your backend server address as CHS minter
+node scripts/setCHSMinter.js $CHS_TOKEN_ADDRESS $BACKEND_SERVER_ADDRESS
+
+# Add backend as CharacterNFT minter (supports multiple now)
+node scripts/setMinter.js $CHARACTER_NFT_ADDRESS $BACKEND_SERVER_ADDRESS
+```
+
+**Adding a game contract as minter**:
+```bash
+# If you have a game contract that needs to mint rewards
+node scripts/setCHSMinter.js $CHS_TOKEN_ADDRESS $GAME_CONTRACT_ADDRESS
+```
+
+**Adding multiple team members** (both contracts now support this):
+```bash
+# Add team member 1 to CHS Token
+node scripts/setCHSMinter.js $CHS_TOKEN_ADDRESS $TEAM_MEMBER_1_ADDRESS
+
+# Add team member 1 to CharacterNFT
+node scripts/setMinter.js $CHARACTER_NFT_ADDRESS $TEAM_MEMBER_1_ADDRESS
+
+# Add team member 2 to CHS Token
+node scripts/setCHSMinter.js $CHS_TOKEN_ADDRESS $TEAM_MEMBER_2_ADDRESS
+
+# Add team member 2 to CharacterNFT
+node scripts/setMinter.js $CHARACTER_NFT_ADDRESS $TEAM_MEMBER_2_ADDRESS
+```
+

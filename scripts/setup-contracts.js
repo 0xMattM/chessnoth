@@ -36,14 +36,15 @@ async function main() {
   // ============================================
   console.log('🔐 Step 1: Setting authorized minter for CharacterNFT...')
   try {
-    const currentMinter = await characterNFT.authorizedMinter()
-    if (currentMinter.toLowerCase() === deployer.address.toLowerCase()) {
-      console.log('✅ Authorized minter already set to deployer')
+    const isMinter = await characterNFT.authorizedMinters(deployer.address)
+    if (isMinter) {
+      console.log('✅ Deployer is already authorized minter for CharacterNFT')
     } else {
-      const tx = await characterNFT.setAuthorizedMinter(deployer.address)
+      console.log('⚠️  Deployer is not authorized minter, adding...')
+      const tx = await characterNFT.addAuthorizedMinter(deployer.address)
       console.log('⏳ Transaction sent, waiting for confirmation...')
       await tx.wait()
-      console.log('✅ Deployer set as authorized minter for CharacterNFT')
+      console.log('✅ Deployer added as authorized minter for CharacterNFT')
     }
   } catch (error) {
     console.error('❌ Error setting authorized minter:', error.message)

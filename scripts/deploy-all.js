@@ -71,8 +71,8 @@ async function main() {
   // 4. Set authorized minter for CharacterNFT
   // ============================================
   console.log('\n🔐 Setting deployer as authorized minter for CharacterNFT...')
-  const setMinterTx = await characterNFT.setAuthorizedMinter(deployer.address)
-  await setMinterTx.wait()
+  const addMinterNFTTx = await characterNFT.addAuthorizedMinter(deployer.address)
+  await addMinterNFTTx.wait()
   console.log('✅ Deployer added as authorized minter for CharacterNFT')
 
   // ============================================

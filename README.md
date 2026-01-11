@@ -145,6 +145,64 @@ The app connects to three smart contracts deployed on **Mantle Network**:
 
 For contract setup and configuration, see [CONTRACT_SETUP.md](./CONTRACT_SETUP.md)
 
+### Adding Authorized Minters
+
+#### For CHSToken (Multiple Minters Supported)
+
+CHSToken supports multiple authorized minters. To add additional minters:
+
+**Using the script**:
+```bash
+# Add a new minter for CHS Token
+node scripts/setCHSMinter.js <CHS_TOKEN_ADDRESS> <NEW_MINTER_ADDRESS>
+
+# Example:
+node scripts/setCHSMinter.js 0x3808b1b4D64bBbE734A91caB45CEbC359c604cd2 0xYourNewMinterAddress
+```
+
+**Or using Hardhat console**:
+```bash
+npx hardhat console --network mantleSepolia
+```
+```javascript
+const CHSToken = await ethers.getContractAt('CHSToken', 'YOUR_CHS_TOKEN_ADDRESS')
+const tx = await CHSToken.addAuthorizedMinter('NEW_MINTER_ADDRESS')
+await tx.wait()
+console.log('✅ New minter added!')
+```
+
+**To remove a minter**:
+```javascript
+const tx = await CHSToken.removeAuthorizedMinter('MINTER_ADDRESS_TO_REMOVE')
+await tx.wait()
+```
+
+#### For CharacterNFT (Single Minter Only)
+
+CharacterNFT only supports one authorized minter at a time. Setting a new minter will replace the previous one.
+
+**Using the script**:
+```bash
+# Set authorized minter for CharacterNFT (replaces previous)
+node scripts/setMinter.js <CHARACTER_NFT_ADDRESS> <NEW_MINTER_ADDRESS>
+
+# Example:
+node scripts/setMinter.js 0x0A1A35519167ba58b5b408418D97ac3eeFDDc3c1 0xYourNewMinterAddress
+```
+
+**Or using Hardhat console**:
+```bash
+npx hardhat console --network mantleSepolia
+```
+```javascript
+const CharacterNFT = await ethers.getContractAt('CharacterNFT', 'YOUR_CHARACTER_NFT_ADDRESS')
+const tx = await CharacterNFT.setAuthorizedMinter('NEW_MINTER_ADDRESS')
+await tx.wait()
+console.log('✅ Minter updated!')
+```
+
+**Note**: If you need multiple minters for CharacterNFT, consider deploying a minter contract that acts as a proxy and manages multiple addresses internally.
+
 ### Mantle Network Configuration
 
 #### Mantle Sepolia Testnet (Recommended for Development)

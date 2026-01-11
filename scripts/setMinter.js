@@ -33,14 +33,23 @@ async function main() {
     process.exit(1)
   }
 
-  const tx = await CharacterNFT.setAuthorizedMinter(minterAddress)
+  // Check if already authorized
+  const isAlreadyAuthorized = await CharacterNFT.authorizedMinters(minterAddress)
+  if (isAlreadyAuthorized) {
+    console.log('ℹ️  Minter is already authorized')
+    return
+  }
+
+  console.log('📤 Sending transaction...')
+  const tx = await CharacterNFT.addAuthorizedMinter(minterAddress)
   console.log('Transaction hash:', tx.hash)
-  console.log('Waiting for confirmation...')
+  console.log('⏳ Waiting for confirmation...')
   
-  await tx.wait()
+  const receipt = await tx.wait()
+  console.log('✅ Transaction confirmed in block:', receipt.blockNumber)
   
   // Verify
-  const authorizedMinter = await CharacterNFT.authorizedMinter()
+  const isAuthorized = await CharacterNFT.authorizedMinters(minterAddress)
   const network = await hre.ethers.provider.getNetwork()
   
   // Determine explorer URL based on network
@@ -53,11 +62,23 @@ async function main() {
     explorerUrl = `https://explorer.mantle.xyz/tx/${tx.hash}`
   }
   
-  console.log('\n✅ Authorized minter set to:', authorizedMinter)
-  if (explorerUrl) {
-    console.log('🔗 View on Mantle Explorer:')
-    console.log(`  ${explorerUrl}`)
+  console.log('\n' + '='.repeat(60))
+  if (isAuthorized) {
+    console.log('✅ Authorized minter added successfully!')
+    console.log('   Minter address:', minterAddress)
+  } else {
+    console.log('❌ Failed to add authorized minter')
   }
+  console.log('='.repeat(60))
+  
+  if (explorerUrl) {
+    console.log('\n🔗 View on Mantle Explorer:')
+    console.log(`   ${explorerUrl}`)
+  }
+  
+  console.log('\n💡 Note: CharacterNFT now supports multiple minters!')
+  console.log('   Use addAuthorizedMinter() to add more minters')
+  console.log('   Use removeAuthorizedMinter() to remove a minter')
 }
 
 main()

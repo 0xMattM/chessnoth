@@ -33,8 +33,8 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     // Mapping from token ID to experience points
     mapping(uint256 => uint256) private _experience;
     
-    // Authorized minter address (game contract or backend)
-    address public authorizedMinter;
+    // Mapping of authorized minters (game contracts, backend, etc.)
+    mapping(address => bool) public authorizedMinters;
     
     // Base URI for token metadata
     string private _baseTokenURI;
@@ -76,6 +76,9 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
         string ipfsHash
     );
     
+    event AuthorizedMinterAdded(address indexed minter);
+    event AuthorizedMinterRemoved(address indexed minter);
+    
     /**
      * @dev Constructor
      * @param name Token name
@@ -92,11 +95,35 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Sets the authorized minter address
+     * @dev Adds an authorized minter address
+     * @param minter Address that can mint NFTs
+     */
+    function addAuthorizedMinter(address minter) external onlyOwner {
+        require(minter != address(0), "CharacterNFT: Cannot add zero address");
+        authorizedMinters[minter] = true;
+        emit AuthorizedMinterAdded(minter);
+    }
+    
+    /**
+     * @dev Removes an authorized minter address
+     * @param minter Address to remove from authorized minters
+     */
+    function removeAuthorizedMinter(address minter) external onlyOwner {
+        authorizedMinters[minter] = false;
+        emit AuthorizedMinterRemoved(minter);
+    }
+    
+    /**
+     * @dev Sets the authorized minter address (backward compatibility)
+     * @notice This function is kept for backward compatibility but it's recommended to use addAuthorizedMinter instead to support multiple minters
      * @param minter Address that can mint NFTs
      */
     function setAuthorizedMinter(address minter) external onlyOwner {
-        authorizedMinter = minter;
+        require(minter != address(0), "CharacterNFT: Cannot set zero address");
+        // Remove all existing minters (we can't enumerate, so this is a limitation)
+        // In practice, you should use addAuthorizedMinter/removeAuthorizedMinter
+        authorizedMinters[minter] = true;
+        emit AuthorizedMinterAdded(minter);
     }
     
     /**
@@ -123,6 +150,10 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
         string memory class,
         string memory name
     ) external whenNotPaused returns (uint256) {
+        require(
+            authorizedMinters[msg.sender] || msg.sender == owner(),
+            "CharacterNFT: Not authorized to mint"
+        );
         require(to != address(0), "CharacterNFT: Cannot mint to zero address");
         require(bytes(ipfsHash).length > 0, "CharacterNFT: IPFS hash required");
         require(bytes(class).length > 0, "CharacterNFT: Class required");
@@ -241,7 +272,7 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
         uint256 amount
     ) external {
         require(
-            msg.sender == authorizedMinter || msg.sender == owner(),
+            authorizedMinters[msg.sender] || msg.sender == owner(),
             "CharacterNFT: Not authorized to set experience"
         );
         

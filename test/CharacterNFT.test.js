@@ -241,9 +241,41 @@ describe("CharacterNFT", function () {
   });
 
   describe("Authorized Minter", function () {
-    it("Should allow owner to set authorized minter", async function () {
-      await characterNFT.setAuthorizedMinter(addr1.address);
-      expect(await characterNFT.authorizedMinter()).to.equal(addr1.address);
+    it("Should allow owner to add authorized minter", async function () {
+      await characterNFT.addAuthorizedMinter(addr1.address);
+      expect(await characterNFT.authorizedMinters(addr1.address)).to.be.true;
+    });
+
+    it("Should allow owner to add multiple authorized minters", async function () {
+      await characterNFT.addAuthorizedMinter(addr1.address);
+      await characterNFT.addAuthorizedMinter(addr2.address);
+      expect(await characterNFT.authorizedMinters(addr1.address)).to.be.true;
+      expect(await characterNFT.authorizedMinters(addr2.address)).to.be.true;
+    });
+
+    it("Should allow owner to remove authorized minter", async function () {
+      await characterNFT.addAuthorizedMinter(addr1.address);
+      await characterNFT.removeAuthorizedMinter(addr1.address);
+      expect(await characterNFT.authorizedMinters(addr1.address)).to.be.false;
+    });
+
+    it("Should emit AuthorizedMinterAdded event", async function () {
+      await expect(characterNFT.addAuthorizedMinter(addr1.address))
+        .to.emit(characterNFT, "AuthorizedMinterAdded")
+        .withArgs(addr1.address);
+    });
+
+    it("Should emit AuthorizedMinterRemoved event", async function () {
+      await characterNFT.addAuthorizedMinter(addr1.address);
+      await expect(characterNFT.removeAuthorizedMinter(addr1.address))
+        .to.emit(characterNFT, "AuthorizedMinterRemoved")
+        .withArgs(addr1.address);
+    });
+
+    it("Should reject adding zero address as minter", async function () {
+      await expect(
+        characterNFT.addAuthorizedMinter(ethers.ZeroAddress)
+      ).to.be.revertedWith("CharacterNFT: Cannot add zero address");
     });
 
     it("Should allow authorized minter to set experience", async function () {
@@ -255,7 +287,7 @@ describe("CharacterNFT", function () {
         "TestWarrior"
       );
       
-      await characterNFT.setAuthorizedMinter(addr2.address);
+      await characterNFT.addAuthorizedMinter(addr2.address);
       await characterNFT.connect(addr2).setExperience(1, 200);
       
       expect(await characterNFT.getExperience(1)).to.equal(200);
@@ -274,6 +306,32 @@ describe("CharacterNFT", function () {
       await expect(
         characterNFT.connect(addr2).setExperience(1, 200)
       ).to.be.revertedWith("CharacterNFT: Not authorized to set experience");
+    });
+
+    it("Should allow authorized minter to mint characters", async function () {
+      await characterNFT.addAuthorizedMinter(addr2.address);
+      const tx = await characterNFT.connect(addr2).mintCharacter(
+        addr1.address,
+        "QmTest123",
+        1,
+        "Warrior",
+        "TestWarrior"
+      );
+      await expect(tx)
+        .to.emit(characterNFT, "CharacterMinted")
+        .withArgs(1, addr1.address, "Warrior", "TestWarrior", 1, "QmTest123");
+    });
+
+    it("Should prevent non-authorized from minting", async function () {
+      await expect(
+        characterNFT.connect(addr2).mintCharacter(
+          addr1.address,
+          "QmTest123",
+          1,
+          "Warrior",
+          "TestWarrior"
+        )
+      ).to.be.revertedWith("CharacterNFT: Not authorized to mint");
     });
   });
 
