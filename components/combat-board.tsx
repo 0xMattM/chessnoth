@@ -54,10 +54,55 @@ function getCharacterSpritePath(character: CombatCharacter): string {
 }
 
 /**
- * Get enemy sprite path based on class and enemy index
- * Maps enemy classes to appropriate enemy sprites
+ * Get enemy sprite path based on character's enemySprite field
+ * If enemySprite is set (from combat initialization), use it directly
+ * Otherwise, fall back to class-based mapping
  */
 function getEnemySpritePath(character: CombatCharacter): string {
+  // If character has a specific enemy sprite assigned, use it
+  if (character.enemySprite) {
+    // Map sprite name to full path
+    const spriteName = character.enemySprite
+    
+    // Map sprite names to their folder locations
+    const spritePathMap: Record<string, string> = {
+      // Goblins
+      'goblin_warrior': '/enemies/goblins/goblin_warrior.svg',
+      'goblin_guard': '/enemies/goblins/goblin_guard.svg',
+      'goblin_archer': '/enemies/goblins/goblin_archer.svg',
+      'goblin_scout': '/enemies/goblins/goblin_scout.svg',
+      'goblin_spear': '/enemies/goblins/goblin_spear.svg',
+      // Undeads
+      'skeleton_warrior': '/enemies/undeads/skeleton_warrior.svg',
+      'skeleton_archer': '/enemies/undeads/skeleton_archer.svg',
+      'skeleton_spear': '/enemies/undeads/skeleton_spear.svg',
+      'zombie': '/enemies/undeads/zombie.svg',
+      'ghoul': '/enemies/undeads/ghoul.svg',
+      // Dark humanoids
+      'shadow_mage': '/enemies/dark_humanoids/shadow_mage.svg',
+      'dark_cultist': '/enemies/dark_humanoids/dark_cultist.svg',
+      'fire_cult_soldier': '/enemies/dark_humanoids/fire_cult_soldier.svg',
+      'ice_raider': '/enemies/dark_humanoids/ice_raider.svg',
+      'assasin': '/enemies/dark_humanoids/assasin.svg',
+      'corrupted_paladin': '/enemies/dark_humanoids/corrupted_paladin.svg',
+      'undead_champion': '/enemies/dark_humanoids/undead_champion.svg',
+      // Brutes
+      'troll': '/enemies/brutes/troll.svg',
+      'ogre': '/enemies/brutes/ogre.svg',
+      'armored_troll': '/enemies/brutes/armored_troll.svg',
+      // Beasts
+      'wolf': '/enemies/beasts/wolf.svg',
+      'spider': '/enemies/beasts/spider.svg',
+      'bat': '/enemies/beasts/bat.svg',
+    }
+    
+    const spritePath = spritePathMap[spriteName]
+    if (spritePath) {
+      return spritePath
+    }
+  }
+  
+  // Fallback: use class-based mapping
   const normalizedClass = character.class
     .toLowerCase()
     .trim()

@@ -381,10 +381,14 @@ export function useCombatState(): UseCombatStateReturn {
 
       // Reset hasMoved and hasActed for all characters at start of new turn
       const resetCharactersForNewTurn = () => {
-        updatedCharacters.forEach((char) => {
-          char.hasMoved = false
-          char.hasActed = false
-        })
+        // IMPORTANT: Create new objects instead of mutating existing ones
+        for (let i = 0; i < updatedCharacters.length; i++) {
+          updatedCharacters[i] = {
+            ...updatedCharacters[i],
+            hasMoved: false,
+            hasActed: false,
+          }
+        }
         // Update turnOrder references after reset
         updatedTurnOrder.forEach((char, idx) => {
           const updatedChar = updatedCharacters.find((c) => c.id === char.id)

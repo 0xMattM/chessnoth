@@ -384,7 +384,7 @@ export async function initializeCombatCharacters(
         // Continue without skills if loading fails
       }
       
-      combatCharacters.push({
+      const newEnemy = {
         id: `enemy-${i}`,
         tokenId: `enemy-${i}`,
         name: enemyName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
@@ -393,16 +393,33 @@ export async function initializeCombatCharacters(
         stats,
         baseStats: { ...stats }, // Store base stats without terrain modifiers
         position: null,
-        team: 'enemy',
+        team: 'enemy' as const,
         hasMoved: false,
         hasActed: false,
         statusEffects: [],
         skills: enemySkills, // Assign learned skills
         equippedSkills: equippedSkills, // Assign equipped skills
         enemySprite: enemyName, // Store sprite name for rendering
+      }
+      
+      logger.debug(`Created enemy ${i}`, { 
+        id: newEnemy.id, 
+        name: newEnemy.name, 
+        team: newEnemy.team,
+        class: newEnemy.class,
       })
+      
+      combatCharacters.push(newEnemy)
     }
   }
+  
+  // Log all characters and their teams
+  logger.info('Combat characters initialized', {
+    total: combatCharacters.length,
+    players: combatCharacters.filter(c => c.team === 'player').length,
+    enemies: combatCharacters.filter(c => c.team === 'enemy').length,
+    characters: combatCharacters.map(c => ({ id: c.id, name: c.name, team: c.team }))
+  })
   
   return combatCharacters
 }
@@ -548,13 +565,35 @@ export function getValidAttackTargets(
   const targets: CombatCharacter[] = []
   
   allCharacters.forEach((target) => {
-    if (target.team === character.team) return // Can't attack allies
+    // Can't attack self
+    if (target.id === character.id) return
+    // Can't attack allies
+    if (target.team === character.team) {
+      logger.debug('Skipping ally target', {
+        attackerId: character.id,
+        attackerTeam: character.team,
+        targetId: target.id,
+        targetTeam: target.team,
+      })
+      return
+    }
+    // Can't attack defeated enemies
+    if (target.stats.hp <= 0) return
+    // Can't attack targets without position
     if (!target.position) return
     
     const distance = Math.abs(target.position.row - row) + Math.abs(target.position.col - col)
     if (distance <= attackRange) {
       targets.push(target)
     }
+  })
+  
+  logger.debug('Valid attack targets found', {
+    attackerId: character.id,
+    attackerName: character.name,
+    attackerTeam: character.team,
+    targetCount: targets.length,
+    targets: targets.map(t => ({ id: t.id, name: t.name, team: t.team }))
   })
   
   return targets
@@ -798,6 +837,9 @@ export function getValidSkillTargets(
   
   // Process all characters to find targets
   allCharacters.forEach((target) => {
+    // Skip defeated characters (except for all_allies which may include revive)
+    if (target.stats.hp <= 0 && skill.aoeType !== 'all_allies') return
+    // Skip targets without position (except for all_allies)
     if (!target.position && skill.aoeType !== 'all_allies') return
     
     const isEnemy = target.team !== character.team

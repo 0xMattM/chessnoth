@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import {
   getValidMovePositions,
   getValidAttackTargets,
@@ -74,6 +74,20 @@ export function useEnemyAI({
 }: UseEnemyAIParams) {
   // Track logged turns to prevent duplicates
   const loggedTurnsRef = useRef<Set<string>>(new Set())
+  // Track safety timer for current operation
+  const safetyTimerRef = useRef<NodeJS.Timeout | null>(null)
+  
+  /**
+   * Helper function to reset operation flag and clear safety timer
+   */
+  const resetOperationFlag = useCallback(() => {
+    operationInProgressRef.current = false
+    if (safetyTimerRef.current) {
+      clearTimeout(safetyTimerRef.current)
+      timeoutRefsRef.current.delete(safetyTimerRef.current)
+      safetyTimerRef.current = null
+    }
+  }, [operationInProgressRef, timeoutRefsRef])
   
   // Auto-play enemy turns - ONLY trigger on turn changes
   useEffect(() => {
@@ -84,6 +98,10 @@ export function useEnemyAI({
 
     // Prevent multiple executions
     if (operationInProgressRef.current) {
+      logger.debug('Operation already in progress, skipping', { 
+        characterId: current.id, 
+        turn: combatState.turn 
+      })
       return
     }
 
@@ -111,11 +129,27 @@ export function useEnemyAI({
     // Mark operation as in progress
     operationInProgressRef.current = true
 
+    // Safety timeout: if operation doesn't complete in 10 seconds, reset flag
+    const safetyTimer = setTimeout(() => {
+      if (operationInProgressRef.current) {
+        logger.warn('Enemy AI operation timed out, resetting flag', {
+          characterId: current.id,
+          turn: combatState.turn,
+        })
+        resetOperationFlag()
+        // Try to advance turn as fallback
+        nextTurn()
+      }
+    }, 10000) // 10 second safety timeout
+
+    safetyTimerRef.current = safetyTimer
+    timeoutRefsRef.current.add(safetyTimer)
+
     // Execute enemy AI after a short delay
     const timer = setTimeout(() => {
       const currentSnapshot = getCurrentCharacter()
       if (!currentSnapshot || currentSnapshot.team !== 'enemy') {
-        operationInProgressRef.current = false
+        resetOperationFlag()
         return
       }
 
@@ -135,6 +169,13 @@ export function useEnemyAI({
     return () => {
       clearTimeout(timer)
       timeoutRefsRef.current.delete(timer)
+      
+      // Clean up safety timer
+      if (safetyTimerRef.current) {
+        clearTimeout(safetyTimerRef.current)
+        timeoutRefsRef.current.delete(safetyTimerRef.current)
+        safetyTimerRef.current = null
+      }
     }
   }, [
     combatState?.currentTurnIndex,
@@ -145,8 +186,22 @@ export function useEnemyAI({
   // Perform move action
   function performMove(enemy: CombatCharacter) {
     if (!combatState) {
-      operationInProgressRef.current = false
+      resetOperationFlag()
       return
+    }
+
+    // SAFETY CHECK: Verify enemy is actually on enemy team
+    if (enemy.team !== 'enemy') {
+      logger.error('CRITICAL ERROR: Enemy has wrong team!', {
+        enemyId: enemy.id,
+        enemyName: enemy.name,
+        wrongTeam: enemy.team,
+        allEnemies: combatState.characters
+          .filter(c => c.id.startsWith('enemy-'))
+          .map(c => ({ id: c.id, name: c.name, team: c.team }))
+      })
+      // Force correct team
+      enemy = { ...enemy, team: 'enemy' as const }
     }
 
     const players = combatState.characters.filter((c) => c.team === 'player' && c.stats.hp > 0)
@@ -164,7 +219,7 @@ export function useEnemyAI({
         }
       })
       
-      operationInProgressRef.current = false
+      // DON'T reset flag - keep true until attack completes
       
       // Try to attack or end turn
       setTimeout(() => {
@@ -201,7 +256,7 @@ export function useEnemyAI({
         }
       })
       
-      operationInProgressRef.current = false
+      // DON'T reset flag - keep true until attack completes
       
       // Try to attack or end turn
       setTimeout(() => {
@@ -229,7 +284,7 @@ export function useEnemyAI({
         }
       })
       
-      operationInProgressRef.current = false
+      // DON'T reset flag - keep true until attack completes
       
       // Proceed to attack immediately
       setTimeout(() => {
@@ -260,7 +315,7 @@ export function useEnemyAI({
         }
       })
       
-      operationInProgressRef.current = false
+      // DON'T reset flag - keep true until attack completes
       
       // Try to attack if possible
       setTimeout(() => {
@@ -297,7 +352,7 @@ export function useEnemyAI({
         }
       })
       
-      operationInProgressRef.current = false
+      // DON'T reset flag - keep true until attack completes
       
       // Try to attack if possible
       setTimeout(() => {
@@ -398,8 +453,8 @@ export function useEnemyAI({
         return newBoard
       })
 
-      // Reset operation flag
-      operationInProgressRef.current = false
+      // DON'T reset operation flag here - keep it true until attack completes
+      // operationInProgressRef.current remains true
 
       // Continue to attack phase after a short delay
       setTimeout(() => {
@@ -411,7 +466,7 @@ export function useEnemyAI({
   // Perform attack action
   function performAttack(enemy: CombatCharacter) {
     if (!combatState) {
-      operationInProgressRef.current = false
+      resetOperationFlag()
       return
     }
 
@@ -435,15 +490,27 @@ export function useEnemyAI({
                 enemy,
                 skill,
                 combatState.characters,
-                board
+                undefined // Don't pass board - use undefined for fourth parameter
               )
               
-              if (validSkillTargets.length > 0) {
-                // Mark operation in progress before using skill
-                operationInProgressRef.current = true
+              // Filter out any allies for damage skills (SAFETY CHECK)
+              const isDamageSkill = skill.damageType === 'magical' || skill.damageType === 'physical'
+              const safeTargets = isDamageSkill 
+                ? validSkillTargets.filter(t => t.team !== enemy.team && t.stats.hp > 0)
+                : validSkillTargets.filter(t => t.stats.hp > 0)
+              
+              if (safeTargets.length > 0) {
                 // Use the skill on the first valid target (it's a CombatCharacter, not a position)
-                useSkill(enemy, skill, validSkillTargets[0])
+                // Operation flag is already true from performMove
+                useSkill(enemy, skill, safeTargets[0])
                 return
+              } else if (validSkillTargets.length > 0 && safeTargets.length === 0) {
+                // Had targets but they were all filtered out (probably allies)
+                logger.debug('Skill targets filtered out (friendly fire prevention)', {
+                  enemyId: enemy.id,
+                  skillId: skill.id,
+                  originalTargets: validSkillTargets.length,
+                })
               }
             } catch (error) {
               logger.error('Error using skill', { skill: skill.id, error })
@@ -468,7 +535,7 @@ export function useEnemyAI({
           selectedCharacter: updated,
         }
       })
-      operationInProgressRef.current = false
+      resetOperationFlag()
       
       // Advance turn when no actions available
       setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
@@ -477,6 +544,52 @@ export function useEnemyAI({
 
     // Attack first target
     const target = validTargets[0]
+    
+    // Log attack details for debugging
+    logger.debug('Enemy attacking', {
+      attackerId: enemy.id,
+      attackerName: enemy.name,
+      attackerTeam: enemy.team,
+      targetId: target.id,
+      targetName: target.name,
+      targetTeam: target.team,
+      allEnemyTeams: combatState.characters
+        .filter(c => c.id.startsWith('enemy-'))
+        .map(c => ({ id: c.id, name: c.name, team: c.team }))
+    })
+    
+    // CRITICAL SAFETY CHECK: Verify target is not an ally
+    if (target.team === enemy.team) {
+      logger.error('PREVENTED FRIENDLY FIRE: Enemy tried to attack ally', {
+        enemyId: enemy.id,
+        enemyName: enemy.name,
+        enemyTeam: enemy.team,
+        targetId: target.id,
+        targetName: target.name,
+        targetTeam: target.team,
+        allCharacters: combatState.characters.map(c => ({ 
+          id: c.id, 
+          name: c.name, 
+          team: c.team 
+        }))
+      })
+      
+      // Mark as acted and end turn
+      setCombatState((prev) => {
+        if (!prev) return prev
+        const updated = { ...enemy, hasActed: true }
+        return {
+          ...prev,
+          characters: prev.characters.map((c) => c.id === enemy.id ? updated : c),
+          turnOrder: prev.turnOrder.map((c) => c.id === enemy.id ? updated : c),
+          selectedCharacter: updated,
+        }
+      })
+      resetOperationFlag()
+      setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
+      return
+    }
+    
     const damage = calculateDamage(enemy, target, true)
 
     combatLog.addAttackLog(enemy.name, target.name)
@@ -540,7 +653,7 @@ export function useEnemyAI({
 
         const combatEnd = checkCombatEnd(resetCharacters)
         if (combatEnd.gameOver) {
-          operationInProgressRef.current = false
+          resetOperationFlag()
           setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
           return {
             ...ps,
@@ -563,7 +676,7 @@ export function useEnemyAI({
         return c
       })))
 
-      operationInProgressRef.current = false
+      resetOperationFlag()
       
       // Advance turn after attack completes
       setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
@@ -573,7 +686,7 @@ export function useEnemyAI({
   // Use skill
   function useSkill(enemy: CombatCharacter, skill: Skill, target: CombatCharacter) {
     if (!combatState) {
-      operationInProgressRef.current = false
+      resetOperationFlag()
       return
     }
 
@@ -582,23 +695,76 @@ export function useEnemyAI({
     
     if (skill.aoeType === 'all_enemies' || skill.aoeType === 'all_allies') {
       // Global AOE
-      affectedTargets = getValidSkillTargets(enemy, skill, combatState.characters, board)
+      affectedTargets = getValidSkillTargets(enemy, skill, combatState.characters, undefined)
     } else if (skill.aoeRadius && skill.aoeRadius > 0 && target.position) {
-      // Radius AOE around target
+      // Radius AOE around target - only affect enemies of the caster
       affectedTargets = combatState.characters.filter(char => {
         if (!char.position || !target.position) return false
+        if (char.team === enemy.team) return false // Don't hit allies
+        if (char.stats.hp <= 0) return false // Don't target defeated characters
         const distance = Math.abs(char.position.row - target.position.row) + 
                         Math.abs(char.position.col - target.position.col)
-        return distance <= (skill.aoeRadius || 0) && char.stats.hp > 0 && 
-               char.team !== enemy.team
+        return distance <= (skill.aoeRadius || 0)
       })
     } else {
-      // Single target
-      affectedTargets = [target]
+      // Single target - verify it's a valid enemy target
+      if (target.team !== enemy.team && target.stats.hp > 0) {
+        affectedTargets = [target]
+      }
     }
 
     if (affectedTargets.length === 0) {
-      operationInProgressRef.current = false
+      // No valid targets for skill, mark as acted and end turn
+      logger.debug('No valid targets for enemy skill, ending turn', { 
+        enemyId: enemy.id, 
+        skillId: skill.id 
+      })
+      
+      setCombatState((prev) => {
+        if (!prev) return prev
+        const updated = { ...enemy, hasActed: true }
+        return {
+          ...prev,
+          characters: prev.characters.map((c) => c.id === enemy.id ? updated : c),
+          turnOrder: prev.turnOrder.map((c) => c.id === enemy.id ? updated : c),
+          selectedCharacter: updated,
+        }
+      })
+      
+      resetOperationFlag()
+      
+      // Advance turn
+      setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
+      return
+    }
+
+    // CRITICAL: Filter out any allies from affectedTargets to prevent friendly fire
+    // This is a safety check to ensure enemies never damage their own team
+    const isDamageSkill = skill.damageType === 'magical' || skill.damageType === 'physical'
+    if (isDamageSkill) {
+      affectedTargets = affectedTargets.filter(t => t.team !== enemy.team && t.stats.hp > 0)
+    }
+    
+    // If no valid targets remain after filtering, end turn
+    if (affectedTargets.length === 0) {
+      logger.warn('All targets filtered out (friendly fire prevention)', {
+        enemyId: enemy.id,
+        skillId: skill.id,
+      })
+      
+      setCombatState((prev) => {
+        if (!prev) return prev
+        const updated = { ...enemy, hasActed: true }
+        return {
+          ...prev,
+          characters: prev.characters.map((c) => c.id === enemy.id ? updated : c),
+          turnOrder: prev.turnOrder.map((c) => c.id === enemy.id ? updated : c),
+          selectedCharacter: updated,
+        }
+      })
+      
+      resetOperationFlag()
+      setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
       return
     }
 
@@ -727,7 +893,7 @@ export function useEnemyAI({
 
         const combatEnd = checkCombatEnd(resetCharacters)
         if (combatEnd.gameOver) {
-          operationInProgressRef.current = false
+          resetOperationFlag()
           setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
           return {
             ...ps,
@@ -750,7 +916,7 @@ export function useEnemyAI({
         return c
       })))
 
-      operationInProgressRef.current = false
+      resetOperationFlag()
       
       // Advance turn after skill completes
       setTimeout(() => nextTurn(), ANIMATION_DURATIONS.TURN_ADVANCE_SHORT)
