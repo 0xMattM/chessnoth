@@ -25,6 +25,7 @@ type MovingCharacterData = {
 
 export default function CombatPage() {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
   const {
     stage,
     battleTeam,
@@ -50,6 +51,11 @@ export default function CombatPage() {
   
   // Track logged turns to prevent duplicates
   const loggedTurnsRef = useRef<Set<string>>(new Set())
+
+  // Ensure component is mounted before rendering to avoid hydration errors
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Use enemy AI hook
   useEnemyAI({
@@ -163,6 +169,20 @@ export default function CombatPage() {
       }
     }
   }, [combatState?.currentTurnIndex, combatState?.turn, combatState, getCurrentCharacter, combatLog])
+
+  // Prevent hydration errors by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+        <Navigation />
+        <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -300,7 +320,7 @@ export default function CombatPage() {
                     <CardTitle className="text-base">Turn Order</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-1 text-xs max-h-[calc(50vh-200px)] overflow-y-auto">
+                    <div className="space-y-1 text-xs max-h-[calc(50vh-200px)] overflow-y-auto custom-scrollbar">
                       {combatState.turnOrder.map((char, idx) => (
                         <div
                           key={char.id}

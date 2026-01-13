@@ -5,7 +5,7 @@ import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
-import { getTeam, addToTeam, removeFromTeam, isInTeam, validateTeam, clearTeam, type TeamMember } from '@/lib/team'
+import { getTeam, addToTeam, removeFromTeam, validateTeam, clearTeam, type TeamMember } from '@/lib/team'
 import {
   getEquippedSkills,
   setEquippedSkills,
@@ -13,7 +13,8 @@ import {
   getSkillPoints,
 } from '@/lib/skills'
 import { getNFTCharacterImage, getNFTCharacterPortrait } from '@/lib/nft-images'
-import { Sword, Users, X, Plus } from 'lucide-react'
+import { logger } from '@/lib/logger'
+import { Sword, Users, X, Plus, Heart, Droplet, Zap, Shield, Eye } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { ERROR_MESSAGES, MAX_TEAM_SIZE } from '@/lib/constants'
@@ -24,6 +25,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { getCharacterEquipment, type EquipmentSlot } from '@/lib/equipment'
+import itemsData from '@/data/items.json'
+import { getItemImageFromData } from '@/lib/item-images'
+import { type Item, type ClassData, type Skill } from '@/lib/types'
+import { SectionTitle } from '@/components/section-title'
 
 interface Character {
   tokenId: bigint
@@ -43,6 +49,7 @@ export default function TeamPage() {
   const [teamUpdate, setTeamUpdate] = useState(0) // Force re-render when team changes
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null)
   const [equipSkillsOpen, setEquipSkillsOpen] = useState(false)
+  const [viewCharacterOpen, setViewCharacterOpen] = useState(false)
   const { toast } = useToast()
 
   // Load team from localStorage
@@ -219,7 +226,8 @@ export default function TeamPage() {
       })
       return
     }
-    if (isInTeam(tokenId)) {
+    // Use teamMembers state instead of calling isInTeam() to avoid hydration issues
+    if (teamMembers.some(member => member.tokenId === tokenId)) {
       toast({
         variant: 'destructive',
         title: 'Character Already in Team',
@@ -249,15 +257,10 @@ export default function TeamPage() {
 
       <Navigation />
       <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-8 animate-slide-up">
-          <div className="inline-block mb-4 rounded-full bg-emerald-500/10 px-4 py-1.5 text-sm font-medium text-emerald-300 border border-emerald-500/20">
-            ⚔️ Team Builder
-          </div>
-          <h1 className="mb-4 text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-emerald-100 to-emerald-200 bg-clip-text text-transparent">
-            Team Selection
-          </h1>
-          <p className="text-lg text-emerald-200/80">Select up to 4 characters for battle</p>
-        </div>
+        <SectionTitle
+          title="Team Selection"
+          subtitle="Select up to 4 characters for battle"
+        />
 
         {!isConnected ? (
           <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
@@ -316,15 +319,16 @@ export default function TeamPage() {
                 ) : (
                   <div className="grid gap-4 sm:grid-cols-2">
                     {teamCharacters.map((character, index) => (
-                      <Card key={character.tokenId.toString()} className="group relative border-border/40 bg-slate-800/50 backdrop-blur-sm overflow-hidden hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-300 animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-primary/0 group-hover:from-emerald-500/10 group-hover:to-primary/10 transition-all duration-300" />
+                      <Card key={character.tokenId.toString()} className="group relative border-border/40 bg-slate-800/50 backdrop-blur-sm overflow-visible hover:shadow-xl hover:shadow-emerald-500/20 transition-all duration-300 animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/0 to-primary/0 group-hover:from-emerald-500/10 group-hover:to-primary/10 transition-all duration-300 rounded-xl overflow-hidden" />
                         <button
                           onClick={() => handleRemoveFromTeam(character.tokenId.toString())}
-                          className="absolute right-2 top-2 z-10 rounded-full bg-red-500/80 p-1.5 text-white hover:bg-red-500 hover:scale-110 transition-all duration-200 shadow-lg"
+                          className="absolute right-2 top-2 z-20 flex items-center justify-center w-7 h-7 rounded-full bg-gradient-to-br from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white hover:scale-110 active:scale-95 transition-all duration-200 shadow-[0_4px_12px_rgba(220,38,38,0.6),0_0_0_2px_rgba(220,38,38,0.3),inset_0_1px_2px_rgba(255,255,255,0.2)] hover:shadow-[0_6px_16px_rgba(220,38,38,0.8),0_0_0_3px_rgba(220,38,38,0.4),inset_0_1px_2px_rgba(255,255,255,0.3)] border-2 border-red-500/80 hover:border-red-400 backdrop-blur-sm"
+                          aria-label="Remove from team"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-4 w-4 stroke-[3] drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" />
                         </button>
-                        <CardContent className="relative pt-6">
+                        <CardContent className="relative pt-6 overflow-hidden">
                           <div className="aspect-square w-full overflow-hidden rounded-xl bg-slate-700/50 mb-4 border border-border/40 group-hover:border-emerald-500/40 transition-all">
                             {character.metadata?.image ? (
                               <img
@@ -353,12 +357,11 @@ export default function TeamPage() {
                             className="w-full mt-3 bg-slate-700/50 border-emerald-500/30 hover:bg-emerald-500/20 hover:border-emerald-500 hover:text-emerald-200 transition-all"
                             onClick={() => {
                               setSelectedCharacter(character)
-                              setEquipSkillsOpen(true)
+                              setViewCharacterOpen(true)
                             }}
                           >
-                            <Sword className="h-4 w-4 mr-2" />
-                            Equip Skills ({getEquippedSkills(character.tokenId.toString()).length}
-                            /4)
+                            <Eye className="h-4 w-4 mr-2" />
+                            View
                           </Button>
                         </CardContent>
                       </Card>
@@ -409,7 +412,8 @@ export default function TeamPage() {
                   <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                     {characters.map((character, index) => {
                       const tokenId = character.tokenId.toString()
-                      const inTeam = isInTeam(tokenId)
+                      // Use teamMembers state instead of calling isInTeam() to avoid hydration errors
+                      const inTeam = teamMembers.some(member => member.tokenId === tokenId)
                       const teamFull = teamMembers.length >= 4
 
                       return (
@@ -491,6 +495,13 @@ export default function TeamPage() {
         )}
       </main>
 
+      {/* View Character Dialog */}
+      <ViewCharacterDialog
+        character={selectedCharacter}
+        open={viewCharacterOpen}
+        onOpenChange={setViewCharacterOpen}
+      />
+
       {/* Equip Skills Dialog */}
       <EquipSkillsDialog
         character={selectedCharacter}
@@ -502,6 +513,310 @@ export default function TeamPage() {
   )
 }
 
+interface ViewCharacterDialogProps {
+  character: Character | null
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}
+
+function ViewCharacterDialog({ character, open, onOpenChange }: ViewCharacterDialogProps) {
+  const [classData, setClassData] = useState<ClassData | null>(null)
+  const [equipment, setEquipment] = useState<Record<EquipmentSlot, string | undefined>>({
+    weapon: undefined,
+    helmet: undefined,
+    armor: undefined,
+    pants: undefined,
+    boots: undefined,
+    accessory: undefined,
+  })
+  const [equippedSkills, setEquippedSkills] = useState<string[]>([])
+  const [skills, setSkills] = useState<Skill[]>([])
+
+  useEffect(() => {
+    if (!character || !open) return
+
+    const tokenId = character.tokenId.toString()
+    
+    // Load equipment
+    const charEquipment = getCharacterEquipment(tokenId)
+    setEquipment({
+      weapon: charEquipment.weapon,
+      helmet: charEquipment.helmet,
+      armor: charEquipment.armor,
+      pants: charEquipment.pants,
+      boots: charEquipment.boots,
+      accessory: charEquipment.accessory,
+    })
+
+    // Load equipped skills
+    const equipped = getEquippedSkills(tokenId)
+    setEquippedSkills(equipped)
+
+    // Load class data
+    const loadClassData = async () => {
+      const className = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
+      try {
+        const classModule = await import(`@/data/classes/${className}.json`)
+        setClassData(classModule.default || classModule)
+      } catch (error) {
+        logger.error('Failed to load class data', error as Error)
+      }
+    }
+
+    // Load skills data
+    const loadSkills = async () => {
+      try {
+        const classId = character.metadata?.class?.toLowerCase().replace(' ', '_') || 'warrior'
+        const skillsModule = await import(`@/data/skills/${classId}.json`)
+        const allSkills = skillsModule.default || skillsModule
+        setSkills(allSkills)
+      } catch (error) {
+        console.error('Failed to load skills:', error)
+        setSkills([])
+      }
+    }
+
+    loadClassData()
+    loadSkills()
+  }, [character, open])
+
+  // Calculate stats
+  const calculateStats = () => {
+    if (!classData) {
+      return {
+        hp: 0,
+        mana: 0,
+        atk: 0,
+        mag: 0,
+        def: 0,
+        res: 0,
+        spd: 0,
+        eva: 0,
+        crit: 0,
+      }
+    }
+
+    const level = character?.metadata?.level || 1
+    const baseStats = { ...classData.baseStats }
+    const growthRates = classData.growthRates
+
+    const stats = {
+      hp: Math.floor(baseStats.hp + growthRates.hp * (level - 1)),
+      mana: Math.floor(baseStats.mana + growthRates.mana * (level - 1)),
+      atk: Math.floor(baseStats.atk + growthRates.atk * (level - 1)),
+      mag: Math.floor(baseStats.mag + growthRates.mag * (level - 1)),
+      def: Math.floor(baseStats.def + growthRates.def * (level - 1)),
+      res: Math.floor(baseStats.res + growthRates.res * (level - 1)),
+      spd: Math.floor(baseStats.spd + growthRates.spd * (level - 1)),
+      eva: Math.floor(baseStats.eva + growthRates.eva * (level - 1)),
+      crit: Math.floor(baseStats.crit + growthRates.crit * (level - 1)),
+    }
+
+    // Add equipment bonuses
+    Object.values(equipment).forEach((itemId) => {
+      if (itemId) {
+        const item = (itemsData as Item[]).find((i) => i.id === itemId)
+        if (item?.statBonuses) {
+          Object.entries(item.statBonuses).forEach(([stat, value]) => {
+            if (typeof value === 'number') {
+              const statKey = stat.toLowerCase() as keyof typeof stats
+              if (statKey in stats) {
+                stats[statKey] += value
+              }
+            }
+          })
+        }
+      }
+    })
+
+    return stats
+  }
+
+  const totalStats = calculateStats()
+
+  if (!character) return null
+
+  const getEquippedSkillData = (skillId: string) => {
+    return skills.find((s) => s.id === skillId)
+  }
+
+  const slotLabels: Record<EquipmentSlot, string> = {
+    weapon: 'Weapon',
+    helmet: 'Helmet',
+    armor: 'Armor',
+    pants: 'Pants',
+    boots: 'Boots',
+    accessory: 'Accessory',
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
+          <DialogTitle className="text-2xl">
+            {character.metadata?.name || 'Unknown Character'}
+          </DialogTitle>
+          <DialogDescription className="text-base">
+            {character.metadata?.class} • Level {character.metadata?.level || 1}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Stats Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-emerald-300">Stats</h3>
+            <div className="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Heart className="h-4 w-4 text-red-500" />
+                  <span className="text-sm text-gray-300">HP</span>
+                </div>
+                <span className="font-bold text-yellow-400">{totalStats.hp}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Droplet className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-gray-300">Mana</span>
+                </div>
+                <span className="font-bold text-yellow-400">{totalStats.mana}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sword className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm text-gray-300">ATK</span>
+                </div>
+                <span className="font-bold text-yellow-400">{totalStats.atk}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-purple-500" />
+                  <span className="text-sm text-gray-300">MAG</span>
+                </div>
+                <span className="font-bold text-yellow-400">{totalStats.mag}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-blue-500" />
+                  <span className="text-sm text-gray-300">DEF</span>
+                </div>
+                <span className="font-semibold text-yellow-400">{totalStats.def}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-cyan-500" />
+                  <span className="text-sm text-gray-300">RES</span>
+                </div>
+                <span className="font-semibold text-yellow-400">{totalStats.res}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-yellow-500" />
+                  <span className="text-sm text-gray-300">SPD</span>
+                </div>
+                <span className="font-semibold text-yellow-400">{totalStats.spd}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-green-500" />
+                  <span className="text-sm text-gray-300">EVA</span>
+                </div>
+                <span className="font-semibold text-yellow-400">{totalStats.eva}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sword className="h-4 w-4 text-red-500" />
+                  <span className="text-sm text-gray-300">CRIT</span>
+                </div>
+                <span className="font-semibold text-yellow-400">{totalStats.crit}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Equipment Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-emerald-300">Equipment</h3>
+            <div className="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+              {(Object.keys(equipment) as EquipmentSlot[]).map((slot) => {
+                const itemId = equipment[slot]
+                const item = itemId ? (itemsData as Item[]).find((i) => i.id === itemId) : null
+                return (
+                  <div key={slot} className="flex items-center gap-3 p-2 rounded bg-slate-700/30">
+                    <div className="text-xs font-medium text-gray-400 w-20">
+                      {slotLabels[slot]}:
+                    </div>
+                    {item ? (
+                      <div className="flex items-center gap-2 flex-1">
+                        {item.image && (
+                          <img
+                            src={getItemImageFromData(item) || undefined}
+                            alt={item.name}
+                            className="w-8 h-8 rounded border border-slate-600"
+                          />
+                        )}
+                        <span className="text-sm text-emerald-200">{item.name}</span>
+                      </div>
+                    ) : (
+                      <span className="text-sm text-gray-500 italic">Empty</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Equipped Skills Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-emerald-300">
+              Equipped Skills ({equippedSkills.length}/4)
+            </h3>
+            <div className="space-y-2 bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
+              {equippedSkills.length === 0 ? (
+                <p className="text-sm text-gray-500 italic text-center py-4">No skills equipped</p>
+              ) : (
+                equippedSkills.map((skillId, index) => {
+                  const skill = getEquippedSkillData(skillId)
+                  return (
+                    <div
+                      key={skillId}
+                      className="p-3 rounded bg-emerald-500/10 border border-emerald-500/30"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm text-emerald-200">
+                            {skill?.name || skillId}
+                          </div>
+                          {skill?.description && (
+                            <div className="text-xs text-gray-400 mt-1">{skill.description}</div>
+                          )}
+                          <div className="text-xs text-gray-500 mt-1">
+                            Hotkey: W+{index + 1}
+                            {skill?.manaCost && ` • Mana: ${skill.manaCost}`}
+                            {skill?.range && ` • Range: ${skill.range}`}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+              {Array.from({ length: 4 - equippedSkills.length }).map((_, i) => (
+                <div
+                  key={`empty-${i}`}
+                  className="p-3 rounded bg-slate-700/20 border border-dashed border-slate-600/50 text-center text-xs text-gray-500"
+                >
+                  Empty Slot
+                </div>
+              ))}
+            </div>
+          </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 interface EquipSkillsDialogProps {
   character: Character | null
   open: boolean
@@ -510,7 +825,7 @@ interface EquipSkillsDialogProps {
 }
 
 function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSkillsDialogProps) {
-  const [skills, setSkills] = useState<any[]>([])
+  const [skills, setSkills] = useState<Skill[]>([])
   const [equippedSkills, setEquippedSkillsState] = useState<string[]>([])
   const { toast } = useToast()
 
@@ -529,13 +844,13 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
         const allSkills = skillsModule.default || skillsModule
 
         // Filter to only learned skills
-        const learnedSkills = allSkills.filter(
-          (skill: any) => getSkillPoints(tokenId, skill.id) > 0
+        const learnedSkills = (allSkills as Skill[]).filter(
+          (skill) => getSkillPoints(tokenId, skill.id) > 0
         )
 
         setSkills(learnedSkills)
       } catch (error) {
-        console.error('Failed to load skills:', error)
+        logger.error('Failed to load skills', error as Error)
         setSkills([])
       }
     }
@@ -575,8 +890,8 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>
             Equip Skills - {character.metadata?.name || 'Unknown Character'}
           </DialogTitle>
@@ -585,7 +900,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
             W+1-4.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4">
           <div>
             <p className="text-sm font-semibold mb-2">
               Equipped Skills ({equippedSkills.length}/4)
@@ -633,7 +948,7 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
                 This character has not learned any skills yet. Learn skills in the Skills page.
               </p>
             ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
                 {skills.map(skill => {
                   const isEquipped = equippedSkills.includes(skill.id)
                   const canEquip = !isEquipped && equippedSkills.length < 4

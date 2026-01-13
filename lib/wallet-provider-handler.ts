@@ -10,8 +10,8 @@ interface EthereumProvider {
   isCoinbaseWallet?: boolean
   isBraveWallet?: boolean
   providers?: EthereumProvider[]
-  removeListener?: (event: string, callback: (...args: any[]) => void) => void
-  on?: (event: string, callback: (...args: any[]) => void) => void
+  removeListener?: (event: string, callback: (...args: unknown[]) => void) => void
+  on?: (event: string, callback: (...args: unknown[]) => void) => void
 }
 
 declare global {

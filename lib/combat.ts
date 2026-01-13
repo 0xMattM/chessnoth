@@ -49,6 +49,7 @@ export interface CombatCharacter {
   equippedSkills?: string[] // Up to 4 skill IDs equipped for combat (max length 4)
   bossSprite?: string // For boss enemies, path to boss sprite
   isBoss?: boolean // Flag to identify boss characters
+  enemySprite?: string // For regular enemies, sprite name (e.g., 'goblin_warrior')
 }
 
 export interface CombatState {
@@ -258,19 +259,63 @@ export async function initializeCombatCharacters(
     // Mix of melee, ranged, magic, and support classes
     const enemyClasses = ['warrior', 'mage', 'archer', 'assassin', 'healer', 'paladin']
     
+    // Map enemy classes to sprite names based on stage progression
+    const getEnemyName = (enemyClass: string, stage: number): string => {
+      // Early stages (1-3): Goblins and basic undeads
+      if (stage <= 3) {
+        const earlyEnemies = {
+          warrior: ['goblin_warrior', 'goblin_guard', 'skeleton_warrior'],
+          mage: ['shadow_mage', 'dark_cultist'],
+          archer: ['goblin_archer', 'skeleton_archer'],
+          assassin: ['goblin_scout', 'assasin'],
+          healer: ['dark_cultist'],
+          paladin: ['goblin_guard', 'skeleton_warrior']
+        }
+        const options = earlyEnemies[enemyClass] || ['goblin_warrior']
+        return options[Math.floor(Math.random() * options.length)]
+      }
+      
+      // Mid stages (4-6): More dangerous enemies
+      if (stage <= 6) {
+        const midEnemies = {
+          warrior: ['troll', 'undead_champion', 'goblin_spear'],
+          mage: ['shadow_mage', 'fire_cult_soldier'],
+          archer: ['skeleton_archer', 'ice_raider'],
+          assassin: ['assasin', 'ghoul'],
+          healer: ['corrupted_paladin'],
+          paladin: ['undead_champion', 'corrupted_paladin']
+        }
+        const options = midEnemies[enemyClass] || ['troll']
+        return options[Math.floor(Math.random() * options.length)]
+      }
+      
+      // Late stages (7+): Strongest enemies
+      const lateEnemies = {
+        warrior: ['armored_troll', 'ogre', 'undead_champion'],
+        mage: ['shadow_mage', 'corrupted_paladin'],
+        archer: ['ice_raider', 'skeleton_archer'],
+        assassin: ['assasin', 'fire_cult_soldier'],
+        healer: ['corrupted_paladin', 'shadow_mage'],
+        paladin: ['corrupted_paladin', 'undead_champion']
+      }
+      const options = lateEnemies[enemyClass] || ['ogre']
+      return options[Math.floor(Math.random() * options.length)]
+    }
+    
     for (let i = 0; i < enemyCount; i++) {
       // Cycle through classes, ensuring variety
       const enemyClass = enemyClasses[i % enemyClasses.length]
       
       // Progressive level scaling: enemies get stronger as stage increases
-      // Base level increases with stage, and later enemies in the same stage are slightly stronger
-      // Formula ensures enemies scale appropriately with stage progression
-      // Early stages: enemies are weaker, later stages: enemies are stronger
-      const stageMultiplier = Math.min(1.0, 0.7 + (stage - 1) * 0.05) // 70% to 100% scaling
-      const baseLevel = Math.floor(stage * stageMultiplier)
+      // Base level = stage (so stage 1 = level 1, stage 2 = level 2, etc.)
+      // Add variance based on enemy position in the group
+      const baseLevel = stage // Enemies scale directly with stage
       const positionBonus = Math.floor(i / 2) // Every 2 enemies get +1 level bonus
-      const variance = i % 2 === 0 ? 0 : 1 // Alternate enemies get slight variance
+      const variance = Math.floor(Math.random() * 2) // Random 0-1 variance
       const enemyLevel = Math.max(1, baseLevel + positionBonus + variance)
+      
+      // Get appropriate enemy name based on class and stage
+      const enemyName = getEnemyName(enemyClass, stage)
       
       const classData = await import(`@/data/classes/${enemyClass}.json`)
       const baseStats = classData.default?.baseStats || classData.baseStats
@@ -290,10 +335,59 @@ export async function initializeCombatCharacters(
         crit: Math.floor(baseStats.crit + growthRates.crit * (enemyLevel - 1)),
       }
       
+      // Load and assign skills for this enemy based on class and level
+      let enemySkills: { [skillId: string]: number } = {}
+      let equippedSkills: string[] = []
+      
+      try {
+        const skillsModule = await import(`@/data/skills/${enemyClass}.json`)
+        const allSkills = (skillsModule.default || skillsModule) as Array<{
+          id: string
+          levelReq: number
+          spCost: number
+          manaCost: number
+        }>
+        
+        // Filter skills that enemy can learn (level requirement met)
+        const availableSkills = allSkills.filter((skill) => skill.levelReq <= enemyLevel)
+        
+        // Assign skills: enemies get skills based on their level
+        // Higher level enemies get more and better skills
+        const skillsToLearn = Math.min(
+          Math.max(2, Math.floor(enemyLevel / 3) + 1), // At least 2, more as level increases
+          availableSkills.length,
+          4 // Max 4 equipped skills
+        )
+        
+        // Select skills to learn (prioritize lower level requirements first, then by levelReq)
+        const sortedSkills = [...availableSkills].sort((a, b) => {
+          // First sort by levelReq (lower first)
+          if (a.levelReq !== b.levelReq) {
+            return a.levelReq - b.levelReq
+          }
+          // Then by manaCost (cheaper first for AI)
+          return a.manaCost - b.manaCost
+        })
+        
+        // Select skills to learn and equip
+        const selectedSkills = sortedSkills.slice(0, skillsToLearn)
+        
+        // Assign skill points (1 point per skill for enemies)
+        selectedSkills.forEach((skill) => {
+          enemySkills[skill.id] = 1
+        })
+        
+        // Equip all learned skills (up to 4)
+        equippedSkills = selectedSkills.map((skill) => skill.id).slice(0, 4)
+      } catch (error) {
+        logger.warn('Failed to load skills for enemy', { enemyClass, error })
+        // Continue without skills if loading fails
+      }
+      
       combatCharacters.push({
         id: `enemy-${i}`,
         tokenId: `enemy-${i}`,
-        name: `${enemyClass.charAt(0).toUpperCase() + enemyClass.slice(1)} ${i + 1}`,
+        name: enemyName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
         class: enemyClass,
         level: enemyLevel,
         stats,
@@ -303,6 +397,9 @@ export async function initializeCombatCharacters(
         hasMoved: false,
         hasActed: false,
         statusEffects: [],
+        skills: enemySkills, // Assign learned skills
+        equippedSkills: equippedSkills, // Assign equipped skills
+        enemySprite: enemyName, // Store sprite name for rendering
       })
     }
   }
@@ -416,14 +513,36 @@ export function getValidMovePositions(
 }
 
 /**
- * Get valid attack targets (adjacent enemies)
+ * Get the base attack range for a character class
+ * Archers and mages have longer range than melee classes
+ */
+export function getCharacterAttackRange(character: CombatCharacter): number {
+  const classLower = character.class.toLowerCase()
+  
+  // Ranged classes have longer attack range
+  if (classLower === 'archer' || classLower === 'axe_thrower') {
+    return 3 // Archers can attack from 3 tiles away
+  }
+  if (classLower === 'mage' || classLower === 'dark_mage') {
+    return 3 // Mages can attack from 3 tiles away
+  }
+  
+  // Melee classes have range 1
+  return 1
+}
+
+/**
+ * Get valid attack targets based on character's attack range
  */
 export function getValidAttackTargets(
   character: CombatCharacter,
   allCharacters: CombatCharacter[],
-  range: number = 1
+  range?: number // Optional override, otherwise uses character's class range
 ): CombatCharacter[] {
   if (!character.position) return []
+  
+  // Use provided range or determine from character class
+  const attackRange = range ?? getCharacterAttackRange(character)
   
   const { row, col } = character.position
   const targets: CombatCharacter[] = []
@@ -433,7 +552,7 @@ export function getValidAttackTargets(
     if (!target.position) return
     
     const distance = Math.abs(target.position.row - row) + Math.abs(target.position.col - col)
-    if (distance <= range) {
+    if (distance <= attackRange) {
       targets.push(target)
     }
   })
@@ -565,15 +684,24 @@ export function calculateDamage(
 
 /**
  * Get valid skill targets based on skill range and requirements
+ * Handles AOE types: single, line, radius, all_allies, all_enemies
  */
 export function getValidSkillTargets(
   character: CombatCharacter,
-  skill: { range: number; aoeType?: string; effects?: Array<{ type: string }>; requiresTarget?: boolean; damageType?: string },
-  allCharacters: CombatCharacter[]
+  skill: { 
+    range: number
+    aoeType?: string
+    aoeRadius?: number
+    effects?: Array<{ type: string }>
+    requiresTarget?: boolean
+    damageType?: string
+  },
+  allCharacters: CombatCharacter[],
+  selectedTargetPosition?: { row: number; col: number } // For AOE skills that need a target point
 ): CombatCharacter[] {
   if (!character.position) return []
   
-  const { row, col } = character.position
+  const { row: casterRow, col: casterCol } = character.position
   const targets: CombatCharacter[] = []
   
   // Check if skill is healing/buff type
@@ -585,33 +713,101 @@ export function getValidSkillTargets(
   // Check if skill is damage type
   const isDamageSkill = skill.damageType === 'magical' || skill.damageType === 'physical'
   
-  // Check if skill targets all allies (AOE)
-  const isAllAlliesAOE = skill.aoeType === 'all_allies'
+  // Handle global AOE skills that don't need a target
+  if (skill.aoeType === 'all_allies') {
+    // Target all allies (including self and defeated ones for revive)
+    allCharacters.forEach((target) => {
+      if (target.team === character.team) {
+        targets.push(target)
+      }
+    })
+    return targets
+  }
   
+  if (skill.aoeType === 'all_enemies') {
+    // Target all enemies
+    allCharacters.forEach((target) => {
+      if (target.team !== character.team && target.stats.hp > 0) {
+        targets.push(target)
+      }
+    })
+    return targets
+  }
+  
+  // For AOE skills (line, radius), we need a target position
+  // If no target position provided, return empty (user needs to click a target)
+  if ((skill.aoeType === 'line' || skill.aoeType === 'radius') && !selectedTargetPosition) {
+    // Return potential targets within range for selection
+    allCharacters.forEach((target) => {
+      if (!target.position) return
+      
+      const distance = Math.abs(target.position.row - casterRow) + Math.abs(target.position.col - casterCol)
+      if (distance <= skill.range) {
+        if (isDamageSkill && target.team !== character.team) {
+          targets.push(target)
+        } else if (isSupportSkill && target.team === character.team) {
+          targets.push(target)
+        }
+      }
+    })
+    return targets
+  }
+  
+  // Calculate AOE area if target position is provided
+  let aoePositions: Array<{ row: number; col: number }> = []
+  if (selectedTargetPosition && (skill.aoeType === 'line' || skill.aoeType === 'radius')) {
+    if (skill.aoeType === 'line') {
+      // Line AOE: all positions in a straight line from caster to target
+      const targetRow = selectedTargetPosition.row
+      const targetCol = selectedTargetPosition.col
+      const rowDiff = targetRow - casterRow
+      const colDiff = targetCol - casterCol
+      
+      // Determine direction
+      if (Math.abs(rowDiff) > Math.abs(colDiff)) {
+        // Vertical line
+        const startRow = Math.min(casterRow, targetRow)
+        const endRow = Math.max(casterRow, targetRow)
+        for (let r = startRow; r <= endRow; r++) {
+          aoePositions.push({ row: r, col: casterCol })
+        }
+      } else {
+        // Horizontal line
+        const startCol = Math.min(casterCol, targetCol)
+        const endCol = Math.max(casterCol, targetCol)
+        for (let c = startCol; c <= endCol; c++) {
+          aoePositions.push({ row: casterRow, col: c })
+        }
+      }
+    } else if (skill.aoeType === 'radius' && skill.aoeRadius) {
+      // Radius AOE: all positions within radius of target
+      const centerRow = selectedTargetPosition.row
+      const centerCol = selectedTargetPosition.col
+      const radius = skill.aoeRadius
+      
+      for (let r = centerRow - radius; r <= centerRow + radius; r++) {
+        for (let c = centerCol - radius; c <= centerCol + radius; c++) {
+          const distance = Math.abs(r - centerRow) + Math.abs(c - centerCol)
+          if (distance <= radius && r >= 0 && r < 8 && c >= 0 && c < 8) {
+            aoePositions.push({ row: r, col: c })
+          }
+        }
+      }
+    }
+  }
+  
+  // Process all characters to find targets
   allCharacters.forEach((target) => {
-    // Skip if target has no position (defeated)
-    if (!target.position && !isAllAlliesAOE) return
-    
-    const distance = target.position 
-      ? Math.abs(target.position.row - row) + Math.abs(target.position.col - col)
-      : 0
+    if (!target.position && skill.aoeType !== 'all_allies') return
     
     const isEnemy = target.team !== character.team
     const isAlly = target.team === character.team && target !== character
     const isSelf = target === character
     
-    // Handle skills that don't require a target (self-targeting or AOE)
-    if (skill.requiresTarget === false) {
-      if (isAllAlliesAOE) {
-        // AOE skill that targets all allies - include all allies (even defeated ones for revive)
-        if (isAlly || isSelf) {
-          targets.push(target)
-        }
-      } else {
-        // Self-targeting skill
-        if (isSelf) {
-          targets.push(target)
-        }
+    // Handle skills that don't require a target (self-targeting)
+    if (skill.requiresTarget === false && skill.aoeType !== 'all_allies' && skill.aoeType !== 'all_enemies') {
+      if (isSelf) {
+        targets.push(target)
       }
       return
     }
@@ -624,32 +820,50 @@ export function getValidSkillTargets(
       return
     }
     
-    // Handle skills with range > 0
-    if (target.position && distance <= skill.range) {
-      // Damage skills target enemies
-      if (isDamageSkill && isEnemy) {
-        targets.push(target)
-        return
+    // Handle AOE skills with target position
+    if (aoePositions.length > 0 && target.position) {
+      const isInAOE = aoePositions.some(
+        (pos) => pos.row === target.position!.row && pos.col === target.position!.col
+      )
+      if (isInAOE) {
+        if (isDamageSkill && isEnemy) {
+          targets.push(target)
+        } else if (isSupportSkill && (isAlly || isSelf)) {
+          targets.push(target)
+        }
       }
-      
-      // Healing/support skills target allies and self
-      if (isSupportSkill && (isAlly || isSelf)) {
-        targets.push(target)
-        return
-      }
-      
-      // Skills with no damage type but with effects - check effect types
-      if (skill.damageType === 'none' && skill.effects) {
-        const hasDebuffEffect = skill.effects.some((e: { type: string }) => e.type === 'debuff' || e.type === 'status')
-        // Debuff/status skills target enemies
-        if (hasDebuffEffect && isEnemy) {
+      return
+    }
+    
+    // Handle single target skills with range > 0
+    if (target.position) {
+      const distance = Math.abs(target.position.row - casterRow) + Math.abs(target.position.col - casterCol)
+      if (distance <= skill.range) {
+        // Damage skills target enemies
+        if (isDamageSkill && isEnemy) {
           targets.push(target)
           return
         }
-        // Other effects (like cure) target allies
-        if (!hasDebuffEffect && (isAlly || isSelf)) {
+        
+        // Healing/support skills target allies and self
+        if (isSupportSkill && (isAlly || isSelf)) {
           targets.push(target)
           return
+        }
+        
+        // Skills with no damage type but with effects - check effect types
+        if (skill.damageType === 'none' && skill.effects) {
+          const hasDebuffEffect = skill.effects.some((e: { type: string }) => e.type === 'debuff' || e.type === 'status')
+          // Debuff/status skills target enemies
+          if (hasDebuffEffect && isEnemy) {
+            targets.push(target)
+            return
+          }
+          // Other effects (like cure) target allies
+          if (!hasDebuffEffect && (isAlly || isSelf)) {
+            targets.push(target)
+            return
+          }
         }
       }
     }

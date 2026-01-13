@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
  * @dev ERC-721 contract for character NFTs in the tactical RPG game
  * Supports minting, metadata updates, and ownership verification
  * Includes pausable functionality for emergency stops
- * Includes rate limiting to prevent spam minting
+ * Public minting with fixed price (5 MNT)
  */
 contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     // Mapping from token ID to IPFS hash
@@ -42,9 +42,8 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     // Counter for token IDs
     uint256 private _tokenIdCounter;
     
-    // Rate limiting for minting (anti-spam)
-    mapping(address => uint256) public lastMintTime;
-    uint256 public constant MINT_COOLDOWN = 1 hours;
+    // Mint price in native currency (MNT)
+    uint256 public mintPrice = 5 ether; // 5 MNT
     
     // Events
     event CharacterMinted(
@@ -135,7 +134,16 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Mints a new character NFT
+     * @dev Sets the mint price
+     * @param _mintPrice New mint price in native currency (MNT)
+     */
+    function setMintPrice(uint256 _mintPrice) external onlyOwner {
+        mintPrice = _mintPrice;
+    }
+    
+    /**
+     * @dev Mints a new character NFT (public mint with payment)
+     * Requires payment of mintPrice in native currency (MNT)
      * @param to Address to mint the NFT to
      * @param ipfsHash IPFS hash of the character metadata
      * @param generation Generation number of the character
@@ -149,22 +157,18 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
         uint256 generation,
         string memory class,
         string memory name
-    ) external whenNotPaused returns (uint256) {
-        require(
-            authorizedMinters[msg.sender] || msg.sender == owner(),
-            "CharacterNFT: Not authorized to mint"
-        );
+    ) external payable whenNotPaused nonReentrant returns (uint256) {
         require(to != address(0), "CharacterNFT: Cannot mint to zero address");
         require(bytes(ipfsHash).length > 0, "CharacterNFT: IPFS hash required");
         require(bytes(class).length > 0, "CharacterNFT: Class required");
         require(bytes(name).length > 0, "CharacterNFT: Name required");
+        require(msg.value >= mintPrice, "CharacterNFT: Insufficient payment");
         
-        // Rate limiting: prevent spam minting
-        require(
-            block.timestamp >= lastMintTime[msg.sender] + MINT_COOLDOWN,
-            "CharacterNFT: Mint cooldown active"
-        );
-        lastMintTime[msg.sender] = block.timestamp;
+        // Transfer payment to contract owner
+        if (msg.value > 0) {
+            (bool success, ) = payable(owner()).call{value: msg.value}("");
+            require(success, "CharacterNFT: Payment transfer failed");
+        }
         
         uint256 tokenId = _tokenIdCounter;
         _tokenIdCounter++;
@@ -263,7 +267,8 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev Sets experience points for a character (admin function)
+     * @dev Sets experience points for a character
+     * Can be called by token owner or authorized addresses
      * @param tokenId Token ID to update
      * @param amount Amount of experience to set
      */
@@ -272,7 +277,7 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
         uint256 amount
     ) external {
         require(
-            authorizedMinters[msg.sender] || msg.sender == owner(),
+            _isAuthorized(_ownerOf(tokenId), msg.sender, tokenId) || authorizedMinters[msg.sender] || msg.sender == owner(),
             "CharacterNFT: Not authorized to set experience"
         );
         

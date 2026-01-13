@@ -367,7 +367,7 @@ Each NFT must have JSON metadata on IPFS with:
 - `lib/contract.ts` (update ABIs)
 - `lib/nft.ts` (new - NFT utilities)
 - `lib/chs-token.ts` (new - CHS utilities)
-- `app/upgrade/page.tsx` (new - upgrade UI)
+- `app/page.tsx` (upgrade UI integrated in Dashboard tab "Level Up")
 - `app/marketplace/page.tsx` (new - marketplace UI)
 - `hooks/useCharacterNFT.ts` (new - hook to read NFTs)
 - `hooks/useUpgrade.ts` (new - upgrade hook)

@@ -53,8 +53,8 @@ export function Navigation() {
                   className={cn(
                     'group relative flex items-center space-x-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/25'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground hover:shadow-md'
+                      ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/30' // Chessnoth Branding: Arcane Blue
+                      : 'text-muted-foreground hover:bg-slate-800/50 hover:text-blue-300 hover:shadow-md'
                   )}
                 >
                   <Icon className={cn(
@@ -63,7 +63,7 @@ export function Navigation() {
                   )} />
                   <span>{item.name}</span>
                   {isActive && (
-                    <div className="absolute inset-x-0 -bottom-0.5 h-0.5 bg-gradient-to-r from-transparent via-primary-foreground to-transparent" />
+                    <div className="absolute inset-x-0 -bottom-0.5 h-0.5 bg-gradient-to-r from-transparent via-blue-400 to-transparent" />
                   )}
                 </Link>
               )
@@ -107,8 +107,8 @@ export function Navigation() {
                   className={cn(
                     'flex items-center space-x-3 rounded-xl px-4 py-3 text-base font-medium transition-all',
                     isActive
-                      ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-lg'
-                      : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      ? 'bg-blue-500 text-white shadow-lg' // Chessnoth Branding: Arcane Blue
+                      : 'text-muted-foreground hover:bg-slate-800/50 hover:text-blue-300'
                   )}
                 >
                   <Icon className="h-5 w-5" />

@@ -29,7 +29,8 @@
       {
         "type": "status",
         "statusId": "freeze",
-        "duration": 1
+        "duration": 1,
+        "chance": 50
       }
     ],
     "requiresTarget": true

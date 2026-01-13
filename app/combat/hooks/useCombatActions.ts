@@ -519,22 +519,27 @@ export function useCombatActions({
 
       // Check if clicking on a valid skill target
       if (combatState.selectedAction === 'skill' && selectedSkill) {
-        const skillTargets = getValidSkillTargets(current, selectedSkill, combatState.characters)
-        const target = skillTargets.find((t) => {
-          // For defeated characters (no position), check by ID
-          if (!t.position) {
-            return t.id === combatState.characters.find((c) => c.position?.row === row && c.position?.col === col)?.id
-          }
-          return t.position?.row === row && t.position?.col === col
-        })
-
-        // Also allow clicking on self for self-targeting skills
-        const isSelfClick = current.position?.row === row && current.position?.col === col
+        // Get valid targets - for AOE skills, pass the clicked position
+        const clickedPosition = { row, col }
+        const skillTargets = getValidSkillTargets(
+          current, 
+          selectedSkill, 
+          combatState.characters,
+          (selectedSkill.aoeType === 'line' || selectedSkill.aoeType === 'radius') ? clickedPosition : undefined
+        )
+        
+        // For AOE skills that don't require a target (all_enemies, all_allies), allow clicking anywhere
+        const isGlobalAOE = selectedSkill.aoeType === 'all_enemies' || selectedSkill.aoeType === 'all_allies'
         const isSelfTargeting = !selectedSkill.requiresTarget || selectedSkill.range === 0
+        const isSelfClick = current.position?.row === row && current.position?.col === col
+        
+        // For AOE skills (line, radius), check if clicked position is valid
+        const isAOEValid = (selectedSkill.aoeType === 'line' || selectedSkill.aoeType === 'radius') && skillTargets.length > 0
+        
+        // Check if we have a valid target or valid AOE position
+        const hasValidTarget = skillTargets.length > 0 || isGlobalAOE || (isSelfTargeting && isSelfClick) || isAOEValid
 
-        if (target || (isSelfTargeting && isSelfClick)) {
-          const actualTarget = target || current
-
+        if (hasValidTarget) {
           // Check if character can use skills (not silenced)
           if (!canCharacterUseSkills(current)) {
             toast({
@@ -555,11 +560,38 @@ export function useCombatActions({
             return
           }
 
-          // Handle AOE skills that target all allies
-          const isAllAlliesAOE = selectedSkill.aoeType === 'all_allies'
-          const targetsToAffect = isAllAlliesAOE
-            ? combatState.characters.filter((c) => c.team === 'player' && (c.id === current.id || c.team === current.team))
-            : [actualTarget]
+          // Determine targets to affect based on skill type
+          let targetsToAffect: CombatCharacter[] = []
+          
+          if (selectedSkill.aoeType === 'all_allies') {
+            // Target all allies
+            targetsToAffect = combatState.characters.filter((c) => c.team === current.team)
+          } else if (selectedSkill.aoeType === 'all_enemies') {
+            // Target all enemies
+            targetsToAffect = combatState.characters.filter((c) => c.team !== current.team && c.stats.hp > 0)
+          } else if (selectedSkill.aoeType === 'line' || selectedSkill.aoeType === 'radius') {
+            // AOE skills - use targets from getValidSkillTargets with clicked position
+            targetsToAffect = skillTargets
+          } else if (isSelfTargeting && isSelfClick) {
+            // Self-targeting skill
+            targetsToAffect = [current]
+          } else {
+            // Single target skill
+            const target = skillTargets.find((t) => {
+              if (!t.position) return false
+              return t.position.row === row && t.position.col === col
+            })
+            if (target) {
+              targetsToAffect = [target]
+            } else {
+              // No valid target found
+              return
+            }
+          }
+          
+          if (targetsToAffect.length === 0) {
+            return
+          }
 
           // Set animation states for casting
           const castingChar = { ...current, animationState: 'casting' as AnimationState }
@@ -590,18 +622,50 @@ export function useCombatActions({
           }
 
           // Apply damage or healing to all affected targets
+          // Handle multi-hit skills (e.g., Multi Shot hits 3 times, Barrage hits 5 times)
+          // Determine hit count from skill data or description
+          let hitCount = selectedSkill.hitCount || 1
+          if (!selectedSkill.hitCount) {
+            // Fallback: detect from skill name/description
+            const skillName = selectedSkill.name.toLowerCase()
+            const skillDesc = selectedSkill.description.toLowerCase()
+            if (skillName.includes('multi shot') || skillDesc.includes('3 arrows')) {
+              hitCount = 3
+            } else if (skillName.includes('barrage') || skillDesc.includes('5 arrows')) {
+              hitCount = 5
+            }
+          }
+          
           updatedTargets.forEach((skillTarget) => {
             const originalTarget = combatState.characters.find((c) => c.id === skillTarget.id)
             if (!originalTarget) return
 
-            // Apply damage to enemies
+            // Apply damage to enemies (with multi-hit support)
             if (selectedSkill.damageType === 'magical' || selectedSkill.damageType === 'physical') {
               if (skillTarget.team !== current.team) {
                 const isPhysical = selectedSkill.damageType === 'physical'
-                const damage = calculateDamage(current, skillTarget, isPhysical, selectedSkill.damageMultiplier || 1.0)
-                skillTarget.stats.hp = Math.max(0, originalTarget.stats.hp - damage)
-                // Log damage
-                combatLog.addDamageLog(current.name, skillTarget.name, damage)
+                let totalDamage = 0
+                
+                // Apply multiple hits for multi-hit skills
+                for (let hit = 0; hit < hitCount; hit++) {
+                  const damage = calculateDamage(current, skillTarget, isPhysical, selectedSkill.damageMultiplier || 1.0)
+                  totalDamage += damage
+                }
+                
+                skillTarget.stats.hp = Math.max(0, originalTarget.stats.hp - totalDamage)
+                // Log damage (for multi-hit, log each hit separately for clarity)
+                if (hitCount > 1) {
+                  // Log total damage with indication of multiple hits
+                  combatLog.addLog({
+                    type: 'damage',
+                    actor: current.name,
+                    target: skillTarget.name,
+                    damage: totalDamage,
+                    message: `${current.name} deals ${totalDamage} damage to ${skillTarget.name} (${hitCount} hits)`,
+                  })
+                } else {
+                  combatLog.addDamageLog(current.name, skillTarget.name, totalDamage)
+                }
               }
             }
             
@@ -672,15 +736,20 @@ export function useCombatActions({
                   // Log debuff
                   combatLog.addDebuffLog(current.name, skillTarget.name, effect.stat, effect.duration)
                 } else if (effect.type === 'status' && effect.statusId && effect.duration !== undefined) {
-                  // Add status effect (stun, freeze, etc.)
-                  skillTarget.statusEffects.push({
-                    type: effect.statusId,
-                    statusId: effect.statusId,
-                    duration: effect.duration,
-                    value: effect.value,
-                  })
-                  // Log status
-                  combatLog.addStatusLog(current.name, skillTarget.name, effect.statusId, effect.duration)
+                  // Check if effect has a chance to apply
+                  const shouldApply = effect.chance === undefined || Math.random() * 100 < effect.chance
+                  
+                  if (shouldApply) {
+                    // Add status effect (stun, freeze, etc.)
+                    skillTarget.statusEffects.push({
+                      type: effect.statusId,
+                      statusId: effect.statusId,
+                      duration: effect.duration,
+                      value: effect.value,
+                    })
+                    // Log status
+                    combatLog.addStatusLog(current.name, skillTarget.name, effect.statusId, effect.duration)
+                  }
                 }
               })
             })

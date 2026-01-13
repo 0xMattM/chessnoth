@@ -4,13 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Sword, Shield, Shirt, Package, X, Heart, Zap, Shield as ShieldIcon, Droplet } from 'lucide-react'
 import itemsData from '@/data/items.json'
-import { getCharacterEquipment, setCharacterEquipment, type EquipmentSlot } from '@/lib/equipment'
+import { getCharacterEquipment, setCharacterEquipment, type EquipmentSlot, canEquipItem, getAvailableItemCount } from '@/lib/equipment'
 import { getItemImageFromData } from '@/lib/item-images'
 import { getInventory, getItemQuantity } from '@/lib/inventory'
 import { useState, useEffect } from 'react'
 import { logger } from '@/lib/logger'
 import { type Item } from '@/lib/types'
 import Image from 'next/image'
+import { rarityColors, rarityTextColors } from '@/lib/constants'
 
 interface Character {
   tokenId: bigint
@@ -45,21 +46,7 @@ interface ClassData {
   growthRates: CharacterStats
 }
 
-const rarityColors = {
-  common: 'border-gray-500 bg-gray-500/10',
-  uncommon: 'border-green-500 bg-green-500/10',
-  rare: 'border-blue-500 bg-blue-500/10',
-  epic: 'border-purple-500 bg-purple-500/10',
-  legendary: 'border-yellow-500 bg-yellow-500/10',
-}
-
-const rarityTextColors = {
-  common: 'text-gray-500',
-  uncommon: 'text-green-500',
-  rare: 'text-blue-500',
-  epic: 'text-purple-500',
-  legendary: 'text-yellow-500',
-}
+// Use centralized rarity colors from branding (imported above)
 
 export function CharacterInventory({ character, onClose, onEquipmentChange }: CharacterInventoryProps) {
   const tokenId = character.tokenId.toString()
@@ -184,6 +171,25 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
   }
 
   const handleEquip = (slot: EquipmentSlot, itemId: string) => {
+    const totalQuantity = getItemQuantity(itemId)
+    const currentlyEquippedInThisSlot = equipment[slot] === itemId
+    
+    // If already equipped in this slot, allow re-equipping (no change needed)
+    if (currentlyEquippedInThisSlot) {
+      return
+    }
+    
+    // Check if item can be equipped (has available copies)
+    if (!canEquipItem(itemId, totalQuantity, tokenId)) {
+      // Show error message or prevent equip
+      logger.warn('Cannot equip item: all copies are already equipped', {
+        itemId,
+        totalQuantity,
+        tokenId,
+      })
+      return
+    }
+    
     setCharacterEquipment(tokenId, slot, itemId)
     setEquipment((prev) => ({ ...prev, [slot]: itemId }))
     onEquipmentChange?.()
@@ -309,7 +315,7 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-6">
+        <CardContent className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           <div className="grid grid-cols-12 gap-6 h-full">
             {/* Left Column - Stats */}
             <div className="col-span-3 space-y-4">
@@ -318,35 +324,35 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                   <CardTitle className="text-lg">Stats</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="flex items-center justify-between">
+                  <div className="stat-display flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Heart className="h-4 w-4 text-red-500" />
-                      <span className="text-sm">HP</span>
+                      <span className="text-sm text-gray-300">HP</span>
                     </div>
-                    <span className="font-semibold">{totalStats.hp}</span>
+                    <span className="font-bold text-yellow-400">{totalStats.hp}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="stat-display flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Droplet className="h-4 w-4 text-blue-500" />
-                      <span className="text-sm">Mana</span>
+                      <span className="text-sm text-gray-300">Mana</span>
                     </div>
-                    <span className="font-semibold">{totalStats.mana}</span>
+                    <span className="font-bold text-yellow-400">{totalStats.mana}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="stat-display flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Sword className="h-4 w-4 text-orange-500" />
-                      <span className="text-sm">ATK</span>
+                      <span className="text-sm text-gray-300">ATK</span>
                     </div>
-                    <span className="font-semibold">{totalStats.atk}</span>
+                    <span className="font-bold text-yellow-400">{totalStats.atk}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="stat-display flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Zap className="h-4 w-4 text-purple-500" />
-                      <span className="text-sm">MAG</span>
+                      <span className="text-sm text-gray-300">MAG</span>
                     </div>
-                    <span className="font-semibold">{totalStats.mag}</span>
+                    <span className="font-bold text-yellow-400">{totalStats.mag}</span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="stat-display flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <ShieldIcon className="h-4 w-4 text-blue-500" />
                       <span className="text-sm">DEF</span>
@@ -470,18 +476,23 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                           const isEquipped = Object.values(equipment).includes(item.id)
                           const itemImage = getItemImageFromData(item)
                           const quantity = getItemQuantity(item.id)
+                          const availableCount = getAvailableItemCount(item.id, quantity, tokenId)
+                          const canEquip = canEquipItem(item.id, quantity, tokenId) || isEquipped
                           return (
                             <button
                               key={item.id}
                               onClick={() => handleItemClick(item)}
                               className={`relative aspect-square rounded-lg border-2 overflow-hidden transition-all hover:scale-110 hover:z-10 ${
-                                isEquipped
-                                  ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
-                                  : selectedItem?.id === item.id
-                                    ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20'
-                                    : `${rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common} hover:shadow-md`
+                                !canEquip
+                                  ? 'opacity-50 cursor-not-allowed border-red-500/50 bg-red-500/10'
+                                  : isEquipped
+                                    ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
+                                    : selectedItem?.id === item.id
+                                      ? 'border-primary bg-primary/20 shadow-lg shadow-primary/20'
+                                      : `${rarityColors[item.rarity as keyof typeof rarityColors] || rarityColors.common} hover:shadow-md`
                               }`}
-                              title={item.name}
+                              title={`${item.name}${!canEquip ? ` (All ${quantity} copies equipped)` : ` (${availableCount}/${quantity} available)`}`}
+                              disabled={!canEquip && !isEquipped}
                             >
                               {itemImage ? (
                                 <Image
@@ -499,10 +510,10 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                               {isEquipped && (
                                 <div className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-background shadow-sm" />
                               )}
-                              {/* Quantity badge */}
-                              {quantity > 1 && (
+                              {/* Quantity badge - show available/total */}
+                              {quantity > 0 && (
                                 <div className="absolute bottom-1 right-1 bg-background/90 text-foreground text-xs font-bold px-1.5 py-0.5 rounded">
-                                  {quantity}
+                                  {availableCount > 0 ? `${availableCount}/${quantity}` : quantity}
                                 </div>
                               )}
                               {/* Rarity indicator */}
@@ -522,6 +533,10 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                 {/* Selected Item Details */}
                 {selectedItem && (() => {
                 const itemImage = getItemImageFromData(selectedItem)
+                const quantity = getItemQuantity(selectedItem.id)
+                const availableCount = getAvailableItemCount(selectedItem.id, quantity, tokenId)
+                const isEquipped = Object.values(equipment).includes(selectedItem.id)
+                const canEquip = canEquipItem(selectedItem.id, quantity, tokenId) || isEquipped
                 return (
                   <Card>
                     <CardContent className="p-4">
@@ -554,6 +569,23 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                           
                           <p className="text-sm text-muted-foreground">{selectedItem.description}</p>
                           
+                          {/* Availability info */}
+                          <div className="text-xs text-muted-foreground">
+                            <p>
+                              Owned: <span className="font-semibold text-foreground">{quantity}</span>
+                            </p>
+                            <p>
+                              Available: <span className={`font-semibold ${availableCount > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {availableCount}
+                              </span>
+                            </p>
+                            {availableCount < quantity && (
+                              <p className="text-yellow-500 mt-1">
+                                {quantity - availableCount} {quantity - availableCount === 1 ? 'copy is' : 'copies are'} equipped on other characters
+                              </p>
+                            )}
+                          </div>
+                          
                           {selectedItem.statBonuses && (
                             <div className="space-y-1">
                               <p className="text-xs font-semibold">Bonuses:</p>
@@ -572,12 +604,12 @@ export function CharacterInventory({ character, onClose, onEquipmentChange }: Ch
                             <Button
                               className="w-full"
                               onClick={() => handleEquipFromInventory(selectedItem)}
-                              disabled={Object.values(equipment).includes(selectedItem.id)}
+                              disabled={!canEquip || isEquipped}
                             >
-                              {Object.values(equipment).includes(selectedItem.id) ? 'Equipped' : 'Equip'}
+                              {isEquipped ? 'Equipped' : !canEquip ? 'All Copies Equipped' : 'Equip'}
                             </Button>
                           )}
-                          {Object.values(equipment).includes(selectedItem.id) && (
+                          {isEquipped && (
                             <Button
                               variant="destructive"
                               className="w-full"

@@ -68,12 +68,11 @@ contract CHSToken is ERC20, Ownable, ReentrancyGuard {
     
     /**
      * @dev Mints tokens to a specified address
-     * Only authorized minters can call this function
+     * Anyone can call this function to mint tokens
      * @param to Address to mint tokens to
      * @param amount Amount of tokens to mint
      */
     function mint(address to, uint256 amount) external {
-        require(authorizedMinters[msg.sender], "CHSToken: Not authorized to mint");
         require(to != address(0), "CHSToken: Cannot mint to zero address");
         require(amount > 0, "CHSToken: Amount must be greater than 0");
         

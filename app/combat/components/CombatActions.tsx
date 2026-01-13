@@ -99,28 +99,30 @@ export function CombatActions({
         {combatState.selectedAction === 'skill' && availableSkills.length > 0 && (
           <div className="mt-2 space-y-1.5">
             <p className="text-xs font-semibold">Select a skill:</p>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
+            <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-1">
               {availableSkills.map((skill: Skill, index: number) => {
                 const canUse = current.stats.mana >= skill.manaCost
                 const hotkeyNumber = current.equippedSkills?.indexOf(skill.id) ?? index
                 return (
                   <Button
                     key={skill.id}
-                    className="w-full justify-start text-left"
+                    className="w-full justify-start text-left h-auto py-2 px-3 whitespace-normal"
                     variant={selectedSkill?.id === skill.id ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => onSkillSelect(skill)}
                     disabled={!canUse}
                   >
-                    <div className="flex-1">
-                      <div className="font-medium">{skill.name}</div>
-                      <div className="text-xs opacity-75">{skill.description}</div>
-                      <div className="text-xs opacity-50">
+                    <div className="flex-1 min-w-0 pr-2 text-left">
+                      <div className="font-medium text-xs break-words leading-tight">{skill.name}</div>
+                      <div className="text-[10px] opacity-75 break-words leading-tight mt-0.5">
+                        {skill.description}
+                      </div>
+                      <div className="text-[10px] opacity-50 mt-0.5 whitespace-nowrap">
                         Mana: {skill.manaCost} | Range: {skill.range}
                       </div>
                     </div>
                     {hotkeyNumber < 4 && (
-                      <span className="ml-auto text-xs opacity-50">W+{hotkeyNumber + 1}</span>
+                      <span className="flex-shrink-0 text-xs opacity-50 ml-2 whitespace-nowrap">W+{hotkeyNumber + 1}</span>
                     )}
                   </Button>
                 )
@@ -138,18 +140,20 @@ export function CombatActions({
         {combatState.selectedAction === 'item' && availableItems.length > 0 && (
           <div className="mt-2 space-y-1.5">
             <p className="text-xs font-semibold">Select an item:</p>
-            <div className="space-y-1 max-h-32 overflow-y-auto">
+            <div className="space-y-1 max-h-48 overflow-y-auto custom-scrollbar pr-1">
               {availableItems.map((item: Item) => (
                 <Button
                   key={item.id}
-                  className="w-full justify-start text-left"
+                  className="w-full justify-start text-left h-auto py-2 px-3 whitespace-normal"
                   variant={selectedItem?.id === item.id ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => onItemSelect(item)}
                 >
-                  <div className="flex-1">
-                    <div className="font-medium">{item.name}</div>
-                    <div className="text-xs opacity-75">{item.description}</div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <div className="font-medium text-xs break-words leading-tight">{item.name}</div>
+                    <div className="text-[10px] opacity-75 break-words leading-tight mt-0.5">
+                      {item.description}
+                    </div>
                   </div>
                 </Button>
               ))}

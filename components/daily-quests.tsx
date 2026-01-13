@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,6 +19,7 @@ type Quest = QuestConfig & QuestProgress
 
 export function DailyQuestsCard() {
   const { toast } = useToast()
+  const { isConnected } = useAccount()
   const [quests, setQuests] = useState<Quest[]>([])
   const [claiming, setClaiming] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -37,27 +39,51 @@ export function DailyQuestsCard() {
       loadQuests()
     }
 
+    // Listen for storage changes (e.g., from other tabs or after page reload)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'chessnoth_daily_quests' || e.key === null) {
+        loadQuests()
+      }
+    }
+
     if (typeof window !== 'undefined') {
       window.addEventListener('chessnoth-quest-updated', handleQuestUpdate)
+      window.addEventListener('storage', handleStorageChange)
+      
       return () => {
         window.removeEventListener('chessnoth-quest-updated', handleQuestUpdate)
+        window.removeEventListener('storage', handleStorageChange)
       }
     }
   }, [])
 
   const handleClaim = async (questId: string) => {
+    // CRITICAL: Check if wallet is connected
+    if (!isConnected) {
+      toast({
+        variant: 'destructive',
+        title: 'Wallet Not Connected',
+        description: 'Please connect your wallet to claim quest rewards.',
+      })
+      return
+    }
+
+    // Prevent multiple simultaneous claims
     if (claiming) return
 
+    // IMMEDIATELY disable the button to prevent race conditions
     setClaiming(questId)
 
     try {
       const reward = claimQuestReward(questId)
 
       if (reward === null) {
+        // Reload quests to get correct state
+        loadQuests()
         toast({
           variant: 'destructive',
           title: 'Cannot Claim',
-          description: 'Quest reward cannot be claimed.',
+          description: 'Quest reward cannot be claimed. It may have already been claimed.',
         })
         return
       }
@@ -169,7 +195,7 @@ export function DailyQuestsCard() {
                     {isCompleted && !isClaimed && (
                       <Button
                         onClick={() => handleClaim(quest.id)}
-                        disabled={claiming === quest.id}
+                        disabled={claiming === quest.id || !isConnected}
                         size="sm"
                       >
                         {claiming === quest.id ? (

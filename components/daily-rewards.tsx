@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -9,18 +10,22 @@ import {
   claimDailyReward, 
   canClaimDailyReward, 
   getCurrentRewardDay,
+  getDailyRewardData,
   DAILY_REWARDS_CONFIG,
   type DailyReward 
 } from '@/lib/daily-rewards'
+import { logger } from '@/lib/logger'
 import { addPendingReward } from '@/lib/rewards'
 import { useToast } from '@/hooks/use-toast'
 import { Gift, Check, Lock, Coins } from 'lucide-react'
 import Image from 'next/image'
 import { getItemImageFromData } from '@/lib/item-images'
 import itemsData from '@/data/items.json'
+import { type Item } from '@/lib/types'
 
 export function DailyRewardsCard() {
   const { toast } = useToast()
+  const { isConnected } = useAccount()
   const [rewards, setRewards] = useState<DailyReward[]>([])
   const [currentDay, setCurrentDay] = useState(1)
   const [canClaim, setCanClaim] = useState(false)
@@ -29,38 +34,181 @@ export function DailyRewardsCard() {
 
   const loadRewards = () => {
     if (typeof window === 'undefined') return
-    const dailyRewards = getDailyRewards()
-    const day = getCurrentRewardDay()
-    const claimable = canClaimDailyReward()
     
-    setRewards(dailyRewards)
-    setCurrentDay(day)
-    setCanClaim(claimable)
+    try {
+      // Force a fresh read from localStorage - don't rely on any cache
+      const stored = localStorage.getItem('chessnoth_daily_rewards')
+      logger.info('loadRewards - raw localStorage', { 
+        stored,
+        hasStored: !!stored 
+      })
+      
+      const dailyRewards = getDailyRewards()
+      const day = getCurrentRewardDay()
+      const claimable = canClaimDailyReward()
+      
+      logger.info('Loading rewards state', { 
+        day, 
+        canClaim: claimable, 
+        rewardsCount: dailyRewards.length,
+        storedData: stored
+      })
+      
+      // Update all state synchronously
+      setRewards(dailyRewards)
+      setCurrentDay(day)
+      setCanClaim(claimable)
+    } catch (error) {
+      logger.error('Error in loadRewards', error)
+    }
   }
 
   useEffect(() => {
-    setMounted(true)
-    loadRewards()
+    // CRITICAL: Only run on client side after mount
+    if (typeof window === 'undefined') return
+    
+    // Expose diagnostic function directly from component
+    if (!(window as any).diagnoseDailyRewards) {
+      (window as any).diagnoseDailyRewards = () => {
+        console.log('=== DAILY REWARDS DIAGNOSTIC ===')
+        const stored = localStorage.getItem('chessnoth_daily_rewards')
+        const today = new Date().toISOString().split('T')[0]
+        let parsed = null
+        try {
+          parsed = stored ? JSON.parse(stored) : null
+        } catch (e) {
+          console.error('Error parsing stored data:', e)
+        }
+        
+        console.log('1. localStorage raw:', stored)
+        console.log('2. Parsed data:', parsed)
+        console.log('3. Today:', today)
+        console.log('4. Can claim:', parsed ? parsed.lastClaimDate !== today : true)
+        console.log('5. Current day:', parsed?.currentStreak || 1)
+        console.log('6. All chessnoth keys:', Object.keys(localStorage).filter(k => k.includes('chessnoth')))
+        console.log('7. Storage key exists:', !!localStorage.getItem('chessnoth_daily_rewards'))
+        
+        if (parsed?.lastClaimDate === today) {
+          console.log('✅ Data shows claimed today - this is CORRECT')
+        } else if (parsed?.lastClaimDate) {
+          console.log('⚠️ Data shows last claim was:', parsed.lastClaimDate, '(not today)')
+        } else {
+          console.log('❌ No claim date found - data is EMPTY')
+        }
+        
+        return { stored, parsed, today }
+      }
+      console.log('✅ diagnoseDailyRewards() is now available in console')
+    }
+    
+    let initTimer: NodeJS.Timeout | null = null
+    let timer: NodeJS.Timeout | null = null
+    
+    // Wait a bit to ensure localStorage is fully available
+    // React Strict Mode in dev can cause double mounting
+    initTimer = setTimeout(() => {
+      // Check localStorage BEFORE setting mounted to see if data exists
+      const initialCheck = localStorage.getItem('chessnoth_daily_rewards')
+      logger.info('Component useEffect - initial localStorage check', { 
+        hasData: !!initialCheck,
+        data: initialCheck,
+        allKeys: Object.keys(localStorage).filter(k => k.includes('chessnoth'))
+      })
+      
+      setMounted(true)
+      
+      // Load immediately when mounted
+      loadRewards()
+      
+      // Also load after a small delay to catch any race conditions
+      timer = setTimeout(() => {
+        // Log what's in localStorage for debugging
+        const stored = localStorage.getItem('chessnoth_daily_rewards')
+        const parsed = stored ? JSON.parse(stored) : null
+        const today = new Date().toISOString().split('T')[0]
+        
+        logger.info('Component mounted - localStorage check after delay', { 
+          stored,
+          hasData: !!stored,
+          parsed,
+          today,
+          lastClaimDate: parsed?.lastClaimDate,
+          canClaim: parsed ? parsed.lastClaimDate !== today : true,
+          allKeys: Object.keys(localStorage).filter(k => k.includes('chessnoth'))
+        })
+        
+        // If data disappeared, log a warning
+        if (initialCheck && !stored) {
+          logger.error('CRITICAL: localStorage data disappeared!', {
+            hadData: true,
+            nowHasData: false,
+            initialCheck
+          })
+        }
+        
+        // Force reload to ensure UI is correct
+        loadRewards()
+      }, 300)
+    }, 50)
+
+    // Listen for storage changes (e.g., from other tabs or after page reload)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'chessnoth_daily_rewards' || e.key === null) {
+        logger.info('Storage changed, reloading rewards')
+        loadRewards()
+      }
+    }
+
+    // Listen for custom events
+    const handleRewardUpdate = () => {
+      logger.info('Reward update event received, reloading rewards')
+      loadRewards()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('chessnoth-reward-updated', handleRewardUpdate)
+    
+    return () => {
+      if (initTimer) clearTimeout(initTimer)
+      if (timer) clearTimeout(timer)
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('chessnoth-reward-updated', handleRewardUpdate)
+    }
   }, [])
 
   const handleClaim = async () => {
-    if (!canClaim || claiming) return
+    // CRITICAL: Check if wallet is connected
+    if (!isConnected) {
+      toast({
+        variant: 'destructive',
+        title: 'Wallet Not Connected',
+        description: 'Please connect your wallet to claim daily rewards.',
+      })
+      return
+    }
 
-    // Immediately disable the button to prevent multiple clicks
+    // CRITICAL: Multiple checks to prevent any possibility of double claims
+    if (!canClaim || claiming) {
+      return
+    }
+
+    // IMMEDIATELY disable everything to prevent any race conditions
     setClaiming(true)
-    setCanClaim(false) // Immediately update state to prevent double claims
+    setCanClaim(false)
 
     try {
+      // Now attempt the claim
       const reward = claimDailyReward()
 
       if (!reward) {
-        // Restore state if claim failed
+        // Claim failed - reload to get correct state IMMEDIATELY
         loadRewards()
         toast({
           variant: 'destructive',
           title: 'Cannot Claim',
           description: 'You have already claimed today\'s reward.',
         })
+        setClaiming(false)
         return
       }
 
@@ -76,7 +224,7 @@ export function DailyRewardsCard() {
       }
 
       // Get item name
-      const item = itemsData.find((i: any) => i.id === reward.itemId)
+      const item = (itemsData as Item[]).find((i) => i.id === reward.itemId)
       const rewardName = reward.itemId === 'chs_token' 
         ? `${reward.quantity} CHS` 
         : item?.name || 'Item'
@@ -86,10 +234,15 @@ export function DailyRewardsCard() {
         description: `You received: ${rewardName}`,
       })
 
-      // Reload rewards to update UI
+      // CRITICAL: Force immediate UI update - reload rewards IMMEDIATELY
+      // This must happen synchronously to update the UI
       loadRewards()
+      
+      // Also force a state update to ensure UI reflects claimed state
+      setCanClaim(false)
     } catch (error) {
-      // Restore state if error occurred
+      logger.error('Error in handleClaim', error)
+      // Reload to get correct state
       loadRewards()
       toast({
         variant: 'destructive',
@@ -98,6 +251,10 @@ export function DailyRewardsCard() {
       })
     } finally {
       setClaiming(false)
+      // Force one more reload after a tiny delay to ensure UI is correct
+      setTimeout(() => {
+        loadRewards()
+      }, 100)
     }
   }
 
@@ -113,7 +270,7 @@ export function DailyRewardsCard() {
       )
     }
 
-    const item = itemsData.find((i: any) => i.id === reward.itemId)
+    const item = (itemsData as Item[]).find((i) => i.id === reward.itemId)
     const imageUrl = item ? getItemImageFromData(item) : '/images/items/placeholder.png'
 
     return (
@@ -221,7 +378,7 @@ export function DailyRewardsCard() {
           {/* Claim Button */}
           <Button
             onClick={handleClaim}
-            disabled={!canClaim || claiming}
+            disabled={!canClaim || claiming || !isConnected}
             className="w-full"
             size="lg"
           >

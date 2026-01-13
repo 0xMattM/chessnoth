@@ -13,6 +13,7 @@ export interface SkillEffect {
   duration?: number // For buff/debuff effects
   statusId?: string // For status effects
   hpPercent?: number // For revive effects
+  chance?: number // Probability (0-100) for effects that may not always apply
 }
 
 /**
@@ -28,10 +29,12 @@ export interface Skill {
   manaCost: number
   range: number
   aoeType: string
+  aoeRadius?: number // For radius AOE skills
   damageType: string
   damageMultiplier: number
   requiresTarget: boolean
   effects?: SkillEffect[]
+  hitCount?: number // For multi-hit skills (e.g., Multi Shot hits 3 times)
 }
 
 /**
@@ -52,5 +55,42 @@ export interface Item {
   allowedClasses?: string[]
   cooldown?: number
   equipmentSlot?: string
+}
+
+/**
+ * Character class definition from JSON files
+ */
+export interface ClassData {
+  id: string
+  name: string
+  baseStats: {
+    hp: number
+    mana: number
+    atk: number
+    mag: number
+    def: number
+    res: number
+    spd: number
+    eva: number
+    crit: number
+  }
+  growthRates: {
+    hp: number
+    mana: number
+    atk: number
+    mag: number
+    def: number
+    res: number
+    spd: number
+    eva: number
+    crit: number
+  }
+  allowedWeapons?: string[]
+  allowedArmor?: string[]
+  terrainBonus?: {
+    terrain: string
+    bonus: string
+    value: number
+  }
 }
 

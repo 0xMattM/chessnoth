@@ -71,7 +71,7 @@ export function CombatEndScreen({
       
       toast({
         title: 'Rewards Earned',
-        description: `You earned ${calculatedRewards.chs} CHS and ${calculatedRewards.exp} EXP! Go to Claim page for CHS and Upgrade page to distribute EXP.`,
+        description: `You earned ${calculatedRewards.chs} CHS and ${calculatedRewards.exp} EXP! Go to Dashboard to claim CHS and distribute EXP.`,
       })
       
       rewardsProcessedRef.current = true
@@ -113,23 +113,16 @@ export function CombatEndScreen({
                 </div>
 
                 <p className="text-sm text-muted-foreground">
-                  CHS and EXP have been added to your pending rewards. Go to the Claim page to claim your CHS, and go to the Upgrade page to distribute EXP to your characters.
+                  CHS and EXP have been added to your pending rewards. Go to the Dashboard to claim your CHS and distribute EXP to your characters.
                 </p>
               </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link href="/claim" className="flex-1">
-                  <Button variant="outline" className="w-full">
-                    <Coins className="h-4 w-4 mr-2" />
-                    Claim CHS
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </Link>
-                <Link href="/upgrade" className="flex-1">
+                <Link href="/" className="flex-1">
                   <Button className="w-full">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    Distribute EXP
+                    <Coins className="h-4 w-4 mr-2" />
+                    Go to Dashboard
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Link>
@@ -162,10 +155,10 @@ export function CombatEndScreen({
           <Button onClick={onReturn} variant="outline" className="flex-1">
             Return to Battle Selection
           </Button>
-          <Link href="/upgrade" className="flex-1">
+          <Link href="/" className="flex-1">
             <Button variant="outline" className="w-full">
               <TrendingUp className="h-4 w-4 mr-2" />
-              Upgrade Characters
+              Go to Dashboard
             </Button>
           </Link>
         </div>

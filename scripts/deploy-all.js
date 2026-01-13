@@ -46,11 +46,8 @@ async function main() {
   const chsTokenAddress = await chsToken.getAddress()
   console.log('✅ CHSToken deployed to:', chsTokenAddress)
 
-  // Add deployer as authorized minter for CHS
-  console.log('🔐 Setting deployer as authorized minter for CHS...')
-  const addMinterTx = await chsToken.addAuthorizedMinter(deployer.address)
-  await addMinterTx.wait()
-  console.log('✅ Deployer added as authorized minter')
+  // Note: CHS token minting is now public (no authorization needed)
+  console.log('ℹ️  CHS token minting is now public - anyone can mint')
 
   // ============================================
   // 3. Deploy Marketplace
@@ -68,12 +65,12 @@ async function main() {
   console.log('✅ Marketplace deployed to:', marketplaceAddress)
 
   // ============================================
-  // 4. Set authorized minter for CharacterNFT
+  // 4. Verify mint price for CharacterNFT
   // ============================================
-  console.log('\n🔐 Setting deployer as authorized minter for CharacterNFT...')
-  const addMinterNFTTx = await characterNFT.addAuthorizedMinter(deployer.address)
-  await addMinterNFTTx.wait()
-  console.log('✅ Deployer added as authorized minter for CharacterNFT')
+  console.log('\n💰 Verifying CharacterNFT mint price...')
+  const mintPrice = await characterNFT.mintPrice()
+  console.log(`✅ CharacterNFT mint price: ${hre.ethers.formatEther(mintPrice)} MNT`)
+  console.log('ℹ️  CharacterNFT minting is now public - anyone can mint for 5 MNT')
 
   // ============================================
   // Summary
@@ -101,7 +98,7 @@ async function main() {
   console.log('  1. Copy all contract addresses above')
   console.log('  2. Update environment variables in .env.local')
   console.log('  3. Test the contracts on the explorer')
-  console.log('  4. Add more authorized minters if needed')
+  console.log('  4. Anyone can now mint NFTs (5 MNT) and CHS tokens (no restrictions)')
 }
 
 main()

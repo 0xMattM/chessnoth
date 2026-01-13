@@ -88,14 +88,14 @@ export function CombatLog({ logs }: CombatLogProps) {
         <CardTitle className="text-base">Combat Log</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="h-[calc(50vh-200px)] overflow-y-auto pr-2">
+        <div className="h-[calc(50vh-200px)] overflow-y-auto pr-2 custom-scrollbar">
           <div className="space-y-1">
             {logs.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-2">
                 No events yet...
               </p>
             ) : (
-              logs.map((log) => (
+              [...logs].reverse().map((log) => (
                 <div
                   key={log.id}
                   className={`flex items-start gap-1.5 text-[10px] p-1.5 rounded bg-muted/50 hover:bg-muted transition-colors ${getLogColor(log.type)}`}

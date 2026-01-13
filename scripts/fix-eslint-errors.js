@@ -9,15 +9,6 @@ const path = require('path');
 
 const filesToFix = [
   {
-    path: 'app/characters/page.tsx',
-    fixes: [
-      {
-        search: /You do not have any characters yet/g,
-        replace: 'You do not have any characters yet',
-      },
-    ],
-  },
-  {
     path: 'app/team/page.tsx',
     fixes: [
       {

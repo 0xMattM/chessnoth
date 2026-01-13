@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { SectionTitle } from '@/components/section-title'
 
 /**
  * Listing Card Component - displays a single marketplace listing
@@ -244,7 +245,7 @@ export default function MarketplacePage() {
         const listings = await getAllActiveListings(1000)
         return await enrichListingsWithNFTData(listings)
       } catch (error) {
-        logger.error('Error fetching listings', { error })
+        logger.error('Error fetching listings', error instanceof Error ? error : new Error(String(error)))
         throw error
       }
     },
@@ -279,7 +280,7 @@ export default function MarketplacePage() {
     abi: MARKETPLACE_ABI,
     functionName: 'listNFT',
     onError: (error) => {
-      logger.error('Error in listNFT transaction', { error, selectedTokenId })
+      logger.error('Error in listNFT transaction', error instanceof Error ? error : new Error(String(error)), { selectedTokenId })
       toast({
         title: 'Error Listing NFT',
         description: error.message || 'The transaction failed. Make sure the NFT is approved and you have the necessary permissions.',
@@ -294,7 +295,7 @@ export default function MarketplacePage() {
     },
   })
   const { isLoading: isConfirmingList, isSuccess: isListSuccess, error: listTxError } = useWaitForTransaction({
-    hash: listHash,
+    hash: (listHash && typeof listHash === 'object' && 'hash' in listHash ? listHash.hash : listHash) as `0x${string}` | undefined,
   })
 
   // Buy NFT
@@ -304,7 +305,7 @@ export default function MarketplacePage() {
     functionName: 'buyNFT',
   })
   const { isLoading: isConfirmingBuy, isSuccess: isBuySuccess } = useWaitForTransaction({
-    hash: buyHash,
+    hash: (buyHash && typeof buyHash === 'object' && 'hash' in buyHash ? buyHash.hash : buyHash) as `0x${string}` | undefined,
   })
 
   // Cancel listing
@@ -314,7 +315,7 @@ export default function MarketplacePage() {
     functionName: 'cancelListing',
   })
   const { isLoading: isConfirmingCancel, isSuccess: isCancelSuccess } = useWaitForTransaction({
-    hash: cancelHash,
+    hash: (cancelHash && typeof cancelHash === 'object' && 'hash' in cancelHash ? cancelHash.hash : cancelHash) as `0x${string}` | undefined,
   })
 
   // Mint NFT
@@ -323,7 +324,7 @@ export default function MarketplacePage() {
     abi: CHARACTER_NFT_ABI,
     functionName: 'mintCharacter',
     onError: (error) => {
-      logger.error('Error in mintCharacter transaction', { error })
+      logger.error('Error in mintCharacter transaction', error instanceof Error ? error : new Error(String(error)))
       // Check if it's a rate limiting error (429)
       const errorMessage = error.message || ''
       const isRateLimit = errorMessage.includes('429') || errorMessage.includes('rate limit') || errorMessage.includes('Too Many Requests')
@@ -338,7 +339,7 @@ export default function MarketplacePage() {
     },
   })
   const { isLoading: isConfirmingMint, isSuccess: isMintSuccess } = useWaitForTransaction({
-    hash: mintHash,
+    hash: (mintHash && typeof mintHash === 'object' && 'hash' in mintHash ? mintHash.hash : mintHash) as `0x${string}` | undefined,
   })
 
 
@@ -349,11 +350,11 @@ export default function MarketplacePage() {
     functionName: 'approve',
   })
   const { isLoading: isConfirmingApprove, isSuccess: isApproveSuccess } = useWaitForTransaction({
-    hash: approveHash,
+    hash: (approveHash && typeof approveHash === 'object' && 'hash' in approveHash ? approveHash.hash : approveHash) as `0x${string}` | undefined,
   })
 
   // Open list dialog for a character
-  const handleOpenListDialog = (character: typeof ownedCharacters[0]) => {
+  const handleOpenListDialog = (character: NonNullable<typeof ownedCharacters>[0]) => {
     const tokenId = character.tokenId.toString()
     
     // Check if character is in team
@@ -491,7 +492,7 @@ export default function MarketplacePage() {
         })
       }
     } catch (error) {
-      logger.error('Error in handleListNFT', { selectedTokenId, error })
+      logger.error('Error in handleListNFT', error instanceof Error ? error : new Error(String(error)), { selectedTokenId })
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'No se pudo procesar la solicitud.',
@@ -567,7 +568,7 @@ export default function MarketplacePage() {
             description: 'Transaction has been sent. Wait for confirmation.',
           })
         } catch (error) {
-          logger.error('Error listing NFT after approval', { pendingListing, error })
+          logger.error('Error listing NFT after approval', error instanceof Error ? error : new Error(String(error)), { pendingListing })
           toast({
             title: 'Error Listing',
             description: error instanceof Error ? error.message : 'Could not list the NFT. Click "List NFT" again to retry.',
@@ -643,7 +644,7 @@ export default function MarketplacePage() {
         description: 'Transaction has been sent. Please wait for confirmation.',
       })
     } catch (error) {
-      logger.error('Error buying NFT', { listingId: targetListing.listingId, error })
+      logger.error('Error buying NFT', error instanceof Error ? error : new Error(String(error)), { listingId: targetListing.listingId })
       toast({
         title: 'Error',
         description: 'Could not buy the NFT. Make sure you have sufficient funds.',
@@ -675,7 +676,7 @@ export default function MarketplacePage() {
         description: 'Transaction has been sent. Please wait for confirmation.',
       })
     } catch (error) {
-      logger.error('Error cancelling listing', { listingId: idToCancel, error })
+      logger.error('Error cancelling listing', error instanceof Error ? error : new Error(String(error)), { listingId: idToCancel })
       toast({
         title: 'Error',
         description: 'Could not cancel the listing.',
@@ -694,7 +695,7 @@ export default function MarketplacePage() {
         title: SUCCESS_MESSAGES.CHARACTER_MINTED,
         description: `${characterName || 'Character'} (${className})`,
       })
-      logger.info('Character NFT minted successfully', { hash: mintHash, characterName, characterClass })
+      logger.info('Character NFT minted successfully', { hash: (mintHash && typeof mintHash === 'object' && 'hash' in mintHash ? mintHash.hash : mintHash), characterName, characterClass })
       // Reset form after successful mint
       setCharacterName('')
       queryClient.invalidateQueries({ queryKey: ['ownedCharacters'] })
@@ -708,7 +709,7 @@ export default function MarketplacePage() {
   // Handle list transaction errors
   useEffect(() => {
     if (listTxError) {
-      logger.error('List transaction failed', { error: listTxError, selectedTokenId })
+      logger.error('List transaction failed', listTxError instanceof Error ? listTxError : new Error(String(listTxError)), { selectedTokenId })
       toast({
         title: 'Transaction Error',
         description: listTxError.message || 'The listing transaction failed. Make sure the NFT is approved.',
@@ -788,17 +789,19 @@ export default function MarketplacePage() {
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Marketplace</h1>
-          <p className="text-muted-foreground">
-            Buy and sell Character NFTs with CHS tokens or MNT
-          </p>
-          {feeBasisPoints && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Marketplace commission: {feePercent}%
-            </p>
-          )}
-        </div>
+        <SectionTitle
+          title="Marketplace"
+          subtitle={
+            <>
+              Buy and sell Character NFTs with CHS tokens or MNT
+              {feeBasisPoints && (
+                <span className="block text-sm mt-1">
+                  Marketplace commission: {feePercent}%
+                </span>
+              )}
+            </>
+          }
+        />
 
         {!isConnected ? (
           <Card>
@@ -884,7 +887,7 @@ export default function MarketplacePage() {
                       id="class"
                       value={characterClass}
                       onChange={(e) => setCharacterClass(e.target.value)}
-                      className="w-full h-10 rounded-lg border border-border/40 bg-slate-800/50 px-3 text-sm"
+                      className="w-full h-10"
                     >
                       {CHARACTER_CLASSES.map(cls => (
                         <option key={cls.id} value={cls.id}>
@@ -987,7 +990,7 @@ export default function MarketplacePage() {
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-5 w-5" />
-                      Mint Character NFT
+                      Mint Character NFT (5 MNT)
                     </>
                   )}
                 </Button>
@@ -1008,7 +1011,7 @@ export default function MarketplacePage() {
           {/* Browse/Buy Tab */}
           <TabsContent value="browse" className="space-y-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Available Listings</h2>
+              <h2 className="text-2xl font-bold mb-2 font-display">Available Listings</h2>
               <p className="text-muted-foreground mb-6">
                 Explore and buy NFTs from other players
               </p>
@@ -1068,7 +1071,7 @@ export default function MarketplacePage() {
           {/* Sell Tab */}
           <TabsContent value="sell" className="space-y-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Tus NFTs</h2>
+              <h2 className="text-2xl font-bold mb-2 font-display">Your NFTs </h2>
               <p className="text-muted-foreground mb-6">
                 Select a character to list on the marketplace
               </p>
@@ -1149,7 +1152,7 @@ export default function MarketplacePage() {
 
             {/* Cancel Listing */}
             <div className="mt-8">
-              <h2 className="text-2xl font-bold mb-2">Your Active Listings</h2>
+              <h2 className="text-2xl font-bold mb-2 font-display">Your Active Listings</h2>
               <p className="text-muted-foreground mb-6">
                 Cancel an active listing to recover your NFT
               </p>
@@ -1238,7 +1241,7 @@ export default function MarketplacePage() {
                             ) : (
                               <>
                                 <X className="h-3 w-3 mr-1" />
-                                Cancelar
+                                Cancel
                               </>
                             )}
                           </Button>
@@ -1288,7 +1291,7 @@ export default function MarketplacePage() {
                 <Label htmlFor="dialog-paymentToken">Token de Pago</Label>
                 <select
                   id="dialog-paymentToken"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex h-10 w-full"
                   value={paymentToken}
                   onChange={(e) => setPaymentToken(e.target.value as 'mnt' | 'chs')}
                 >
@@ -1351,7 +1354,7 @@ export default function MarketplacePage() {
                   }}
                   disabled={isListing || isConfirmingList || isApprovingNFT || isConfirmingApprove}
                 >
-                  Cancelar
+                  Cancel
                 </Button>
                 <Button
                   className="flex-1"

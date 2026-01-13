@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { X, Zap, RotateCcw, Lock, Settings } from 'lucide-react'
+import { X, Zap, RotateCcw, Lock, Settings, CheckCircle2 } from 'lucide-react'
 import { useState, useEffect, useMemo } from 'react'
 import {
   getCharacterSkills,
@@ -228,7 +228,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="flex-1 overflow-y-auto p-6">
+        <CardContent className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           {skills.length === 0 ? (
             <div className="py-12 text-center">
               <Zap className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -240,7 +240,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
               {Object.entries(skillsByBranch).map(([branch, branchSkills]) => (
                 <div key={branch} className="space-y-4">
                   <h3 className="text-lg font-semibold capitalize">{branch} Branch</h3>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
                     {branchSkills.map(({ node, skill }) => {
                       const points = getPointsInSkill(skill.id)
                       const learned = points > 0
@@ -251,7 +251,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                       return (
                         <Card
                           key={skill.id}
-                          className={`transition-all ${learned
+                          className={`transition-all flex flex-col ${learned
                             ? 'border-green-500 bg-green-500/10'
                             : !prerequisitesMet || !meetsLevelReq
                               ? 'opacity-50 border-dashed'
@@ -276,30 +276,34 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent>
-                            <p className="text-sm text-muted-foreground mb-3">{skill.description}</p>
+                          <CardContent className="flex flex-col min-h-[280px]">
+                            <p className="text-sm text-muted-foreground mb-3 flex-shrink-0">{skill.description}</p>
 
-                            {/* Prerequisites */}
-                            {node.prerequisites.length > 0 && (
-                              <div className="mb-3 p-2 bg-muted/50 rounded text-xs">
-                                <p className="font-semibold mb-1">Prerequisites:</p>
-                                {node.prerequisites.map((prereq, idx) => {
-                                  const prereqPoints = getPointsInSkill(prereq.skillId)
-                                  const prereqSkill = skillsMap[prereq.skillId]
-                                  const met = prereqPoints >= prereq.pointsRequired
-                                  return (
-                                    <p
-                                      key={idx}
-                                      className={met ? 'text-green-500' : 'text-red-500'}
-                                    >
-                                      • {prereqSkill?.name || prereq.skillId}: {prereqPoints}/{prereq.pointsRequired} pts
-                                    </p>
-                                  )
-                                })}
-                              </div>
-                            )}
+                            {/* Prerequisites - Always reserve space for consistency */}
+                            <div className="mb-3 min-h-[60px] flex-shrink-0">
+                              {node.prerequisites.length > 0 ? (
+                                <div className="p-2 bg-muted/50 rounded text-xs">
+                                  <p className="font-semibold mb-1">Prerequisites:</p>
+                                  {node.prerequisites.map((prereq, idx) => {
+                                    const prereqPoints = getPointsInSkill(prereq.skillId)
+                                    const prereqSkill = skillsMap[prereq.skillId]
+                                    const met = prereqPoints >= prereq.pointsRequired
+                                    return (
+                                      <p
+                                        key={idx}
+                                        className={met ? 'text-green-500' : 'text-red-500'}
+                                      >
+                                        • {prereqSkill?.name || prereq.skillId}: {prereqPoints}/{prereq.pointsRequired} pts
+                                      </p>
+                                    )
+                                  })}
+                                </div>
+                              ) : (
+                                <div className="h-full" />
+                              )}
+                            </div>
 
-                            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-3">
+                            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground mb-3 flex-shrink-0">
                               <span>Mana: {skill.manaCost}</span>
                               <span>Range: {skill.range}</span>
                               <span>Type: {skill.damageType}</span>
@@ -308,7 +312,7 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                               )}
                             </div>
                             {skill.effects && skill.effects.length > 0 && (
-                              <div className="mb-3">
+                              <div className="mb-3 flex-shrink-0">
                                 <p className="text-xs font-semibold mb-1">Effects:</p>
                                 <div className="space-y-1">
                                   {skill.effects.map((effect, idx) => (
@@ -319,45 +323,63 @@ export function CharacterSkills({ character, onClose, onSkillsChange }: Characte
                                 </div>
                               </div>
                             )}
-                            {meetsLevelReq && prerequisitesMet && (
-                              <div className="flex gap-2">
-                                {learned && (
+                            <div className="mt-auto pt-3 flex-shrink-0 border-t border-border/20">
+                              {meetsLevelReq && prerequisitesMet && (
+                                <div className="flex gap-2">
+                                  {learned && (
+                                    <Button
+                                      variant="destructive"
+                                      size="sm"
+                                      className="flex-1 text-xs font-medium bg-red-600/80 hover:bg-red-600 border-red-500/50 hover:border-red-400 text-white transition-all duration-200 px-2"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleRemovePoint(skill)
+                                      }}
+                                    >
+                                      Remove
+                                    </Button>
+                                  )}
                                   <Button
-                                    variant="destructive"
+                                    variant={learned ? 'outline' : 'default'}
                                     size="sm"
-                                    className="flex-1"
+                                    className={`flex-1 text-xs font-medium transition-all duration-200 px-2 whitespace-nowrap ${
+                                      learned
+                                        ? 'border-blue-500/60 bg-transparent hover:bg-blue-500/15 hover:border-blue-400 text-blue-300 hover:text-blue-200'
+                                        : 'bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 text-white border-0 shadow-md hover:shadow-blue-500/20'
+                                    } ${!canLearn ? 'opacity-50 cursor-not-allowed hover:opacity-50' : ''}`}
                                     onClick={(e) => {
                                       e.stopPropagation()
-                                      handleRemovePoint(skill)
+                                      handleAddPoint(skill)
                                     }}
+                                    disabled={!canLearn}
                                   >
-                                    Remove Point
+                                    {learned ? (
+                                      <span className="flex items-center justify-center gap-1">
+                                        <Zap className="h-3 w-3" />
+                                        <span>Add</span>
+                                        <span className="font-bold">{skill.spCost}SP</span>
+                                      </span>
+                                    ) : (
+                                      <span className="flex items-center justify-center gap-1">
+                                        <Zap className="h-3 w-3" />
+                                        <span>Learn</span>
+                                        <span className="font-bold">{skill.spCost}SP</span>
+                                      </span>
+                                    )}
                                   </Button>
-                                )}
-                                <Button
-                                  variant={learned ? 'outline' : 'default'}
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleAddPoint(skill)
-                                  }}
-                                  disabled={!canLearn}
-                                >
-                                  {learned ? `Add Point (${skill.spCost} SP)` : `Learn (${skill.spCost} SP)`}
-                                </Button>
-                              </div>
-                            )}
-                            {!meetsLevelReq && (
-                              <p className="text-xs text-muted-foreground text-center">
-                                Requires Level {skill.levelReq}
-                              </p>
-                            )}
-                            {!prerequisitesMet && meetsLevelReq && (
-                              <p className="text-xs text-muted-foreground text-center">
-                                Prerequisites not met
-                              </p>
-                            )}
+                                </div>
+                              )}
+                              {!meetsLevelReq && (
+                                <p className="text-xs text-muted-foreground text-center">
+                                  Requires Level {skill.levelReq}
+                                </p>
+                              )}
+                              {!prerequisitesMet && meetsLevelReq && (
+                                <p className="text-xs text-muted-foreground text-center">
+                                  Prerequisites not met
+                                </p>
+                              )}
+                            </div>
                           </CardContent>
                         </Card>
                       )
@@ -448,92 +470,173 @@ function EquipSkillsDialog({ character, open, onOpenChange, onUpdate }: EquipSki
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Equip Skills - {character.metadata?.name || 'Unknown Character'}</DialogTitle>
-          <DialogDescription>
-            Select up to 4 skills to equip for combat. Equipped skills can be used with hotkeys W+1-4.
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-hidden flex flex-col bg-slate-900/95 backdrop-blur-xl border-border/40">
+        <DialogHeader className="border-b border-border/40 pb-4">
+          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+            {character.metadata?.name || 'Unknown Character'} - Equip Skills
+          </DialogTitle>
+          <DialogDescription className="text-blue-200/80 mt-2">
+            Select up to 4 skills to equip for combat. Equipped skills can be used with hotkeys <span className="font-mono font-semibold text-blue-300">W+1-4</span>.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto space-y-6 py-4 custom-scrollbar">
           <div>
-            <p className="text-sm font-semibold mb-2">
-              Equipped Skills ({equippedSkills.length}/4)
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-blue-200 flex items-center gap-2">
+                <Zap className="h-5 w-5 text-blue-400" />
+                Equipped Skills
+                <span className="text-sm font-normal text-blue-300/80">
+                  ({equippedSkills.length}/4)
+                </span>
+              </h3>
+            </div>
             {equippedSkills.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No skills equipped</p>
+              <div className="p-8 border-2 border-dashed border-blue-500/30 rounded-lg bg-blue-500/5 text-center">
+                <Zap className="h-12 w-12 mx-auto mb-3 text-blue-400/50" />
+                <p className="text-blue-200/60 font-medium">No skills equipped</p>
+                <p className="text-sm text-blue-200/40 mt-1">Select skills from below to equip them</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-4 gap-3">
                 {equippedSkills.map((skillId, index) => {
                   const skill = skills.find((s) => s.id === skillId)
                   return (
-                    <div
+                    <Card
                       key={skillId}
-                      className="p-2 border rounded-lg bg-primary/10 border-primary"
+                      className="border-2 border-blue-500/50 bg-gradient-to-br from-blue-500/20 to-violet-500/20 backdrop-blur-sm overflow-hidden group hover:border-blue-400 transition-all"
                     >
-                      <div className="text-xs font-medium">{skill?.name || skillId}</div>
-                      <div className="text-xs text-muted-foreground">W+{index + 1}</div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-full mt-1 text-xs"
-                        onClick={() => handleToggleSkill(skillId)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
+                      <CardContent className="p-4 flex flex-col h-full">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="px-2 py-1 rounded-md bg-blue-500/30 border border-blue-400/50 text-xs font-bold text-blue-100">
+                              W+{index + 1}
+                            </div>
+                            <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
+                          </div>
+                          <h4 className="font-semibold text-sm text-blue-100 mb-1 line-clamp-2">
+                            {skill?.name || skillId}
+                          </h4>
+                          {skill?.description && (
+                            <p className="text-xs text-blue-200/60 line-clamp-2 mb-2">
+                              {skill.description}
+                            </p>
+                          )}
+                          <div className="flex gap-2 text-xs text-blue-200/70 mt-2">
+                            <span>⚡ {skill?.manaCost || 0}</span>
+                            <span>📏 {skill?.range || 0}</span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="w-full mt-3 h-8 text-xs font-semibold"
+                          onClick={() => handleToggleSkill(skillId)}
+                        >
+                          Remove
+                        </Button>
+                      </CardContent>
+                    </Card>
                   )
                 })}
                 {Array.from({ length: 4 - equippedSkills.length }).map((_, i) => (
-                  <div
+                  <Card
                     key={`empty-${i}`}
-                    className="p-2 border border-dashed rounded-lg text-center text-xs text-muted-foreground flex items-center justify-center min-h-[80px]"
+                    className="border-2 border-dashed border-blue-500/30 bg-slate-800/30 backdrop-blur-sm"
                   >
-                    Empty Slot
-                  </div>
+                    <CardContent className="p-4 flex flex-col items-center justify-center min-h-[160px] text-center">
+                      <div className="h-12 w-12 rounded-full bg-blue-500/10 border-2 border-dashed border-blue-500/30 flex items-center justify-center mb-3">
+                        <Zap className="h-6 w-6 text-blue-400/40" />
+                      </div>
+                      <p className="text-xs text-blue-200/40 font-medium">Empty Slot</p>
+                      <p className="text-xs text-blue-200/20 mt-1">W+{equippedSkills.length + i + 1}</p>
+                    </CardContent>
+                  </Card>
                 ))}
               </div>
             )}
           </div>
 
           <div>
-            <p className="text-sm font-semibold mb-2">Available Skills</p>
+            <h3 className="text-lg font-semibold text-blue-200 flex items-center gap-2 mb-4">
+              <Settings className="h-5 w-5 text-blue-400" />
+              Available Skills
+            </h3>
             {skills.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                This character has not learned any skills yet. Learn skills above.
-              </p>
+              <div className="p-8 border-2 border-dashed border-blue-500/30 rounded-lg bg-blue-500/5 text-center">
+                <Zap className="h-12 w-12 mx-auto mb-3 text-blue-400/50" />
+                <p className="text-blue-200/60 font-medium mb-1">
+                  No learned skills available
+                </p>
+                <p className="text-sm text-blue-200/40">
+                  Learn skills in the skill tree above to equip them here
+                </p>
+              </div>
             ) : (
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="grid gap-3 md:grid-cols-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
                 {skills.map((skill) => {
                   const isEquipped = equippedSkills.includes(skill.id)
                   const canEquip = !isEquipped && equippedSkills.length < 4
 
                   return (
-                    <div
+                    <Card
                       key={skill.id}
-                      className={`p-3 border rounded-lg ${isEquipped ? 'bg-primary/10 border-primary' : 'bg-muted/50'
-                        }`}
+                      className={`transition-all hover:shadow-lg ${
+                        isEquipped
+                          ? 'border-2 border-blue-500/70 bg-gradient-to-br from-blue-500/20 to-violet-500/20'
+                          : 'border border-border/40 bg-slate-800/50 hover:border-blue-500/50'
+                      }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="font-medium text-sm">{skill.name}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {skill.description}
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="font-semibold text-sm text-blue-100">{skill.name}</h4>
+                              {isEquipped && (
+                                <span className="px-2 py-0.5 rounded-full bg-green-500/20 border border-green-400/50 text-xs font-semibold text-green-300">
+                                  EQUIPPED
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-blue-200/70 mb-3 line-clamp-2">
+                              {skill.description}
+                            </p>
+                            <div className="flex flex-wrap gap-3 text-xs text-blue-200/60">
+                              <span className="flex items-center gap-1">
+                                <span className="text-blue-400">⚡</span> Mana: {skill.manaCost}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <span className="text-blue-400">📏</span> Range: {skill.range}
+                              </span>
+                              {skill.damageMultiplier > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <span className="text-red-400">⚔️</span> DMG: {skill.damageMultiplier}x
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Mana: {skill.manaCost} | Range: {skill.range}
-                          </div>
+                          <Button
+                            variant={isEquipped ? 'default' : 'outline'}
+                            size="sm"
+                            className={`flex-shrink-0 ${
+                              isEquipped
+                                ? 'bg-green-500 hover:bg-green-600 text-white border-green-400'
+                                : 'border-blue-500/50 hover:bg-blue-500/20 hover:border-blue-400'
+                            }`}
+                            onClick={() => handleToggleSkill(skill.id)}
+                            disabled={!canEquip && !isEquipped}
+                          >
+                            {isEquipped ? (
+                              <>
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Equipped
+                              </>
+                            ) : (
+                              'Equip'
+                            )}
+                          </Button>
                         </div>
-                        <Button
-                          variant={isEquipped ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => handleToggleSkill(skill.id)}
-                          disabled={!canEquip && !isEquipped}
-                        >
-                          {isEquipped ? 'Equipped' : 'Equip'}
-                        </Button>
-                      </div>
-                    </div>
+                      </CardContent>
+                    </Card>
                   )
                 })}
               </div>

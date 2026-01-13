@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useAccount, useContractRead, useContractReads, useContractWrite, useWaitForTransaction } from 'wagmi'
 import { Navigation } from '@/components/navigation'
@@ -31,11 +31,14 @@ import { getTotalPendingEXP, getPendingRewards, getTotalPendingCHS } from '@/lib
 import { formatCHSAmount, parseCHSAmount } from '@/lib/chs-token'
 import { useToast } from '@/hooks/use-toast'
 import itemsData from '@/data/items.json'
-import { getInventory, getItemQuantity } from '@/lib/inventory'
+import { getItemQuantity } from '@/lib/inventory'
 import { fixOldRewards } from '@/lib/fix-exp'
 import { DailyRewardsCard } from '@/components/daily-rewards'
 import { DailyQuestsCard } from '@/components/daily-quests'
 import { LeaderboardCard } from '@/components/leaderboard'
+import { rarityColors } from '@/lib/constants'
+import { cn, getItemBorderClass } from '@/lib/utils'
+import { SectionTitle } from '@/components/section-title'
 
 interface Character {
   tokenId: bigint
@@ -224,34 +227,27 @@ export default function DashboardPage() {
 
   return (
     <CharactersErrorBoundary>
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-900">
+      <div className="min-h-screen branding-background">
         {/* Animated background elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-float" />
-          <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
+          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
         </div>
 
         <Navigation />
         <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mb-8 animate-slide-up">
-            <div className="inline-block mb-4 rounded-full bg-purple-500/10 px-4 py-1.5 text-sm font-medium text-purple-300 border border-purple-500/20">
-              👥 Character Management
-            </div>
-            <h1 className="mb-4 text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-purple-100 to-purple-200 bg-clip-text text-transparent">
-              Dashboard
-            </h1>
-            <p className="text-lg text-purple-200/80">
-              Manage your characters, equipment, skills, and rewards
-            </p>
-          </div>
+          <SectionTitle
+            title="Dashboard"
+            subtitle="Manage your characters, equipment, skills, and rewards"
+          />
 
           {!isConnected ? (
             <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
               <CardContent className="py-16 text-center">
-                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-primary/20 border border-purple-500/20">
-                  <Users className="h-10 w-10 text-purple-300" />
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-violet-600/20 border border-blue-500/20">
+                  <Users className="h-10 w-10 text-blue-300" />
                 </div>
-                <p className="text-purple-200/80 font-medium">
+                <p className="text-blue-200/80 font-medium">
                   Please connect your wallet to view your characters
                 </p>
               </CardContent>
@@ -259,13 +255,13 @@ export default function DashboardPage() {
           ) : (
             <Tabs defaultValue="list" className="space-y-6">
               <TabsList className="bg-slate-900/50 backdrop-blur-xl border border-border/40 p-1">
-                <TabsTrigger value="list" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
+                <TabsTrigger value="list" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all">
                   Characters
                 </TabsTrigger>
-                <TabsTrigger value="equipment" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
+                <TabsTrigger value="equipment" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white transition-all">
                   Equipment
                 </TabsTrigger>
-                <TabsTrigger value="skills" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
+                <TabsTrigger value="skills" className="data-[state=active]:bg-violet-600 data-[state=active]:text-white transition-all">
                   Skills
                 </TabsTrigger>
                 <TabsTrigger value="levelup" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-600 data-[state=active]:to-primary data-[state=active]:text-white transition-all">
@@ -277,11 +273,11 @@ export default function DashboardPage() {
                 {characters.length === 0 ? (
                   <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
                     <CardContent className="py-16 text-center">
-                      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-primary/20 border border-purple-500/20">
-                        <Users className="h-10 w-10 text-purple-300" />
+                      <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-violet-600/20 border border-blue-500/20">
+                        <Users className="h-10 w-10 text-blue-300" />
                       </div>
-                      <p className="text-purple-200/80 font-medium mb-2">You do not have any characters yet</p>
-                      <p className="text-sm text-purple-200/60">
+                      <p className="text-blue-200/80 font-medium mb-2">You do not have any characters yet</p>
+                      <p className="text-sm text-blue-200/60">
                         Mint your first character in the Marketplace
                       </p>
                     </CardContent>
@@ -291,13 +287,13 @@ export default function DashboardPage() {
                     {characters.map((character, index) => (
                       <Card
                         key={character.tokenId.toString()}
-                        className="group cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/20 hover:-translate-y-1 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden animate-scale-in"
+                        className="group cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/30 hover:-translate-y-1 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden animate-scale-in flex flex-col"
                         style={{ animationDelay: `${index * 0.1}s` }}
                         onClick={() => setInventoryCharacter(character)}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-purple-500/0 via-purple-500/0 to-primary/0 group-hover:from-purple-500/10 group-hover:to-primary/10 transition-all duration-300" />
-                        <CardHeader className="relative p-3">
-                          <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-800/50 border border-border/40 group-hover:border-purple-500/40 transition-all">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/0 via-blue-500/0 to-violet-600/0 group-hover:from-blue-500/10 group-hover:to-violet-600/10 transition-all duration-300 pointer-events-none" />
+                        <CardHeader className="relative p-3 z-10 flex-shrink-0">
+                          <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-800/50 border border-border/40 group-hover:border-blue-500/50 transition-all duration-300 relative">
                             {character.metadata?.image ? (
                               <Image
                                 src={character.metadata.image}
@@ -308,26 +304,33 @@ export default function DashboardPage() {
                               />
                             ) : (
                               <div className="flex h-full items-center justify-center">
-                                <Users className="h-8 w-8 text-purple-300/50 group-hover:text-purple-300 transition-colors" />
+                                <Users className="h-8 w-8 text-blue-300/50 group-hover:text-blue-300 transition-colors" />
                               </div>
                             )}
                           </div>
-                          <CardTitle className="mt-2 text-sm group-hover:text-purple-200 transition-colors line-clamp-1">
-                            {character.metadata?.name || 'Unknown Character'}
-                          </CardTitle>
-                          <CardDescription className="flex items-center gap-1 text-xs">
-                            <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                          <CardDescription className="flex items-center gap-1 text-xs mt-2">
+                            <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-300 border border-blue-500/30">
                               {character.metadata?.class}
                             </span>
-                            <span className="text-purple-200/60 text-xs">
+                            <span className="text-blue-200/60 text-xs">
                               Lv.{character.metadata?.level || 1}
                             </span>
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="relative p-3 pt-0">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-purple-200/60">ID:</span>
-                            <span className="font-mono text-purple-300">#{character.tokenId.toString()}</span>
+                        <CardContent className="relative p-3 pt-0 border-t border-border/30 bg-slate-800/30 group-hover:bg-slate-800/40 transition-colors duration-300 z-10 flex-shrink-0 mt-auto">
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-blue-200/80">Name:</span>
+                              <span className="text-xs font-semibold text-blue-200 line-clamp-1 max-w-[60%] text-right">
+                                {character.metadata?.name || 'Unknown Character'}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-blue-200/80">ID:</span>
+                              <span className="text-xs font-mono font-semibold text-blue-300 group-hover:text-blue-200 transition-colors">
+                                #{character.tokenId.toString()}
+                              </span>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -340,12 +343,12 @@ export default function DashboardPage() {
                 <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-2xl">
-                      <div className="rounded-lg bg-purple-500/10 p-2 border border-purple-500/20">
-                        <Shield className="h-5 w-5 text-purple-400" />
+                      <div className="rounded-lg bg-blue-500/10 p-2 border border-blue-500/20">
+                        <Shield className="h-5 w-5 text-blue-400" />
                       </div>
                       Equipment Management
                     </CardTitle>
-                    <CardDescription className="text-purple-200/60">
+                    <CardDescription className="text-blue-200/60">
                       Click on a character to manage their equipment
                     </CardDescription>
                   </CardHeader>
@@ -463,12 +466,12 @@ export default function DashboardPage() {
                 <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3 text-2xl">
-                      <div className="rounded-lg bg-purple-500/10 p-2 border border-purple-500/20">
-                        <Zap className="h-5 w-5 text-purple-400" />
+                      <div className="rounded-lg bg-blue-500/10 p-2 border border-blue-500/20">
+                        <Zap className="h-5 w-5 text-blue-400" />
                       </div>
                       Skills Management
                     </CardTitle>
-                    <CardDescription className="text-purple-200/60">
+                    <CardDescription className="text-blue-200/60">
                       Click on a character to manage their skills
                     </CardDescription>
                   </CardHeader>
@@ -603,8 +606,20 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Decorative line separator */}
+          <div className="relative my-8">
+            <div className="decorative-line" />
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-3 border-2 border-yellow-400/80 rotate-45 shadow-[0_0_8px_rgba(250,204,21,0.6),0_0_16px_rgba(250,204,21,0.3),inset_0_0_4px_rgba(250,204,21,0.4)] bg-gradient-to-br from-yellow-400/30 to-transparent" />
+          </div>
+
           {/* Items Section - Below Characters */}
           <ItemsSection />
+
+          {/* Decorative line separator */}
+          <div className="relative my-8">
+            <div className="decorative-line" />
+            <div className="absolute top-1/2 right-0 -translate-y-1/2 w-3 h-3 border-2 border-yellow-400/80 rotate-45 shadow-[0_0_8px_rgba(250,204,21,0.6),0_0_16px_rgba(250,204,21,0.3),inset_0_0_4px_rgba(250,204,21,0.4)] bg-gradient-to-br from-yellow-400/30 to-transparent" />
+          </div>
 
           {/* Claim Section - Below Items */}
           <ClaimSection />
@@ -731,7 +746,7 @@ function LevelUpTab() {
     return (
       <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
         <CardContent className="py-12 text-center">
-          <p className="text-purple-200/80">Please connect your wallet to view your characters</p>
+          <p className="text-blue-200/80">Please connect your wallet to view your characters</p>
         </CardContent>
       </Card>
     )
@@ -741,8 +756,8 @@ function LevelUpTab() {
     return (
       <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
         <CardContent className="py-12 text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-purple-300" />
-          <p className="text-purple-200/80">Loading characters...</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-300" />
+          <p className="text-blue-200/80">Loading characters...</p>
         </CardContent>
       </Card>
     )
@@ -752,7 +767,7 @@ function LevelUpTab() {
     return (
       <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
         <CardContent className="py-12 text-center">
-          <p className="text-purple-200/80">You don't have any NFT characters yet</p>
+          <p className="text-blue-200/80">You don't have any NFT characters yet</p>
         </CardContent>
       </Card>
     )
@@ -763,12 +778,12 @@ function LevelUpTab() {
       <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-purple-400" />
+            <TrendingUp className="h-5 w-5 text-blue-400" />
             Available Experience
           </CardTitle>
-          <CardDescription className="text-purple-200/60">
+          <CardDescription className="text-blue-200/60">
             {pendingRewards > 0
-              ? `You have ${pendingRewards} EXP pending from won battles`
+              ? `Distribute your experience points to upgrade your characters`
               : 'Enter the amount of experience you gained in combat'}
           </CardDescription>
         </CardHeader>
@@ -780,7 +795,7 @@ function LevelUpTab() {
                 <span className="text-sm font-medium text-blue-300">Pending Rewards</span>
               </div>
               <p className="text-sm text-blue-200/80">
-                You have {pendingRewards} EXP available from won battles.
+                {pendingRewards} EXP available from won battles
               </p>
             </div>
           )}
@@ -807,7 +822,7 @@ function LevelUpTab() {
             )}
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-purple-200/60">Total Distributed:</span>
+            <span className="text-blue-200/60">Total Distributed:</span>
             <span className={isValidDistribution ? 'text-green-400' : 'text-red-400'}>
               {totalDistributed} / {parseFloat(availableExp || '0')}
             </span>
@@ -815,7 +830,7 @@ function LevelUpTab() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 auto-rows-fr">
         {characters.map((character) => {
           const currentLevel = Number(character.level)
           const currentExp = Number(character.experience)
@@ -826,30 +841,30 @@ function LevelUpTab() {
           const willLevelUp = newLevel > currentLevel
 
           return (
-            <Card key={character.tokenId.toString()} className="border-border/40 bg-slate-900/50 backdrop-blur-xl">
+            <Card key={character.tokenId.toString()} className="border-border/40 bg-slate-900/50 backdrop-blur-xl flex flex-col">
               <CardHeader>
                 <CardTitle className="text-lg">{character.name}</CardTitle>
-                <CardDescription className="text-purple-200/60">
+                <CardDescription className="text-blue-200/60">
                   {character.class} • Level {currentLevel}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-purple-200/60">Current Experience:</span>
-                    <span className="font-medium text-purple-200">{currentExp}</span>
+              <CardContent className="space-y-4 flex flex-col flex-1">
+                <div className="space-y-2 text-sm flex-shrink-0">
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-200/60">Current Experience:</span>
+                    <span className="font-medium text-blue-200 text-right">{currentExp}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-purple-200/60">Current Level:</span>
-                    <span className="font-medium text-purple-200">{currentLevel}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-200/60">Current Level:</span>
+                    <span className="font-medium text-blue-200 text-right">{currentLevel}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-purple-200/60">EXP for Next Level:</span>
-                    <span className="font-medium text-purple-200">{expForNextLevel}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-200/60">EXP for Next Level:</span>
+                    <span className="font-medium text-blue-200 text-right">{expForNextLevel}</span>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`exp-${character.tokenId}`}>Experience to Add</Label>
+                <div className="space-y-2 flex-shrink-0">
+                  <Label htmlFor={`exp-${character.tokenId}`} className="block">Experience to Add</Label>
                   <Input
                     id={`exp-${character.tokenId}`}
                     type="number"
@@ -857,55 +872,59 @@ function LevelUpTab() {
                     value={expDistribution[character.tokenId.toString()] || ''}
                     onChange={(e) => handleExpChange(character.tokenId.toString(), e.target.value)}
                     placeholder="0"
-                    className="bg-slate-800/50 border-border/40"
+                    className="bg-slate-800/50 border-border/40 w-full"
                   />
                 </div>
-                {distributedExp > 0 && (
-                  <div className="p-3 bg-purple-500/10 rounded-lg space-y-1 border border-purple-500/20">
-                    <div className="flex items-center gap-2 text-sm font-medium text-purple-300">
-                      <TrendingUp className="h-4 w-4" />
-                      After Upgrade:
-                    </div>
-                    <div className="text-sm space-y-1 text-purple-200/80">
-                      <div className="flex justify-between">
-                        <span>New EXP:</span>
-                        <span className="font-medium">{Math.floor(newExp)}</span>
+                <div className="min-h-[80px] flex-shrink-0">
+                  {distributedExp > 0 && (
+                    <div className="p-3 bg-blue-500/10 rounded-lg space-y-1 border border-blue-500/20">
+                      <div className="flex items-center gap-2 text-sm font-medium text-blue-300">
+                        <TrendingUp className="h-4 w-4" />
+                        After Upgrade:
                       </div>
-                      <div className="flex justify-between">
-                        <span>New Level:</span>
-                        <span className={`font-medium ${willLevelUp ? 'text-green-400' : ''}`}>
-                          {newLevel} {willLevelUp && '⬆️'}
-                        </span>
+                      <div className="text-sm space-y-1 text-blue-200/80">
+                        <div className="flex justify-between items-center">
+                          <span>New EXP:</span>
+                          <span className="font-medium text-right">{Math.floor(newExp)}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>New Level:</span>
+                          <span className={`font-medium text-right ${willLevelUp ? 'text-green-400' : ''}`}>
+                            {newLevel} {willLevelUp && '⬆️'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-                <Button
-                  className="w-full"
-                  onClick={() => {
-                    if (distributedExp > 0) {
-                      handleUpgrade(character.tokenId, BigInt(Math.floor(distributedExp)))
-                    }
-                  }}
-                  disabled={
-                    distributedExp <= 0 ||
-                    isUpgrading ||
-                    !isValidDistribution ||
-                    totalDistributed > parseFloat(availableExp || '0')
-                  }
-                >
-                  {isUpgrading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Zap className="h-4 w-4 mr-2" />
-                      Upgrade ({distributedExp > 0 ? Math.floor(distributedExp) : 0} EXP)
-                    </>
                   )}
-                </Button>
+                </div>
+                <div className="mt-auto pt-2 flex-shrink-0">
+                  <Button
+                    className="w-full"
+                    onClick={() => {
+                      if (distributedExp > 0) {
+                        handleUpgrade(character.tokenId, BigInt(Math.floor(distributedExp)))
+                      }
+                    }}
+                    disabled={
+                      distributedExp <= 0 ||
+                      isUpgrading ||
+                      !isValidDistribution ||
+                      totalDistributed > parseFloat(availableExp || '0')
+                    }
+                  >
+                    {isUpgrading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="h-4 w-4 mr-2" />
+                        Upgrade ({distributedExp > 0 ? Math.floor(distributedExp) : 0} EXP)
+                      </>
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )
@@ -948,30 +967,6 @@ function LevelUpTab() {
  * Displays user's inventory items
  */
 function ItemsSection() {
-  const [inventory, setInventory] = useState<Record<string, number>>({})
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    // Load inventory on mount
-    setInventory(getInventory())
-    
-    // Listen for storage changes to update inventory
-    const handleStorageChange = () => {
-      setInventory(getInventory())
-    }
-    
-    window.addEventListener('storage', handleStorageChange)
-    // Also check periodically (in case same-tab updates)
-    const interval = setInterval(() => {
-      setInventory(getInventory())
-    }, 1000)
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      clearInterval(interval)
-    }
-  }, [])
 
   // Filter items to only show those in inventory
   const equipmentItems = itemsData.filter(
@@ -981,24 +976,17 @@ function ItemsSection() {
     (item) => item.type === 'consumable' && getItemQuantity(item.id) > 0
   )
 
-  const rarityColors = {
-    common: 'border-gray-500 text-gray-500',
-    uncommon: 'border-green-500 text-green-500',
-    rare: 'border-blue-500 text-blue-500',
-    epic: 'border-purple-500 text-purple-500',
-    legendary: 'border-yellow-500 text-yellow-500',
-  }
 
   return (
     <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl mt-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-3 text-2xl">
-          <div className="rounded-lg bg-indigo-500/10 p-2 border border-indigo-500/20">
-            <Package className="h-5 w-5 text-indigo-400" />
+          <div className="rounded-lg bg-blue-500/10 p-2 border border-blue-500/20">
+            <Package className="h-5 w-5 text-blue-400" />
           </div>
           My Inventory
         </CardTitle>
-        <CardDescription className="text-purple-200/60">
+        <CardDescription className="text-blue-200/60">
           Items you own in your inventory
         </CardDescription>
       </CardHeader>
@@ -1026,8 +1014,13 @@ function ItemsSection() {
                   const itemImage = getItemImageFromData(item)
                   const quantity = getItemQuantity(item.id)
                   return (
-                    <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-md hover:shadow-primary/20 transition-all">
-                      <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
+                    <Card key={item.id} className={cn(
+                      "overflow-hidden group transition-all embossed",
+                      getItemBorderClass(item.rarity),
+                      "bg-slate-900/90 backdrop-blur-xl"
+                    )}>
+                      <div className="absolute inset-0 metallic-overlay pointer-events-none" />
+                      <div className="aspect-square w-full overflow-hidden bg-slate-950/80 border-b-2 border-slate-700/50 relative">
                         {itemImage ? (
                           <Image
                             src={itemImage}
@@ -1074,8 +1067,13 @@ function ItemsSection() {
                   const itemImage = getItemImageFromData(item)
                   const quantity = getItemQuantity(item.id)
                   return (
-                    <Card key={item.id} className="border-border/40 bg-slate-800/50 overflow-hidden group hover:shadow-md hover:shadow-primary/20 transition-all">
-                      <div className="aspect-square w-full overflow-hidden bg-slate-900/50 border-b border-border/40 relative">
+                    <Card key={item.id} className={cn(
+                      "overflow-hidden group transition-all embossed",
+                      getItemBorderClass(item.rarity),
+                      "bg-slate-900/90 backdrop-blur-xl"
+                    )}>
+                      <div className="absolute inset-0 metallic-overlay pointer-events-none" />
+                      <div className="aspect-square w-full overflow-hidden bg-slate-950/80 border-b-2 border-slate-700/50 relative">
                         {itemImage ? (
                           <Image
                             src={itemImage}
@@ -1345,7 +1343,7 @@ function ClaimSection() {
             <Coins className="h-5 w-5 text-yellow-500" />
             Claim CHS
           </CardTitle>
-          <CardDescription className="text-purple-200/60">
+          <CardDescription className="text-blue-200/60">
             Claim the CHS tokens you earned in combat
           </CardDescription>
         </CardHeader>
@@ -1366,7 +1364,7 @@ function ClaimSection() {
             <Coins className="h-5 w-5 text-yellow-500" />
             Claim CHS
           </CardTitle>
-          <CardDescription className="text-purple-200/60">
+          <CardDescription className="text-blue-200/60">
             Claim the CHS tokens you earned in combat
           </CardDescription>
         </CardHeader>
@@ -1388,13 +1386,13 @@ function ClaimSection() {
           <Coins className="h-5 w-5 text-yellow-500" />
           Claim CHS
         </CardTitle>
-        <CardDescription className="text-purple-200/60">
+        <CardDescription className="text-blue-200/60">
           Claim the CHS tokens you earned in combat
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-          <span className="text-lg font-medium text-purple-200">Total Pending:</span>
+          <span className="text-lg font-medium text-blue-200">Total Pending:</span>
           <span className="text-3xl font-bold text-primary">
             {formatCHSAmount(totalPendingCHS)} CHS
           </span>

@@ -3,7 +3,8 @@
 import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Crown, Lock, Users, AlertCircle, Sword } from 'lucide-react'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Crown, Lock, Users, AlertCircle, Sword, UsersRound, Search, UserPlus } from 'lucide-react'
 import { useAccount, useContractReads } from 'wagmi'
 import { CHARACTER_NFT_ABI, CHARACTER_NFT_ADDRESS } from '@/lib/contract'
 import { getTeam } from '@/lib/team'
@@ -19,6 +20,7 @@ import { ERROR_MESSAGES, MAX_STAGES } from '@/lib/constants'
 import { useToast } from '@/hooks/use-toast'
 import { logger } from '@/lib/logger'
 import { BattleErrorBoundary } from '@/components/battle-error-boundary'
+import { SectionTitle } from '@/components/section-title'
 
 interface Character {
   tokenId: bigint
@@ -96,7 +98,7 @@ export default function BattlePage() {
     enabled: tokenIndexContracts.length > 0,
   })
 
-  // Get token URIs, classes, and levels for all tokens
+  // Get token URIs, names, classes, and levels for all tokens
   // Memoize to avoid recreating on every render
   const tokenDataContracts = useMemo(
     () =>
@@ -113,6 +115,12 @@ export default function BattlePage() {
                 address: CHARACTER_NFT_ADDRESS,
                 abi: CHARACTER_NFT_ABI,
                 functionName: 'tokenURI' as const,
+                args: [tokenId],
+              },
+              {
+                address: CHARACTER_NFT_ADDRESS,
+                abi: CHARACTER_NFT_ABI,
+                functionName: 'getName' as const,
                 args: [tokenId],
               },
               {
@@ -163,17 +171,20 @@ export default function BattlePage() {
     }
 
     return validTokenIds.map(({ tokenId, index }) => {
-      // Each token has 3 data points: URI (index*3), Class (index*3+1), Level (index*3+2)
-      const uriIndex = index * 3
-      const classIndex = index * 3 + 1
-      const levelIndex = index * 3 + 2
+      // Each token has 4 data points: URI (index*4), Name (index*4+1), Class (index*4+2), Level (index*4+3)
+      const uriIndex = index * 4
+      const nameIndex = index * 4 + 1
+      const classIndex = index * 4 + 2
+      const levelIndex = index * 4 + 3
 
       const uriResult = tokenDataResults[uriIndex]
+      const nameResult = tokenDataResults[nameIndex]
       const classResult = tokenDataResults[classIndex]
       const levelResult = tokenDataResults[levelIndex]
 
       // Extract and validate data using utility functions
       const uri = extractStringFromResult(uriResult)
+      const characterName = extractStringFromResult(nameResult, '')
       const characterClass = extractStringFromResult(classResult, 'Unknown')
       const level = extractLevelFromResult(levelResult, 1)
       const formattedClass = formatClassName(characterClass)
@@ -182,6 +193,7 @@ export default function BattlePage() {
         tokenId,
         uri,
         metadata: {
+          name: characterName || 'Unknown Character',
           class: formattedClass,
           level,
         },
@@ -293,17 +305,10 @@ export default function BattlePage() {
 
         <Navigation />
         <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="mb-8 animate-slide-up">
-            <div className="inline-block mb-4 rounded-full bg-red-500/10 px-4 py-1.5 text-sm font-medium text-red-300 border border-red-500/20">
-              ⚔️ Combat Arena
-            </div>
-            <h1 className="mb-4 text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-red-100 to-orange-200 bg-clip-text text-transparent">
-              Battle Arena
-            </h1>
-            <p className="text-lg text-red-200/80">
-              Fight through stages and defeat bosses to earn rewards
-            </p>
-          </div>
+          <SectionTitle
+            title="Battle Arena"
+            subtitle="Fight through stages and defeat bosses to earn rewards"
+          />
 
           {!isConnected ? (
             <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
@@ -333,133 +338,235 @@ export default function BattlePage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-6">
-              {/* Progress Info */}
-              <Card className="border-border/40 bg-gradient-to-r from-slate-900/50 to-red-900/30 backdrop-blur-xl animate-scale-in">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 text-2xl">
-                    <div className="rounded-lg bg-red-500/10 p-2 border border-red-500/20">
-                      <Crown className="h-5 w-5 text-red-400" />
-                    </div>
-                    Battle Progress
-                  </CardTitle>
-                  <CardDescription className="text-red-200/60">
-                    Highest stage completed:{' '}
-                    <span className="font-semibold text-red-300">Stage {highestStage}</span>
-                  </CardDescription>
-                </CardHeader>
-              </Card>
+            <Tabs defaultValue="campaign" className="w-full">
+              <TabsList className="mb-6 bg-slate-900/80 backdrop-blur-xl border border-slate-700/60">
+                <TabsTrigger value="campaign" className="flex items-center gap-2">
+                  <Sword className="h-4 w-4" />
+                  Campaign
+                </TabsTrigger>
+                <TabsTrigger value="pvp" className="flex items-center gap-2">
+                  <UsersRound className="h-4 w-4" />
+                  PvP
+                </TabsTrigger>
+              </TabsList>
 
-              {/* Stages Grid */}
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {stages.map((stage, index) => {
-                  const unlocked = isStageUnlocked(stage)
-                  const isBoss = isBossStage(stage)
-                  const bossData = isBoss ? getBossData(stage) : null
-                  const completed = stage <= highestStage
+              <TabsContent value="campaign" className="space-y-6">
+                {/* Progress Info */}
+                <Card className="border-border/40 bg-gradient-to-r from-slate-900/50 to-red-900/30 backdrop-blur-xl animate-scale-in">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-2xl">
+                      <div className="rounded-lg bg-red-500/10 p-2 border border-red-500/20">
+                        <Crown className="h-5 w-5 text-red-400" />
+                      </div>
+                      Battle Progress
+                    </CardTitle>
+                    <CardDescription className="text-red-200/60">
+                      Highest stage completed:{' '}
+                      <span className="font-semibold text-red-300">Stage {highestStage}</span>
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
 
-                  return (
-                    <Card
-                      key={stage}
-                      className={`group relative overflow-hidden transition-all duration-300 border-border/40 backdrop-blur-xl animate-scale-in ${
-                        unlocked
-                          ? 'hover:shadow-2xl cursor-pointer hover:-translate-y-2'
-                          : 'opacity-50 cursor-not-allowed'
-                      } ${
-                        isBoss
-                          ? 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/30 to-orange-900/30 hover:shadow-yellow-500/30'
-                          : 'bg-slate-900/50 hover:shadow-red-500/20'
-                      } ${
-                        completed
-                          ? 'border-green-500/50 bg-gradient-to-br from-green-900/20 to-emerald-900/20'
-                          : ''
-                      }`}
-                      style={{ animationDelay: `${index * 0.05}s` }}
-                    >
-                      {/* Glow effect on hover */}
-                      <div className={`absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${
-                        isBoss
-                          ? 'bg-gradient-to-br from-yellow-500/10 to-orange-500/10'
-                          : 'bg-gradient-to-br from-red-500/10 to-orange-500/10'
-                      }`} />
-                      
-                      <CardHeader className="relative pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className={`text-lg font-bold ${
-                            isBoss ? 'text-yellow-300' : completed ? 'text-green-300' : 'text-red-100'
-                          }`}>
-                            {isBoss ? (
-                              <span className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500/20 border border-yellow-500/40">
-                                  <Crown className="h-4 w-4 text-yellow-400 animate-float" />
-                                </div>
-                                <span>{bossData?.name || 'Boss'}</span>
-                              </span>
-                            ) : (
-                              <span className="flex items-center gap-2">
-                                <span className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
-                                  completed
-                                    ? 'bg-green-500/20 text-green-300 border border-green-500/40'
-                                    : 'bg-red-500/20 text-red-300 border border-red-500/40'
-                                }`}>
-                                  {stage}
+                {/* Stages Grid */}
+                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  {stages.map((stage, index) => {
+                    const unlocked = isStageUnlocked(stage)
+                    const isBoss = isBossStage(stage)
+                    const bossData = isBoss ? getBossData(stage) : null
+                    const completed = stage <= highestStage
+
+                    return (
+                      <Card
+                        key={stage}
+                        className={`group relative overflow-hidden transition-all duration-300 border-border/40 backdrop-blur-xl animate-scale-in ${
+                          unlocked
+                            ? 'hover:shadow-2xl cursor-pointer hover:-translate-y-2'
+                            : 'opacity-50 cursor-not-allowed'
+                        } ${
+                          isBoss
+                            ? 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/30 to-orange-900/30 hover:shadow-yellow-500/30'
+                            : 'bg-slate-900/50 hover:shadow-red-500/20'
+                        } ${
+                          completed
+                            ? 'border-green-500/50 bg-gradient-to-br from-green-900/20 to-emerald-900/20'
+                            : ''
+                        }`}
+                        style={{ animationDelay: `${index * 0.05}s` }}
+                      >
+                        {/* Glow effect on hover */}
+                        <div className={`absolute inset-0 transition-opacity duration-300 opacity-0 group-hover:opacity-100 ${
+                          isBoss
+                            ? 'bg-gradient-to-br from-yellow-500/10 to-orange-500/10'
+                            : 'bg-gradient-to-br from-red-500/10 to-orange-500/10'
+                        }`} />
+                        
+                        <CardHeader className="relative pb-3">
+                          <div className="flex items-center justify-between">
+                            <CardTitle className={`text-lg font-bold ${
+                              isBoss ? 'text-yellow-300' : completed ? 'text-green-300' : 'text-red-100'
+                            }`}>
+                              {isBoss ? (
+                                <span className="flex items-center gap-2">
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-yellow-500/20 border border-yellow-500/40">
+                                    <Crown className="h-4 w-4 text-yellow-400 animate-float" />
+                                  </div>
+                                  <span>{bossData?.name || 'Boss'}</span>
                                 </span>
-                                <span>Stage {stage}</span>
-                              </span>
+                              ) : (
+                                <span className="flex items-center gap-2">
+                                  <span className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
+                                    completed
+                                      ? 'bg-green-500/20 text-green-300 border border-green-500/40'
+                                      : 'bg-red-500/20 text-red-300 border border-red-500/40'
+                                  }`}>
+                                    {stage}
+                                  </span>
+                                  <span>Stage {stage}</span>
+                                </span>
+                              )}
+                            </CardTitle>
+                            {!unlocked && (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/50 border border-border/40">
+                                <Lock className="h-4 w-4 text-muted-foreground" />
+                              </div>
                             )}
+                            {completed && (
+                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 border border-green-500/40">
+                                <span className="text-sm font-bold text-green-400">✓</span>
+                              </div>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="relative">
+                          <div className="space-y-3">
+                            <p className={`text-sm ${
+                              isBoss ? 'text-yellow-200/70' : 'text-red-200/70'
+                            }`}>
+                              {isBoss
+                                ? `Face the powerful boss: ${bossData?.name || 'Boss'}`
+                                : `Battle against stage ${stage} enemies`}
+                            </p>
+                            <Button
+                              className={`w-full font-semibold transition-all ${
+                                isBoss
+                                  ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/40'
+                                  : unlocked
+                                    ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40'
+                                    : ''
+                              }`}
+                              variant={unlocked ? 'default' : 'outline'}
+                              disabled={!unlocked}
+                              onClick={() => handleStartBattle(stage)}
+                            >
+                              {unlocked ? (
+                                <span className="flex items-center gap-2">
+                                  <Sword className="h-4 w-4" />
+                                  Start Battle
+                                </span>
+                              ) : (
+                                <span className="flex items-center gap-2">
+                                  <Lock className="h-4 w-4" />
+                                  Locked
+                                </span>
+                              )}
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="pvp" className="space-y-6">
+                <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-3 text-2xl">
+                      <div className="rounded-lg bg-blue-500/10 p-2 border border-blue-500/20">
+                        <UsersRound className="h-5 w-5 text-blue-400" />
+                      </div>
+                      Player vs Player
+                    </CardTitle>
+                    <CardDescription className="text-blue-200/60">
+                      Battle against other players and climb the leaderboard
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="py-8">
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {/* Search Opponent Card */}
+                      <Card className="border-border/40 bg-slate-800/50 backdrop-blur-xl">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-xl">
+                            <div className="rounded-lg bg-blue-500/10 p-2 border border-blue-500/20">
+                              <Search className="h-4 w-4 text-blue-400" />
+                            </div>
+                            Search Opponent
                           </CardTitle>
-                          {!unlocked && (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-700/50 border border-border/40">
-                              <Lock className="h-4 w-4 text-muted-foreground" />
+                          <CardDescription className="text-blue-200/60">
+                            Find and battle against random players
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex flex-col items-center justify-center space-y-4 py-6">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/20">
+                              <Search className="h-8 w-8 text-blue-300" />
                             </div>
-                          )}
-                          {completed && (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/20 border border-green-500/40">
-                              <span className="text-sm font-bold text-green-400">✓</span>
+                            <Button
+                              disabled
+                              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 opacity-50 cursor-not-allowed shadow-lg"
+                              size="lg"
+                            >
+                              <span className="flex items-center gap-2">
+                                <Search className="h-5 w-5" />
+                                Search Opponent
+                              </span>
+                            </Button>
+                            <div className="px-4 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                              <p className="text-sm text-blue-300/80 font-medium">Coming Soon</p>
                             </div>
-                          )}
-                        </div>
-                      </CardHeader>
-                      <CardContent className="relative">
-                        <div className="space-y-3">
-                          <p className={`text-sm ${
-                            isBoss ? 'text-yellow-200/70' : 'text-red-200/70'
-                          }`}>
-                            {isBoss
-                              ? `Face the powerful boss: ${bossData?.name || 'Boss'}`
-                              : `Battle against stage ${stage} enemies`}
-                          </p>
-                          <Button
-                            className={`w-full font-semibold transition-all ${
-                              isBoss
-                                ? 'bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/40'
-                                : unlocked
-                                  ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40'
-                                  : ''
-                            }`}
-                            variant={unlocked ? 'default' : 'outline'}
-                            disabled={!unlocked}
-                            onClick={() => handleStartBattle(stage)}
-                          >
-                            {unlocked ? (
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Challenge a Friend Card */}
+                      <Card className="border-border/40 bg-slate-800/50 backdrop-blur-xl">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2 text-xl">
+                            <div className="rounded-lg bg-purple-500/10 p-2 border border-purple-500/20">
+                              <UserPlus className="h-4 w-4 text-purple-400" />
+                            </div>
+                            Challenge a Friend
+                          </CardTitle>
+                          <CardDescription className="text-purple-200/60">
+                            Invite a friend to battle
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="flex flex-col items-center justify-center space-y-4 py-6">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-purple-500/20">
+                              <UserPlus className="h-8 w-8 text-purple-300" />
+                            </div>
+                            <Button
+                              disabled
+                              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 opacity-50 cursor-not-allowed shadow-lg"
+                              size="lg"
+                            >
                               <span className="flex items-center gap-2">
-                                <Sword className="h-4 w-4" />
-                                Start Battle
+                                <UserPlus className="h-5 w-5" />
+                                Challenge a Friend
                               </span>
-                            ) : (
-                              <span className="flex items-center gap-2">
-                                <Lock className="h-4 w-4" />
-                                Locked
-                              </span>
-                            )}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            </div>
+                            </Button>
+                            <div className="px-4 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                              <p className="text-sm text-purple-300/80 font-medium">Coming Soon</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           )}
         </main>
       </div>

@@ -267,8 +267,8 @@ export function useCombatState(): UseCombatStateReturn {
         return getValidSkillTargets(current, selectedSkill, combatState.characters)
       }
 
-      // Otherwise, get attack targets
-      return getValidAttackTargets(current, combatState.characters, 1)
+      // Otherwise, get attack targets (uses character's class-based range)
+      return getValidAttackTargets(current, combatState.characters)
     },
     [combatState?.currentTurnIndex, combatState?.characters, combatState?.selectedAction, getCurrentCharacter]
   )

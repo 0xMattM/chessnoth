@@ -5,17 +5,21 @@ import { useAccount } from 'wagmi'
 import { Navigation } from '@/components/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { useCHSBalanceRaw, useBurnCHS } from '@/hooks/useCHSToken'
 import { formatCHSAmount, parseCHSAmount } from '@/lib/chs-token'
 import { addItem, getItemQuantity, getInventory } from '@/lib/inventory'
 import { useToast } from '@/hooks/use-toast'
 import { logger } from '@/lib/logger'
-import { ShoppingCart, Coins, Package, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { ShoppingCart, Coins, Package, Loader2, CheckCircle2, AlertCircle, Filter, X } from 'lucide-react'
 import itemsData from '@/data/items.json'
 import Image from 'next/image'
 import { getItemImageFromData } from '@/lib/item-images'
+import { rarityColors, rarityBgColors, RARITY_COLORS } from '@/lib/constants'
+import { CHARACTER_CLASSES } from '@/lib/classes'
+import { cn, getItemBorderClass } from '@/lib/utils'
+import { SectionTitle } from '@/components/section-title'
 
 interface Item {
   id: string
@@ -32,21 +36,7 @@ interface Item {
   effects?: Array<Record<string, any>>
 }
 
-const rarityColors = {
-  common: 'border-gray-500 bg-gray-500/10 text-gray-500',
-  uncommon: 'border-green-500 bg-green-500/10 text-green-500',
-  rare: 'border-blue-500 bg-blue-500/10 text-blue-500',
-  epic: 'border-purple-500 bg-purple-500/10 text-purple-500',
-  legendary: 'border-yellow-500 bg-yellow-500/10 text-yellow-500',
-}
-
-const rarityBgColors = {
-  common: 'bg-gray-500/5',
-  uncommon: 'bg-green-500/5',
-  rare: 'bg-blue-500/5',
-  epic: 'bg-purple-500/5',
-  legendary: 'bg-yellow-500/5',
-}
+// Use centralized rarity colors from branding (imported above)
 
 /**
  * Shop page for purchasing items with CHS tokens
@@ -59,6 +49,8 @@ export default function ShopPage() {
   const [inventory, setInventory] = useState<Record<string, number>>({})
   const [quantities, setQuantities] = useState<Record<string, string>>({})
   const [selectedCategory, setSelectedCategory] = useState<'all' | 'weapon' | 'armor' | 'consumable'>('all')
+  const [selectedClass, setSelectedClass] = useState<string>('all')
+  const [selectedRarity, setSelectedRarity] = useState<string>('all')
   const [pendingPurchase, setPendingPurchase] = useState<{ itemId: string; quantity: number } | null>(null)
   const processedHashesRef = useRef<Set<string>>(new Set())
   const purchaseInfoRef = useRef<Map<string, { itemId: string; quantity: number }>>(new Map())
@@ -182,10 +174,41 @@ export default function ShopPage() {
     }
   }, [burnError, pendingPurchase, toast])
 
-  // Filter items by category
+  // Get unique rarities from items (for filter dropdown)
+  const availableRarities = Array.from(
+    new Set(itemsData.map((item: Item) => item.rarity))
+  ).sort((a, b) => {
+    const rarityOrder = ['common', 'uncommon', 'rare', 'epic', 'legendary']
+    return rarityOrder.indexOf(a) - rarityOrder.indexOf(b)
+  })
+  
+  // Filter items by category, class, and rarity
   const filteredItems = itemsData.filter((item: Item) => {
-    if (selectedCategory === 'all') return true
-    return item.type === selectedCategory
+    // Filter by category
+    if (selectedCategory !== 'all' && item.type !== selectedCategory) {
+      return false
+    }
+    
+    // Filter by class
+    if (selectedClass !== 'all') {
+      // If item has no allowedClasses, it's usable by all classes - show it
+      if (!item.allowedClasses || item.allowedClasses.length === 0) {
+        // Universal items (no class restriction) - show for all class filters
+        // This allows consumables and universal items to appear
+      } else {
+        // Item has class restrictions - check if selected class is allowed
+        if (!item.allowedClasses.includes(selectedClass)) {
+          return false
+        }
+      }
+    }
+    
+    // Filter by rarity
+    if (selectedRarity !== 'all' && item.rarity !== selectedRarity) {
+      return false
+    }
+    
+    return true
   }) as Item[]
 
   // Handle purchase
@@ -308,15 +331,10 @@ export default function ShopPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <Navigation />
       <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-8 animate-slide-up">
-          <div className="inline-block mb-4 rounded-full bg-yellow-500/10 px-4 py-1.5 text-sm font-medium text-yellow-300 border border-yellow-500/20">
-            🛒 Shop
-          </div>
-          <h1 className="mb-4 text-5xl font-bold tracking-tight bg-gradient-to-r from-white via-yellow-100 to-yellow-200 bg-clip-text text-transparent">
-            Item Shop
-          </h1>
-          <p className="text-lg text-yellow-200/80">Purchase equipment and consumables with CHS tokens</p>
-        </div>
+        <SectionTitle
+          title="Item Shop"
+          subtitle="Purchase equipment and consumables with CHS tokens"
+        />
 
         {/* Balance Card */}
         <Card className="mb-6 border-yellow-500/20 bg-slate-900/50 backdrop-blur-xl">
@@ -341,26 +359,132 @@ export default function ShopPage() {
           </CardContent>
         </Card>
 
-        {/* Shop Tabs */}
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="bg-slate-900/50 backdrop-blur-xl border border-border/40 p-1">
-            <TabsTrigger value="all" onClick={() => setSelectedCategory('all')}>
-              All Items
-            </TabsTrigger>
-            <TabsTrigger value="weapon" onClick={() => setSelectedCategory('weapon')}>
-              Weapons
-            </TabsTrigger>
-            <TabsTrigger value="armor" onClick={() => setSelectedCategory('armor')}>
-              Armor
-            </TabsTrigger>
-            <TabsTrigger value="consumable" onClick={() => setSelectedCategory('consumable')}>
-              Consumables
-            </TabsTrigger>
-          </TabsList>
+        {/* Filters Section */}
+        <Card className="mb-6 border-slate-700/60 bg-slate-900/50 backdrop-blur-xl">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Filter className="h-4 w-4 text-blue-400" />
+              Filters
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Category Filter */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-muted-foreground">Category</label>
+              <Tabs value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as typeof selectedCategory)}>
+                <TabsList className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/60 p-1 w-full grid grid-cols-4">
+                  <TabsTrigger value="all" className="text-xs">
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="weapon" className="text-xs">
+                    Weapons
+                  </TabsTrigger>
+                  <TabsTrigger value="armor" className="text-xs">
+                    Armor
+                  </TabsTrigger>
+                  <TabsTrigger value="consumable" className="text-xs">
+                    Consumables
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            
+            {/* Class and Rarity Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Class Filter */}
+              <div className="space-y-2">
+                <label htmlFor="class-filter" className="text-sm font-medium text-muted-foreground">
+                  Character Class
+                </label>
+                <select
+                  id="class-filter"
+                  value={selectedClass}
+                  onChange={(e) => setSelectedClass(e.target.value)}
+                  className="w-full h-10"
+                >
+                  <option value="all">All Classes</option>
+                  {CHARACTER_CLASSES.map((cls) => (
+                    <option key={cls.id} value={cls.id}>
+                      {cls.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              {/* Rarity Filter */}
+              <div className="space-y-2">
+                <label htmlFor="rarity-filter" className="text-sm font-medium text-muted-foreground">
+                  Rarity
+                </label>
+                <select
+                  id="rarity-filter"
+                  value={selectedRarity}
+                  onChange={(e) => setSelectedRarity(e.target.value)}
+                  className="w-full h-10"
+                >
+                  <option value="all">All Rarities</option>
+                  {availableRarities.map((rarity) => (
+                    <option key={rarity} value={rarity}>
+                      {RARITY_COLORS[rarity as keyof typeof RARITY_COLORS]?.name || rarity.charAt(0).toUpperCase() + rarity.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            {/* Active Filters Display */}
+            {(selectedClass !== 'all' || selectedRarity !== 'all') && (
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-700/60">
+                <span className="text-xs text-muted-foreground">Active filters:</span>
+                {selectedClass !== 'all' && (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-500/20 border border-blue-500/30 text-xs">
+                    <span className="text-blue-300">
+                      Class: {CHARACTER_CLASSES.find(c => c.id === selectedClass)?.name || selectedClass}
+                    </span>
+                    <button
+                      onClick={() => setSelectedClass('all')}
+                      className="text-blue-300 hover:text-blue-200 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                {selectedRarity !== 'all' && (
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-violet-500/20 border border-violet-500/30 text-xs">
+                    <span className="text-violet-300">
+                      Rarity: {RARITY_COLORS[selectedRarity as keyof typeof RARITY_COLORS]?.name || selectedRarity}
+                    </span>
+                    <button
+                      onClick={() => setSelectedRarity('all')}
+                      className="text-violet-300 hover:text-violet-200 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    setSelectedClass('all')
+                    setSelectedRarity('all')
+                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors underline"
+                >
+                  Clear all
+                </button>
+              </div>
+            )}
+            
+            {/* Results Count */}
+            <div className="text-xs text-muted-foreground pt-2 border-t border-slate-700/60">
+              Showing {filteredItems.length} of {itemsData.length} items
+            </div>
+          </CardContent>
+        </Card>
 
-          <TabsContent value={selectedCategory} className="space-y-4">
-            <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-              {filteredItems.map((item: Item) => {
+        {/* Shop Items Grid */}
+        <div className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+            {filteredItems.map((item: Item) => {
                 const itemImage = getItemImageFromData(item)
                 const ownedQuantity = inventory[item.id] || 0
                 const quantityInput = quantities[item.id] || '1'
@@ -373,9 +497,14 @@ export default function ShopPage() {
                 return (
                   <Card
                     key={item.id}
-                    className={`group transition-all duration-300 hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden flex flex-col ${rarityBgColors[item.rarity]}`}
+                    className={cn(
+                      "group transition-all duration-300 hover:-translate-y-1 overflow-hidden flex flex-col embossed",
+                      getItemBorderClass(item.rarity),
+                      "bg-slate-900/90 backdrop-blur-xl"
+                    )}
                   >
-                    <div className="aspect-[3/2] w-full overflow-hidden bg-slate-800/50 border-b border-border/40 relative flex items-center justify-center">
+                    <div className="absolute inset-0 metallic-overlay pointer-events-none" />
+                    <div className="aspect-[3/2] w-full overflow-hidden bg-slate-950/80 border-b-2 border-slate-700/50 relative flex items-center justify-center">
                       {itemImage ? (
                         <Image
                           src={itemImage}
@@ -483,18 +612,20 @@ export default function ShopPage() {
                   </Card>
                 )
               })}
-            </div>
-
-            {filteredItems.length === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No items in this category</p>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-        </Tabs>
+          </div>
+          
+          {filteredItems.length === 0 && (
+            <Card className="border-slate-700/60 bg-slate-900/50 backdrop-blur-xl">
+              <CardContent className="py-12 text-center">
+                <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground mb-2">No items match your filters</p>
+                <p className="text-xs text-muted-foreground/80">
+                  Try adjusting your filters to see more items
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   )

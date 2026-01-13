@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Cinzel } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -8,7 +8,20 @@ import { WalletConflictWarning } from '@/components/wallet-conflict-warning'
 import Script from 'next/script'
 import '@/lib/clear-storage' // Initialize clear storage functions
 
-const inter = Inter({ subsets: ['latin'] })
+// Chessnoth Branding: Inter for body text (UI/body)
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+// Chessnoth Branding: Cinzel for titles (Display/titles)
+const cinzel = Cinzel({ 
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-cinzel',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Chessnoth - NFT Game',
@@ -27,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.variable} ${cinzel.variable} ${inter.className}`} suppressHydrationWarning>
         <Script id="suppress-wallet-errors" strategy="beforeInteractive">
           {`
             // Suppress specific wallet-related console errors

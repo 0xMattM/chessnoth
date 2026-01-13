@@ -75,3 +75,66 @@ export const SUCCESS_MESSAGES = {
   CHARACTER_MINTED: 'Character NFT minted successfully!',
 } as const
 
+// Branding & UI Constants
+// Item Rarity Colors - Used consistently across the application
+// Based on Chessnoth Branding Board specifications
+export const RARITY_COLORS = {
+  common: {
+    name: 'Steel Gray',
+    hex: '#9CA3AF',
+    tailwind: 'border-gray-500 text-gray-500',
+    bgTailwind: 'bg-gray-500/10',
+  },
+  uncommon: {
+    name: 'Emerald Green',
+    hex: '#22C55E',
+    tailwind: 'border-green-500 text-green-500',
+    bgTailwind: 'bg-green-500/10',
+  },
+  rare: {
+    name: 'Arcane Blue',
+    hex: '#3B82F6',
+    tailwind: 'border-blue-500 text-blue-500',
+    bgTailwind: 'bg-blue-500/10',
+  },
+  epic: {
+    name: 'Arcane Purple',
+    hex: '#7C3AED',
+    tailwind: 'border-purple-500 text-purple-500',
+    bgTailwind: 'bg-purple-500/10',
+  },
+  legendary: {
+    name: 'Noble Gold',
+    hex: '#FACC15',
+    tailwind: 'border-yellow-500 text-yellow-500',
+    bgTailwind: 'bg-yellow-500/10',
+  },
+} as const
+
+// Legacy compatibility - simple string format for existing code
+export const rarityColors = {
+  common: RARITY_COLORS.common.tailwind,
+  uncommon: RARITY_COLORS.uncommon.tailwind,
+  rare: RARITY_COLORS.rare.tailwind,
+  epic: RARITY_COLORS.epic.tailwind,
+  legendary: RARITY_COLORS.legendary.tailwind,
+} as const
+
+// Rarity background colors
+export const rarityBgColors = {
+  common: RARITY_COLORS.common.bgTailwind,
+  uncommon: RARITY_COLORS.uncommon.bgTailwind,
+  rare: RARITY_COLORS.rare.bgTailwind,
+  epic: RARITY_COLORS.epic.bgTailwind,
+  legendary: RARITY_COLORS.legendary.bgTailwind,
+} as const
+
+// Rarity text colors (for text styling)
+export const rarityTextColors = {
+  common: 'text-gray-500',
+  uncommon: 'text-green-500',
+  rare: 'text-blue-500',
+  epic: 'text-purple-500',
+  legendary: 'text-yellow-500',
+} as const
+

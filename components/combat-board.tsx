@@ -27,7 +27,9 @@ interface CombatBoardProps {
 
 /**
  * Get sprite path for a character
- * For bosses, use their custom sprite, otherwise use class sprite
+ * For bosses, use their custom sprite
+ * For enemies, use enemy sprites from /enemies folder
+ * For player characters, use character sprites from /characters folder
  * Handles various formats: "warrior", "Dark Mage", "dark_mage", etc.
  */
 function getCharacterSpritePath(character: CombatCharacter): string {
@@ -36,7 +38,12 @@ function getCharacterSpritePath(character: CombatCharacter): string {
     return character.bossSprite
   }
   
-  // Otherwise, use the class sprite
+  // For enemies, use enemy sprites
+  if (character.team === 'enemy') {
+    return getEnemySpritePath(character)
+  }
+  
+  // For player characters, use the class sprite
   // Normalize: lowercase, replace spaces/hyphens with underscores
   const normalizedClass = character.class
     .toLowerCase()
@@ -44,6 +51,64 @@ function getCharacterSpritePath(character: CombatCharacter): string {
     .replace(/[\s-]+/g, '_')
     .replace(/_+/g, '_') // Remove multiple underscores
   return `/characters/${normalizedClass}.svg`
+}
+
+/**
+ * Get enemy sprite path based on class and enemy index
+ * Maps enemy classes to appropriate enemy sprites
+ */
+function getEnemySpritePath(character: CombatCharacter): string {
+  const normalizedClass = character.class
+    .toLowerCase()
+    .trim()
+    .replace(/[\s-]+/g, '_')
+    .replace(/_+/g, '_')
+  
+  // Extract enemy index from ID (e.g., "enemy-0" -> 0)
+  const enemyIndexMatch = character.id.match(/enemy-(\d+)/)
+  const enemyIndex = enemyIndexMatch ? parseInt(enemyIndexMatch[1], 10) : 0
+  
+  // Map enemy classes to sprite categories and files
+  // Use enemy index to add variety when multiple options exist
+  const enemySpriteMap: Record<string, string[]> = {
+    warrior: [
+      '/enemies/goblins/goblin_warrior.svg',
+      '/enemies/undeads/skeleton_warrior.svg',
+      '/enemies/brutes/troll.svg',
+      '/enemies/brutes/ogre.svg',
+    ],
+    mage: [
+      '/enemies/dark_humanoids/shadow_mage.svg',
+      '/enemies/dark_humanoids/dark_cultist.svg',
+      '/enemies/dark_humanoids/fire_cult_soldier.svg',
+    ],
+    archer: [
+      '/enemies/goblins/goblin_archer.svg',
+      '/enemies/undeads/skeleton_archer.svg',
+    ],
+    assassin: [
+      '/enemies/dark_humanoids/assasin.svg',
+      '/enemies/goblins/goblin_scout.svg',
+    ],
+    healer: [
+      '/enemies/dark_humanoids/dark_cultist.svg',
+      '/enemies/undeads/ghoul.svg',
+    ],
+    paladin: [
+      '/enemies/dark_humanoids/corrupted_paladin.svg',
+      '/enemies/dark_humanoids/undead_champion.svg',
+    ],
+  }
+  
+  // Get sprite options for this class, or use a default
+  const spriteOptions = enemySpriteMap[normalizedClass] || [
+    '/enemies/goblins/goblin_guard.svg', // Default fallback
+  ]
+  
+  // Select sprite based on enemy index to add variety
+  const selectedSprite = spriteOptions[enemyIndex % spriteOptions.length]
+  
+  return selectedSprite
 }
 
 export function CombatBoard({
