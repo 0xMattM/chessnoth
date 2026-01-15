@@ -83,7 +83,7 @@ function getEnemySpritePath(character: CombatCharacter): string {
       'dark_cultist': '/enemies/dark_humanoids/dark_cultist.svg',
       'fire_cult_soldier': '/enemies/dark_humanoids/fire_cult_soldier.svg',
       'ice_raider': '/enemies/dark_humanoids/ice_raider.svg',
-      'assasin': '/enemies/dark_humanoids/assasin.svg',
+      'assassin': '/enemies/dark_humanoids/assassin.svg',
       'corrupted_paladin': '/enemies/dark_humanoids/corrupted_paladin.svg',
       'undead_champion': '/enemies/dark_humanoids/undead_champion.svg',
       // Brutes
@@ -132,7 +132,7 @@ function getEnemySpritePath(character: CombatCharacter): string {
       '/enemies/undeads/skeleton_archer.svg',
     ],
     assassin: [
-      '/enemies/dark_humanoids/assasin.svg',
+      '/enemies/dark_humanoids/assassin.svg',
       '/enemies/goblins/goblin_scout.svg',
     ],
     healer: [

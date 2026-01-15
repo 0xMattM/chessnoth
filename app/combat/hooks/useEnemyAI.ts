@@ -590,7 +590,13 @@ export function useEnemyAI({
       return
     }
     
-    const damage = calculateDamage(enemy, target, true)
+    // Determine if attack is physical or magical based on character class
+    // Magic classes use MAG stat for basic attacks, physical classes use ATK
+    const magicClasses = ['mage', 'dark_mage', 'healer']
+    const classLower = enemy.class.toLowerCase().replace(/\s+/g, '_')
+    const isPhysicalAttack = !magicClasses.includes(classLower)
+    
+    const damage = calculateDamage(enemy, target, isPhysicalAttack)
 
     combatLog.addAttackLog(enemy.name, target.name)
     combatLog.addDamageLog(enemy.name, target.name, damage)

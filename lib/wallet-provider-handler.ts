@@ -1,6 +1,7 @@
 /**
  * Wallet Provider Handler
  * Handles conflicts between multiple Ethereum wallet extensions
+ * Prevents MetaMask errors by properly managing provider initialization
  */
 
 import { logger } from './logger'
@@ -12,11 +13,16 @@ interface EthereumProvider {
   providers?: EthereumProvider[]
   removeListener?: (event: string, callback: (...args: unknown[]) => void) => void
   on?: (event: string, callback: (...args: unknown[]) => void) => void
+  request?: (args: { method: string; params?: unknown[] }) => Promise<unknown>
+  _metamask?: {
+    isUnlocked?: () => Promise<boolean>
+  }
 }
 
 declare global {
   interface Window {
     ethereum?: EthereumProvider
+    _ethereumProviderReady?: boolean
   }
 }
 
@@ -90,29 +96,133 @@ export function hasMultipleWalletProviders(): boolean {
 }
 
 /**
+ * Cleans up wallet provider event listeners to prevent memory leaks
+ * Call this when unmounting or when no longer needing wallet connection
+ */
+export function cleanupWalletListeners(): void {
+  if (typeof window === 'undefined') return
+
+  const ethereum = window.ethereum
+
+  if (!ethereum || !ethereum.removeListener) return
+
+  try {
+    // Remove common event listeners that may have been attached
+    const commonEvents = [
+      'accountsChanged',
+      'chainChanged',
+      'connect',
+      'disconnect',
+      'message',
+    ]
+
+    commonEvents.forEach(event => {
+      if (ethereum.removeListener) {
+        // Remove all listeners for this event
+        ethereum.removeListener(event, () => {})
+      }
+    })
+
+    logger.debug('Wallet event listeners cleaned up')
+  } catch (error) {
+    logger.debug('Error cleaning up wallet listeners', error instanceof Error ? error : new Error(String(error)))
+  }
+}
+
+/**
+ * Checks if MetaMask is unlocked and ready
+ * @returns Promise that resolves to true if MetaMask is unlocked
+ */
+async function isMetaMaskUnlocked(provider: EthereumProvider): Promise<boolean> {
+  try {
+    if (provider.isMetaMask && provider._metamask?.isUnlocked) {
+      return await provider._metamask.isUnlocked()
+    }
+    return true // Assume unlocked for non-MetaMask providers
+  } catch (error) {
+    logger.debug('Could not check MetaMask unlock status', error instanceof Error ? error : new Error(String(error)))
+    return true // Assume unlocked if we can't check
+  }
+}
+
+/**
  * Initializes the wallet provider handler
- * Should be called before rendering the app
+ * Should be called after DOM is ready
+ * Improved to prevent race conditions and MetaMask errors
  */
 export function initializeWalletHandler(): void {
   if (typeof window === 'undefined') return
 
-  try {
-    // Check for multiple providers
-    hasMultipleWalletProviders()
+  // Prevent multiple initializations
+  if (window._ethereumProviderReady) {
+    logger.debug('Wallet handler already initialized')
+    return
+  }
 
-    // Get preferred provider
-    const provider = getPreferredProvider()
+  // Wait for wallet providers to be injected (they may load async)
+  const initWithDelay = async () => {
+    try {
+      // Check for multiple providers
+      hasMultipleWalletProviders()
 
-    if (provider) {
-      logger.debug('Wallet provider initialized successfully')
-    } else {
-      logger.debug('No wallet provider found - users will need to install a wallet extension')
+      // Get preferred provider
+      const provider = getPreferredProvider()
+
+      if (provider) {
+        // Check if MetaMask is unlocked before proceeding
+        const isUnlocked = await isMetaMaskUnlocked(provider)
+        
+        if (isUnlocked || !provider.isMetaMask) {
+          window._ethereumProviderReady = true
+          logger.debug('Wallet provider initialized successfully', {
+            isMetaMask: provider.isMetaMask,
+            isCoinbaseWallet: provider.isCoinbaseWallet,
+            isBraveWallet: provider.isBraveWallet,
+          })
+        } else {
+          logger.debug('MetaMask detected but locked - user needs to unlock')
+        }
+      } else {
+        logger.debug('No wallet provider found - users will need to install a wallet extension')
+      }
+    } catch (error) {
+      // Log error but don't throw - wallet not being available is not critical
+      logger.debug(
+        'Wallet handler initialization encountered an error',
+        error instanceof Error ? error : new Error(String(error))
+      )
     }
-  } catch (error) {
-    logger.error(
-      'Error initializing wallet handler',
-      error instanceof Error ? error : new Error(String(error))
-    )
+  }
+
+  // Use ethereum#initialized event if available (standard approach)
+  const handleEthereumInitialized = () => {
+    logger.debug('Ethereum provider initialized event received')
+    initWithDelay()
+  }
+
+  // Check if already available
+  if (window.ethereum) {
+    // Small delay to ensure provider is fully ready
+    setTimeout(initWithDelay, 100)
+  } else {
+    // Listen for ethereum#initialized event (EIP-1193 standard)
+    window.addEventListener('ethereum#initialized', handleEthereumInitialized, { once: true })
+    
+    // Fallback: Poll for ethereum object (max 5 seconds)
+    let attempts = 0
+    const maxAttempts = 10
+    const checkInterval = setInterval(() => {
+      attempts++
+      if (window.ethereum) {
+        clearInterval(checkInterval)
+        window.removeEventListener('ethereum#initialized', handleEthereumInitialized)
+        initWithDelay()
+      } else if (attempts >= maxAttempts) {
+        clearInterval(checkInterval)
+        window.removeEventListener('ethereum#initialized', handleEthereumInitialized)
+        logger.debug('No wallet provider detected after waiting')
+      }
+    }, 500)
   }
 }
 

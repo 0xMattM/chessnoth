@@ -20,7 +20,7 @@ A modern React/Next.js interface for the Chessnoth NFT game, featuring character
    ```
 
 2. **Configure environment variables**:
-   Create `.env.local` in the project root:
+   Create `.env` in the project root:
    ```env
    # Deployment (Hardhat)
    PRIVATE_KEY=your_private_key_here_without_0x
@@ -78,7 +78,7 @@ For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUI
 ## Features
 
 - **Mint NFT**: Mint new character NFTs with custom metadata
-- **Characters**: View and manage your NFT characters with equipment slots
+- **Characters**: View and manage your NFT characters, equip items and level them up 
 - **Team Selection**: Build your battle team (up to 4 characters)
 - **Items**: Preview equipment and consumable items
 - **Battle**: Coming soon - tactical combat system
@@ -110,9 +110,6 @@ For detailed deployment instructions, see [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUI
    NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourDeployedCharacterNFTAddress
    NEXT_PUBLIC_CHS_TOKEN_ADDRESS=0xYourDeployedCHSTokenAddress
    NEXT_PUBLIC_MARKETPLACE_ADDRESS=0xYourDeployedMarketplaceAddress
-   
-   # Deployment (Hardhat - optional, only for deploying contracts)
-   PRIVATE_KEY=your_private_key_for_deployment
    ```
    
    **Important**: 
@@ -335,18 +332,19 @@ If you encounter wallet connection issues, especially errors about "Multiple Eth
 
 ## Mantle Network Integration
 
-This project is built for the **Mantle Global Hackathon 2025** (GameFi & Social track). Mantle Network is a modular Ethereum Layer 2 that offers:
+Chessnoth is built on **Mantle Network**, a modular Ethereum Layer 2 that offers:
 
-- **Low gas fees**: Cost-efficient transactions
-- **High throughput**: Scalable for gaming applications
-- **EVM compatibility**: Easy migration from Ethereum
-- **Built-in tooling**: Mantle DA, Mantle SDK, bridges, and testnets
+- **Low gas fees**: Cost-efficient transactions perfect for gaming
+- **High throughput**: Scalable for frequent gameplay interactions
+- **EVM compatibility**: Standard Solidity contracts with proven security
+- **Fast finality**: Quick transaction confirmations for responsive gameplay
 
-### Hackathon Track: GameFi & Social
+### Why Mantle for Gaming
 
-This project focuses on:
-- Consumer-facing apps integrating RWA or yield logic
-- Token incentive design and user retention tools
+Mantle Network is ideal for blockchain games because:
+- Frequent player interactions (minting, battling, trading) remain affordable
+- Turn-based mechanics allow deterministic on-chain validation
+- Low costs enable sustainable play-to-earn economics
 
 ## Additional Documentation
 

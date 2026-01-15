@@ -94,3 +94,125 @@ export interface ClassData {
   }
 }
 
+/**
+ * Social System Types
+ */
+
+// Guild System
+export interface Guild {
+  id: string
+  name: string
+  description: string
+  logoUrl?: string
+  bannerUrl?: string
+  type: 'casual' | 'competitive'
+  leaderId: string // wallet address
+  officers: string[] // wallet addresses
+  members: string[] // wallet addresses
+  maxMembers: number
+  requirements: {
+    minLevel?: number
+    minBattlesWon?: number
+  }
+  stats: {
+    totalBattles: number
+    totalCHSEarned: number
+    createdAt: number
+    lastActive: number
+  }
+  treasury: number // CHS amount
+  challenges: GuildChallenge[]
+  settings: {
+    autoApprove: boolean
+    allowDonations: boolean
+  }
+}
+
+export interface GuildChallenge {
+  id: string
+  guildId: string
+  name: string
+  description: string
+  type: 'battles' | 'chs' | 'levels'
+  target: number
+  progress: number
+  reward: number // CHS per member
+  startDate: number
+  endDate: number
+  status: 'active' | 'completed' | 'expired'
+}
+
+export interface GuildMember {
+  address: string
+  guildId: string
+  role: 'leader' | 'officer' | 'member'
+  joinedAt: number
+  contribution: {
+    battles: number
+    chsEarned: number
+    donations: number
+  }
+}
+
+export interface GuildJoinRequest {
+  id: string
+  guildId: string
+  userAddress: string
+  status: 'pending' | 'accepted' | 'rejected'
+  createdAt: number
+}
+
+// Friend System
+export interface FriendRequest {
+  id: string
+  from: string // wallet address
+  to: string // wallet address
+  status: 'pending' | 'accepted' | 'rejected'
+  createdAt: number
+}
+
+export interface Friend {
+  address: string
+  addedAt: number
+  stats?: {
+    level: number
+    battlesWon: number
+    chsEarned: number
+  }
+  profile?: {
+    username?: string
+    guildId?: string
+  }
+  lastActive: number
+}
+
+// User Profile
+export interface UserProfile {
+  address: string
+  username?: string
+  guildId?: string
+  stats: {
+    level: number
+    battlesWon: number
+    totalCHS: number
+    nftCount: number
+  }
+  privacy: {
+    showStats: boolean
+    showBattleHistory: boolean
+    publicProfile: boolean
+  }
+  referralCode: string
+  referredBy?: string
+  createdAt: number
+  lastActive: number
+}
+
+// Social Stats
+export interface SocialStats {
+  totalGuilds: number
+  totalMembers: number
+  totalFriends: number
+  activeGuilds: number
+  topGuilds: Guild[]
+}

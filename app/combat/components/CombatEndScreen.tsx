@@ -4,14 +4,15 @@ import { useEffect, useState, useRef } from 'react'
 import { useAccount } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { calculateCombatRewards, addPendingReward } from '@/lib/rewards'
+import { Badge } from '@/components/ui/badge'
+import { calculateCombatRewards, addPendingReward, processCombatVictory, getGuildBonus } from '@/lib/rewards'
 import { getHighestStageCompleted, setHighestStageCompleted, isBossStage } from '@/lib/battle'
 import { updateQuestProgress } from '@/lib/daily-quests'
 import { formatCHSAmount } from '@/lib/chs-token'
 import { useToast } from '@/hooks/use-toast'
 import { logger } from '@/lib/logger'
 import type { CombatCharacter } from '@/lib/combat'
-import { Coins, TrendingUp, CheckCircle2, ArrowRight } from 'lucide-react'
+import { Coins, TrendingUp, CheckCircle2, ArrowRight, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 interface CombatEndScreenProps {
@@ -35,7 +36,7 @@ export function CombatEndScreen({
 }: CombatEndScreenProps) {
   const { address } = useAccount()
   const { toast } = useToast()
-  const [rewards, setRewards] = useState<{ chs: number; exp: number } | null>(null)
+  const [rewards, setRewards] = useState<{ chs: number; exp: number; guildBonus: number } | null>(null)
   const rewardsProcessedRef = useRef(false)
 
   // Calculate rewards on mount (only for victories) - only once per combat
@@ -46,11 +47,22 @@ export function CombatEndScreen({
         (c) => c.team === 'player' && c.stats.hp > 0
       ).length
 
-      const calculatedRewards = calculateCombatRewards(stage, turn, playerCharactersAlive)
-      setRewards({ chs: calculatedRewards.chs, exp: calculatedRewards.exp })
+      // Get guild bonus multiplier
+      const guildBonusMultiplier = getGuildBonus(address)
+      
+      // Calculate rewards with guild bonus
+      const calculatedRewards = calculateCombatRewards(stage, turn, playerCharactersAlive, guildBonusMultiplier)
+      setRewards({ 
+        chs: calculatedRewards.chs, 
+        exp: calculatedRewards.exp,
+        guildBonus: guildBonusMultiplier 
+      })
 
       // Add both CHS and EXP to pending rewards
       addPendingReward(calculatedRewards)
+      
+      // Process combat victory (update guild and user stats)
+      processCombatVictory(address, calculatedRewards, true)
       
       // Update highest stage completed to unlock next stage
       const currentHighest = getHighestStageCompleted()
@@ -69,9 +81,13 @@ export function CombatEndScreen({
       }
       updateQuestProgress('complete_stage', 1, stage)
       
+      const bonusText = guildBonusMultiplier > 0 
+        ? ` (${Math.round(guildBonusMultiplier * 100)}% guild bonus applied!)` 
+        : ''
+      
       toast({
         title: 'Rewards Earned',
-        description: `You earned ${calculatedRewards.chs} CHS and ${calculatedRewards.exp} EXP! Go to Dashboard to claim CHS and distribute EXP.`,
+        description: `You earned ${calculatedRewards.chs} CHS and ${calculatedRewards.exp} EXP${bonusText}! Go to Dashboard to claim CHS and distribute EXP.`,
       })
       
       rewardsProcessedRef.current = true
@@ -111,6 +127,24 @@ export function CombatEndScreen({
                   </div>
                   <span className="text-lg font-bold">{rewards.exp} EXP</span>
                 </div>
+
+                {/* Guild Bonus Display */}
+                {rewards.guildBonus > 0 && (
+                  <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-5 w-5 text-purple-500" />
+                        <span className="font-medium text-purple-700 dark:text-purple-300">Guild Bonus</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-purple-500/20 text-purple-700 dark:text-purple-300">
+                        +{Math.round(rewards.guildBonus * 100)}%
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                      Your guild membership grants you bonus rewards!
+                    </p>
+                  </div>
+                )}
 
                 <p className="text-sm text-muted-foreground">
                   CHS and EXP have been added to your pending rewards. Go to the Dashboard to claim your CHS and distribute EXP to your characters.

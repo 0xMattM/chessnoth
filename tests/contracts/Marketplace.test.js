@@ -46,12 +46,14 @@ describe("Marketplace", function () {
     await marketplace.waitForDeployment();
     
     // Mint NFT to seller
-    await characterNFT.mintCharacter(
+    const mintPrice = await characterNFT.mintPrice();
+    await characterNFT.connect(seller).mintCharacter(
       seller.address,
       "QmTest123",
       1,
       "Warrior",
-      "TestWarrior"
+      "TestWarrior",
+      { value: mintPrice }
     );
     
     // Give buyer some CHS tokens

@@ -87,7 +87,51 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   // Initialize wallet handler on mount
   useEffect(() => {
+    // Initialize immediately - the handler has its own internal delays
     initializeWalletHandler()
+  }, [])
+
+  // Handle wallet errors gracefully
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleError = (error: ErrorEvent) => {
+      const message = error.message || ''
+      
+      // Log wallet-related errors but don't throw
+      if (
+        message.includes('MetaMask') ||
+        message.includes('ethereum') ||
+        message.includes('wallet')
+      ) {
+        logger.debug('Wallet-related error caught', new Error(message))
+        error.preventDefault() // Prevent error from bubbling to console
+      }
+    }
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason
+      const message = reason?.message || String(reason) || ''
+      
+      // Handle wallet-related promise rejections
+      if (
+        message.includes('MetaMask') ||
+        message.includes('ethereum') ||
+        message.includes('User rejected') ||
+        message.includes('User denied')
+      ) {
+        logger.debug('Wallet promise rejection caught', reason instanceof Error ? reason : new Error(message))
+        event.preventDefault() // Prevent unhandled rejection warning
+      }
+    }
+
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleUnhandledRejection)
+
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+    }
   }, [])
 
   // Show error if environment validation failed

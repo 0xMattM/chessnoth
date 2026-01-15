@@ -32,12 +32,14 @@ describe("CharacterNFT", function () {
 
   describe("Minting", function () {
     it("Should mint a character correctly", async function () {
+      const mintPrice = await characterNFT.mintPrice();
       const tx = await characterNFT.mintCharacter(
         addr1.address,
         "QmTest123",
         1,
         "Warrior",
-        "TestWarrior"
+        "TestWarrior",
+        { value: mintPrice }
       );
       
       await expect(tx)
@@ -100,19 +102,22 @@ describe("CharacterNFT", function () {
     });
 
     it("Should increment token IDs correctly", async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest1",
         1,
         "Warrior",
-        "Warrior1"
+        "Warrior1",
+        { value: mintPrice }
       );
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest2",
         1,
         "Mage",
-        "Mage1"
+        "Mage1",
+        { value: mintPrice }
       );
       
       expect(await characterNFT.ownerOf(1)).to.equal(addr1.address);
@@ -122,12 +127,14 @@ describe("CharacterNFT", function () {
 
   describe("Upgrading", function () {
     beforeEach(async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest123",
         1,
         "Warrior",
-        "TestWarrior"
+        "TestWarrior",
+        { value: mintPrice }
       );
     });
 
@@ -204,12 +211,14 @@ describe("CharacterNFT", function () {
 
   describe("Getter Functions", function () {
     beforeEach(async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest123",
         5,
         "Mage",
-        "TestMage"
+        "TestMage",
+        { value: mintPrice }
       );
     });
 
@@ -279,12 +288,14 @@ describe("CharacterNFT", function () {
     });
 
     it("Should allow authorized minter to set experience", async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest123",
         1,
         "Warrior",
-        "TestWarrior"
+        "TestWarrior",
+        { value: mintPrice }
       );
       
       await characterNFT.addAuthorizedMinter(addr2.address);
@@ -295,12 +306,14 @@ describe("CharacterNFT", function () {
     });
 
     it("Should prevent non-authorized from setting experience", async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest123",
         1,
         "Warrior",
-        "TestWarrior"
+        "TestWarrior",
+        { value: mintPrice }
       );
       
       await expect(
@@ -310,51 +323,59 @@ describe("CharacterNFT", function () {
 
     it("Should allow authorized minter to mint characters", async function () {
       await characterNFT.addAuthorizedMinter(addr2.address);
+      const mintPrice = await characterNFT.mintPrice();
       const tx = await characterNFT.connect(addr2).mintCharacter(
         addr1.address,
         "QmTest123",
         1,
         "Warrior",
-        "TestWarrior"
+        "TestWarrior",
+        { value: mintPrice }
       );
       await expect(tx)
         .to.emit(characterNFT, "CharacterMinted")
         .withArgs(1, addr1.address, "Warrior", "TestWarrior", 1, "QmTest123");
     });
 
-    it("Should prevent non-authorized from minting", async function () {
+    it("Should reject minting without sufficient payment", async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await expect(
         characterNFT.connect(addr2).mintCharacter(
           addr1.address,
           "QmTest123",
           1,
           "Warrior",
-          "TestWarrior"
+          "TestWarrior",
+          { value: mintPrice - 1n }
         )
-      ).to.be.revertedWith("CharacterNFT: Not authorized to mint");
+      ).to.be.revertedWith("CharacterNFT: Insufficient payment");
     });
   });
 
   describe("ERC721 Functionality", function () {
     beforeEach(async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest123",
         1,
         "Warrior",
-        "TestWarrior"
+        "TestWarrior",
+        { value: mintPrice }
       );
     });
 
     it("Should return correct balance", async function () {
       expect(await characterNFT.balanceOf(addr1.address)).to.equal(1);
       
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest456",
         1,
         "Mage",
-        "TestMage"
+        "TestMage",
+        { value: mintPrice }
       );
       
       expect(await characterNFT.balanceOf(addr1.address)).to.equal(2);
@@ -369,12 +390,14 @@ describe("CharacterNFT", function () {
     });
 
     it("Should enumerate tokens correctly", async function () {
+      const mintPrice = await characterNFT.mintPrice();
       await characterNFT.mintCharacter(
         addr1.address,
         "QmTest456",
         1,
         "Mage",
-        "TestMage"
+        "TestMage",
+        { value: mintPrice }
       );
       
       const tokenId1 = await characterNFT.tokenOfOwnerByIndex(addr1.address, 0);

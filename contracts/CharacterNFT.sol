@@ -77,6 +77,7 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     
     event AuthorizedMinterAdded(address indexed minter);
     event AuthorizedMinterRemoved(address indexed minter);
+    event MintPriceUpdated(uint256 oldMintPrice, uint256 newMintPrice);
     
     /**
      * @dev Constructor
@@ -135,10 +136,12 @@ contract CharacterNFT is ERC721Enumerable, Ownable, ReentrancyGuard, Pausable {
     
     /**
      * @dev Sets the mint price
-     * @param _mintPrice New mint price in native currency (MNT)
+     * @param newMintPrice New mint price in native currency (MNT)
      */
-    function setMintPrice(uint256 _mintPrice) external onlyOwner {
-        mintPrice = _mintPrice;
+    function setMintPrice(uint256 newMintPrice) external onlyOwner {
+        uint256 oldMintPrice = mintPrice;
+        mintPrice = newMintPrice;
+        emit MintPriceUpdated(oldMintPrice, newMintPrice);
     }
     
     /**

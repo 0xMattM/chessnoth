@@ -46,8 +46,8 @@ export const STORAGE_KEYS = {
 
 // Combat Calculation Constants
 export const COMBAT_CALCULATIONS = {
-  DEFENSE_FACTOR: 1.5,
-  MIN_DAMAGE_FACTOR: 0.2,
+  DEFENSE_FACTOR: 0.8, // Reduced from 1.5 to make defense less oppressive
+  MIN_DAMAGE_FACTOR: 0.35, // Increased from 0.2 to guarantee more meaningful minimum damage
   CRIT_MULTIPLIER: 2.0,
   BASE_HIT_CHANCE: 0.95,
   EVASION_DIVISOR: 200,

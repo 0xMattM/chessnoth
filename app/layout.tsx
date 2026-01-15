@@ -41,38 +41,51 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${cinzel.variable} ${inter.className}`} suppressHydrationWarning>
-        <Script id="suppress-wallet-errors" strategy="beforeInteractive">
+        <Script id="force-body-scroll" strategy="afterInteractive">
           {`
-            // Suppress specific wallet-related console errors
+            // FORCE body scroll - remove inline overflow:hidden
             (function() {
-              const originalError = console.error;
-              console.error = function(...args) {
-                const errorMessage = args[0]?.toString() || '';
-                
-                // Suppress MetaMask provider errors and hydration errors
-                if (errorMessage.includes('MetaMask encountered an error setting the global Ethereum provider') ||
-                    errorMessage.includes('Cannot set property ethereum') ||
-                    errorMessage.includes('which has only a getter') ||
-                    errorMessage.includes('Could not establish connection. Receiving end does not exist') ||
-                    errorMessage.includes('Hydration failed')) {
-                  return;
+              function forceScroll() {
+                if (document.body) {
+                  document.body.style.removeProperty('overflow');
+                  document.body.style.removeProperty('padding-right');
+                  document.documentElement.style.removeProperty('overflow');
                 }
-                
-                // Call original console.error for other errors
-                originalError.apply(console, args);
-              };
+              }
               
-              // Also suppress warnings
-              const originalWarn = console.warn;
-              console.warn = function(...args) {
-                const warnMessage = args[0]?.toString() || '';
-                
-                if (warnMessage.includes('MetaMask') && warnMessage.includes('Ethereum provider')) {
-                  return;
-                }
-                
-                originalWarn.apply(console, args);
-              };
+              // Run immediately
+              forceScroll();
+              
+              // Run after DOM is ready
+              if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', forceScroll);
+              }
+              
+              // Keep checking and forcing scroll
+              const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                  if (mutation.type === 'attributes' && 
+                      (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+                    // Only force scroll if no actual dialog is open
+                    const hasDialog = document.querySelector('[data-radix-dialog-overlay]');
+                    if (!hasDialog) {
+                      forceScroll();
+                    }
+                  }
+                });
+              });
+              
+              observer.observe(document.body, {
+                attributes: true,
+                attributeFilter: ['style', 'class']
+              });
+              
+              if (document.documentElement) {
+                observer.observe(document.documentElement, {
+                  attributes: true,
+                  attributeFilter: ['style', 'class']
+                });
+              }
             })();
           `}
         </Script>

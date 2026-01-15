@@ -60,9 +60,8 @@ export default function DashboardPage() {
   useEffect(() => {
     fixOldRewards()
   }, [])
-  const { address, isConnected: isConnectedWagmi } = useAccount()
+  const { address, isConnected } = useAccount()
   const [mounted, setMounted] = useState(false)
-  const isConnected = mounted && isConnectedWagmi
 
   useEffect(() => {
     setMounted(true)
@@ -227,7 +226,7 @@ export default function DashboardPage() {
 
   return (
     <CharactersErrorBoundary>
-      <div className="min-h-screen branding-background">
+      <div className="min-h-screen branding-background" suppressHydrationWarning>
         {/* Animated background elements */}
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-float" />
@@ -241,14 +240,14 @@ export default function DashboardPage() {
             subtitle="Manage your characters, equipment, skills, and rewards"
           />
 
-          {!isConnected ? (
+          {!mounted || !isConnected ? (
             <Card className="border-border/40 bg-slate-900/50 backdrop-blur-xl animate-scale-in">
               <CardContent className="py-16 text-center">
                 <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/20 to-violet-600/20 border border-blue-500/20">
                   <Users className="h-10 w-10 text-blue-300" />
                 </div>
                 <p className="text-blue-200/80 font-medium">
-                  Please connect your wallet to view your characters
+                  {!mounted ? 'Loading...' : 'Please connect your wallet to view your characters'}
                 </p>
               </CardContent>
             </Card>
@@ -692,9 +691,9 @@ function LevelUpTab() {
     }))
   }
 
-  const handleUpgrade = async (tokenId: bigint, expAmount: bigint) => {
+  const handleUpgrade = (tokenId: bigint, expAmount: bigint) => {
     try {
-      await upgrade(tokenId, expAmount)
+      upgrade(tokenId, expAmount)
       
       // Update quest progress for character upgrade
       if (typeof window !== 'undefined') {
@@ -1127,16 +1126,8 @@ function ClaimSection() {
   const [pendingRewards, setPendingRewards] = useState<ReturnType<typeof getPendingRewards>>([])
   const justClaimedRef = useRef(false)
 
-  // Check if user is authorized minter
-  const { data: isAuthorizedMinter } = useContractRead({
-    address: CHS_TOKEN_ADDRESS,
-    abi: CHS_TOKEN_ABI,
-    functionName: 'authorizedMinters',
-    args: address ? [address] : undefined,
-    enabled: !!address && isConnected && CHS_TOKEN_ADDRESS !== '0x0000000000000000000000000000',
-  })
-
-  // Contract write for minting
+  // Contract write for minting CHS tokens
+  // Note: CHSToken.mint() is public and can be called by anyone
   const { write: mintCHS, data: mintHash, isLoading: isMinting, error: mintError } = useContractWrite({
     address: CHS_TOKEN_ADDRESS,
     abi: CHS_TOKEN_ABI,
@@ -1230,16 +1221,18 @@ function ClaimSection() {
       setIsClaiming(true)
       const amountInWei = parseCHSAmount(totalPendingCHS.toString())
 
-      if (isAuthorizedMinter && CHS_TOKEN_ADDRESS !== '0x0000000000000000000000000000000000000000') {
+      // Check if contract is deployed
+      if (CHS_TOKEN_ADDRESS !== '0x0000000000000000000000000000000000000000') {
         logger.info('Minting CHS via contract', { address, amount: totalPendingCHS })
         
-        // LIMPIAR INMEDIATAMENTE ANTES DE MINTEAR
+        // Clear rewards immediately before minting
         justClaimedRef.current = true
         localStorage.removeItem('chessnoth_pending_rewards')
         setPendingRewards([])
         setTotalPendingCHS(0)
         logger.info('Rewards cleared BEFORE mint')
         
+        // Call mint function on contract (public function, anyone can call it)
         mintCHS({ args: [address, amountInWei] })
         
         setTimeout(() => {
@@ -1249,17 +1242,17 @@ function ClaimSection() {
         return
       }
 
+      // Fallback: if contract not deployed, use backend or simulate
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL
       if (!backendUrl) {
-        logger.warn('No backend URL and not authorized minter, simulating claim', { totalPendingCHS })
+        logger.warn('Contract not deployed and no backend URL, simulating claim', { totalPendingCHS })
         // Save the amount before clearing
         const claimedAmount = totalPendingCHS
         
-        // ELIMINAR TODAS LAS RECOMPENSAS DEL CLAIM
+        // Clear all rewards from claim
         logger.info('Before claim - totalCHS:', totalPendingCHS)
         
         if (typeof window !== 'undefined') {
-          // ELIMINAR COMPLETAMENTE del localStorage
           localStorage.removeItem('chessnoth_pending_rewards')
           logger.info('localStorage cleared')
         }
@@ -1276,12 +1269,13 @@ function ClaimSection() {
         
         toast({
           title: 'CHS Claimed (Simulated)',
-          description: `Successfully claimed ${formatCHSAmount(parseCHSAmount(claimedAmount.toString()))} CHS tokens. Note: Backend not configured and not authorized minter - this is a simulation.`,
+          description: `Successfully claimed ${formatCHSAmount(parseCHSAmount(claimedAmount.toString()))} CHS tokens. Note: Contract not deployed - this is a simulation.`,
         })
         setIsClaiming(false)
         return
       }
 
+      // Use backend to mint tokens
       const response = await fetch(backendUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1292,11 +1286,12 @@ function ClaimSection() {
       })
 
       if (response.ok) {
-        // ELIMINAR TODAS LAS RECOMPENSAS DEL CLAIM
+        const claimedAmount = totalPendingCHS
+        
+        // Clear all rewards from claim
         logger.info('Before claim - totalCHS:', totalPendingCHS)
         
         if (typeof window !== 'undefined') {
-          // ELIMINAR COMPLETAMENTE del localStorage
           localStorage.removeItem('chessnoth_pending_rewards')
           logger.info('localStorage cleared')
         }

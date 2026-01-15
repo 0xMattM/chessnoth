@@ -145,12 +145,14 @@ export function removeCHSFromPendingRewards(): void {
  * @param stage Stage number (difficulty)
  * @param turns Number of turns taken
  * @param charactersAlive Number of player characters alive at end
- * @returns Calculated rewards
+ * @param guildBonus Optional guild bonus multiplier (e.g., 0.1 for 10% bonus)
+ * @returns Calculated rewards with guild bonus applied
  */
 export function calculateCombatRewards(
   stage: number,
   turns: number,
-  charactersAlive: number
+  charactersAlive: number,
+  guildBonus: number = 0
 ): CombatRewards {
   // Base rewards increase with stage
   const baseCHS = 50 + (stage * 25) // 50, 75, 100, 125, etc.
@@ -162,8 +164,25 @@ export function calculateCombatRewards(
   // Bonus for keeping more characters alive
   const survivalBonus = charactersAlive * 10 // 10 per character alive
 
-  const chs = baseCHS + turnBonus + survivalBonus
-  const exp = baseEXP + (turnBonus * 2) + (survivalBonus * 2)
+  // Calculate base totals
+  const baseChsTotal = baseCHS + turnBonus + survivalBonus
+  const baseExpTotal = baseEXP + (turnBonus * 2) + (survivalBonus * 2)
+
+  // Apply guild bonus if in a guild
+  const guildChsBonus = Math.floor(baseChsTotal * guildBonus)
+  const guildExpBonus = Math.floor(baseExpTotal * guildBonus)
+
+  const chs = baseChsTotal + guildChsBonus
+  const exp = baseExpTotal + guildExpBonus
+
+  logger.info('Combat rewards calculated', { 
+    baseCHS: baseChsTotal, 
+    guildBonus: guildChsBonus, 
+    totalCHS: chs,
+    baseEXP: baseExpTotal,
+    guildEXPBonus: guildExpBonus,
+    totalEXP: exp
+  })
 
   return {
     chs: Math.floor(chs),
@@ -173,3 +192,77 @@ export function calculateCombatRewards(
   }
 }
 
+/**
+ * Process combat victory - updates guild and user stats
+ * Call this after a successful battle
+ * @param userAddress User wallet address
+ * @param rewards Combat rewards earned
+ * @param victory Whether the battle was won
+ */
+export function processCombatVictory(
+  userAddress: string,
+  rewards: CombatRewards,
+  victory: boolean = true
+): void {
+  if (typeof window === 'undefined') return
+  if (!victory) return // Only process victories
+
+  try {
+    // Import dynamically to avoid circular dependencies
+    const { getUserGuildId } = require('./guilds')
+    const { updateGuildContribution } = require('./guilds')
+    const { updateUserStats } = require('./friends')
+
+    // Update user profile stats
+    updateUserStats(userAddress, {
+      battlesWon: 1, // Increment by 1
+      totalCHS: rewards.chs, // Add CHS earned
+    })
+
+    logger.info('User stats updated after victory', { userAddress, chs: rewards.chs })
+
+    // Update guild stats if user is in a guild
+    const guildId = getUserGuildId(userAddress)
+    if (guildId) {
+      updateGuildContribution(userAddress, guildId, {
+        battles: 1, // Increment battles
+        chsEarned: rewards.chs, // Add CHS earned
+      })
+
+      logger.info('Guild contribution updated', { guildId, userAddress, chs: rewards.chs })
+    }
+  } catch (error) {
+    logger.error('Error processing combat victory', error instanceof Error ? error : undefined)
+  }
+}
+
+/**
+ * Get guild bonus multiplier for a user
+ * @param userAddress User wallet address
+ * @returns Guild bonus multiplier (0.0 - 1.0)
+ */
+export function getGuildBonus(userAddress: string): number {
+  if (typeof window === 'undefined') return 0
+
+  try {
+    // Import dynamically to avoid circular dependencies
+    const { getUserGuildId, getGuild } = require('./guilds')
+
+    const guildId = getUserGuildId(userAddress)
+    if (!guildId) return 0
+
+    const guild = getGuild(guildId)
+    if (!guild) return 0
+
+    // Different bonus for casual vs competitive guilds
+    // Competitive guilds get higher bonus to encourage competition
+    if (guild.type === 'competitive') {
+      return 0.15 // 15% bonus for competitive guilds
+    } else {
+      return 0.10 // 10% bonus for casual guilds
+    }
+  } catch (error) {
+    logger.error('Error getting guild bonus', error instanceof Error ? error : undefined)
+    return 0
+  }
+}

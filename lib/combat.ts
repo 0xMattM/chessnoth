@@ -260,16 +260,20 @@ export async function initializeCombatCharacters(
     const enemyClasses = ['warrior', 'mage', 'archer', 'assassin', 'healer', 'paladin']
     
     // Map enemy classes to sprite names based on stage progression
+    // IMPORTANT: Sprites are mapped to classes based on their abilities/role
+    // - dark_cultist, fire_cult_soldier → warrior (melee attackers)
+    // - ice_raider, undead_champion, corrupted_paladin → paladin (tanky)
+    // - beasts (wolf, spider, bat) → warrior without skills (basic attack only)
     const getEnemyName = (enemyClass: string, stage: number): string => {
       // Early stages (1-3): Goblins and basic undeads
       if (stage <= 3) {
         const earlyEnemies = {
-          warrior: ['goblin_warrior', 'goblin_guard', 'skeleton_warrior'],
-          mage: ['shadow_mage', 'dark_cultist'],
+          warrior: ['goblin_warrior', 'goblin_guard', 'skeleton_warrior', 'wolf', 'spider'],
+          mage: ['shadow_mage'],
           archer: ['goblin_archer', 'skeleton_archer'],
-          assassin: ['goblin_scout', 'assasin'],
-          healer: ['dark_cultist'],
-          paladin: ['goblin_guard', 'skeleton_warrior']
+          assassin: ['goblin_scout', 'assassin', 'bat'],
+          healer: ['zombie'], // Zombie can be a "healer" but slow
+          paladin: ['goblin_guard', 'skeleton_spear']
         }
         const options = earlyEnemies[enemyClass] || ['goblin_warrior']
         return options[Math.floor(Math.random() * options.length)]
@@ -278,12 +282,12 @@ export async function initializeCombatCharacters(
       // Mid stages (4-6): More dangerous enemies
       if (stage <= 6) {
         const midEnemies = {
-          warrior: ['troll', 'undead_champion', 'goblin_spear'],
-          mage: ['shadow_mage', 'fire_cult_soldier'],
-          archer: ['skeleton_archer', 'ice_raider'],
-          assassin: ['assasin', 'ghoul'],
-          healer: ['corrupted_paladin'],
-          paladin: ['undead_champion', 'corrupted_paladin']
+          warrior: ['troll', 'goblin_spear', 'dark_cultist', 'fire_cult_soldier', 'wolf'],
+          mage: ['shadow_mage', 'ghoul'],
+          archer: ['skeleton_archer', 'skeleton_spear'],
+          assassin: ['assassin', 'bat'],
+          healer: ['zombie', 'ghoul'],
+          paladin: ['ice_raider', 'undead_champion', 'corrupted_paladin']
         }
         const options = midEnemies[enemyClass] || ['troll']
         return options[Math.floor(Math.random() * options.length)]
@@ -291,12 +295,12 @@ export async function initializeCombatCharacters(
       
       // Late stages (7+): Strongest enemies
       const lateEnemies = {
-        warrior: ['armored_troll', 'ogre', 'undead_champion'],
-        mage: ['shadow_mage', 'corrupted_paladin'],
-        archer: ['ice_raider', 'skeleton_archer'],
-        assassin: ['assasin', 'fire_cult_soldier'],
-        healer: ['corrupted_paladin', 'shadow_mage'],
-        paladin: ['corrupted_paladin', 'undead_champion']
+        warrior: ['armored_troll', 'ogre', 'dark_cultist', 'fire_cult_soldier'],
+        mage: ['shadow_mage'],
+        archer: ['skeleton_archer', 'skeleton_spear'],
+        assassin: ['assassin', 'bat'],
+        healer: ['zombie', 'ghoul'],
+        paladin: ['ice_raider', 'undead_champion', 'corrupted_paladin']
       }
       const options = lateEnemies[enemyClass] || ['ogre']
       return options[Math.floor(Math.random() * options.length)]
@@ -336,52 +340,56 @@ export async function initializeCombatCharacters(
       }
       
       // Load and assign skills for this enemy based on class and level
+      // EXCEPTION: Beasts (wolf, spider, bat) don't have skills - only basic attacks
+      const isBeast = ['wolf', 'spider', 'bat'].includes(enemyName)
       let enemySkills: { [skillId: string]: number } = {}
       let equippedSkills: string[] = []
       
-      try {
-        const skillsModule = await import(`@/data/skills/${enemyClass}.json`)
-        const allSkills = (skillsModule.default || skillsModule) as Array<{
-          id: string
-          levelReq: number
-          spCost: number
-          manaCost: number
-        }>
-        
-        // Filter skills that enemy can learn (level requirement met)
-        const availableSkills = allSkills.filter((skill) => skill.levelReq <= enemyLevel)
-        
-        // Assign skills: enemies get skills based on their level
-        // Higher level enemies get more and better skills
-        const skillsToLearn = Math.min(
-          Math.max(2, Math.floor(enemyLevel / 3) + 1), // At least 2, more as level increases
-          availableSkills.length,
-          4 // Max 4 equipped skills
-        )
-        
-        // Select skills to learn (prioritize lower level requirements first, then by levelReq)
-        const sortedSkills = [...availableSkills].sort((a, b) => {
-          // First sort by levelReq (lower first)
-          if (a.levelReq !== b.levelReq) {
-            return a.levelReq - b.levelReq
-          }
-          // Then by manaCost (cheaper first for AI)
-          return a.manaCost - b.manaCost
-        })
-        
-        // Select skills to learn and equip
-        const selectedSkills = sortedSkills.slice(0, skillsToLearn)
-        
-        // Assign skill points (1 point per skill for enemies)
-        selectedSkills.forEach((skill) => {
-          enemySkills[skill.id] = 1
-        })
-        
-        // Equip all learned skills (up to 4)
-        equippedSkills = selectedSkills.map((skill) => skill.id).slice(0, 4)
-      } catch (error) {
-        logger.warn('Failed to load skills for enemy', { enemyClass, error })
-        // Continue without skills if loading fails
+      if (!isBeast) {
+        try {
+          const skillsModule = await import(`@/data/skills/${enemyClass}.json`)
+          const allSkills = (skillsModule.default || skillsModule) as Array<{
+            id: string
+            levelReq: number
+            spCost: number
+            manaCost: number
+          }>
+          
+          // Filter skills that enemy can learn (level requirement met)
+          const availableSkills = allSkills.filter((skill) => skill.levelReq <= enemyLevel)
+          
+          // Assign skills: enemies get skills based on their level
+          // Higher level enemies get more and better skills
+          const skillsToLearn = Math.min(
+            Math.max(2, Math.floor(enemyLevel / 3) + 1), // At least 2, more as level increases
+            availableSkills.length,
+            4 // Max 4 equipped skills
+          )
+          
+          // Select skills to learn (prioritize lower level requirements first, then by levelReq)
+          const sortedSkills = [...availableSkills].sort((a, b) => {
+            // First sort by levelReq (lower first)
+            if (a.levelReq !== b.levelReq) {
+              return a.levelReq - b.levelReq
+            }
+            // Then by manaCost (cheaper first for AI)
+            return a.manaCost - b.manaCost
+          })
+          
+          // Select skills to learn and equip
+          const selectedSkills = sortedSkills.slice(0, skillsToLearn)
+          
+          // Assign skill points (1 point per skill for enemies)
+          selectedSkills.forEach((skill) => {
+            enemySkills[skill.id] = 1
+          })
+          
+          // Equip all learned skills (up to 4)
+          equippedSkills = selectedSkills.map((skill) => skill.id).slice(0, 4)
+        } catch (error) {
+          logger.warn('Failed to load skills for enemy', { enemyClass, error })
+          // Continue without skills if loading fails
+        }
       }
       
       const newEnemy = {

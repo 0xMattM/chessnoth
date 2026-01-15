@@ -44,7 +44,10 @@ Chessnoth is a tactical RPG NFT game built on Next.js 14 with Web3 integration. 
 ├── data/                 # Static data (JSON files)
 │   ├── skills/           # Skill definitions per class
 │   └── items.json        # Item definitions
-└── tests/                # Unit tests (mirrors app structure)
+└── tests/                # All tests
+    ├── contracts/        # Smart contract tests (Hardhat/JS)
+    ├── app/              # App component tests (Jest/TS)
+    └── lib/              # Utility tests (Jest/TS)
 ```
 
 ### TypeScript Conventions
@@ -132,7 +135,7 @@ Chessnoth is a tactical RPG NFT game built on Next.js 14 with Web3 integration. 
 
 ## Mantle Network Integration
 
-This project is built for the **Mantle Global Hackathon 2025** (GameFi & Social track).
+Chessnoth is deployed on **Mantle Network** for optimal gaming performance.
 
 ### Mantle Network Benefits
 
@@ -152,15 +155,17 @@ This project is built for the **Mantle Global Hackathon 2025** (GameFi & Social 
   - RPC: https://rpc.mantle.xyz
   - Explorer: https://explorer.mantle.xyz
 
-### Hackathon Track Requirements
+### GameFi & Social Focus
 
-**GameFi & Social Track** focuses on:
-- Consumer-facing apps integrating RWA or yield logic
-- Token incentive design and user retention tools
+**Core Design Principles:**
+- Consumer-facing gameplay with Web3 integration
+- Token incentive design for player retention
+- Social features that enhance gameplay
 
-**Future Enhancements for Hackathon:**
-- [ ] Integrate yield-bearing mechanisms (staking rewards, etc.)
-- [ ] Design token incentive system (MNT rewards for achievements)
+**Future Enhancements:**
+- [ ] Integrate yield-bearing mechanisms (staking rewards)
+- [ ] Enhanced token incentive system (bonus rewards for achievements)
+- [ ] Expanded social features (tournaments, leaderboards)
 - [ ] Implement user retention tools (leaderboards, daily quests, achievements)
 - [ ] Social features (guilds, friend system, battle replays)
 

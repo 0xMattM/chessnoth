@@ -15,15 +15,20 @@ export function WalletConflictWarning() {
   const [isDismissed, setIsDismissed] = useState(false)
 
   useEffect(() => {
-    // Check for multiple providers on mount
-    const multipleDetected = hasMultipleWalletProviders()
-    setHasMultiple(multipleDetected)
+    // Delay check to ensure wallet providers are loaded
+    const checkTimeout = setTimeout(() => {
+      // Check for multiple providers
+      const multipleDetected = hasMultipleWalletProviders()
+      setHasMultiple(multipleDetected)
 
-    // Check if user has previously dismissed the warning
-    const dismissed = localStorage.getItem('wallet_conflict_warning_dismissed')
-    if (dismissed === 'true') {
-      setIsDismissed(true)
-    }
+      // Check if user has previously dismissed the warning
+      const dismissed = localStorage.getItem('wallet_conflict_warning_dismissed')
+      if (dismissed === 'true') {
+        setIsDismissed(true)
+      }
+    }, 1000) // Wait 1 second for providers to load
+
+    return () => clearTimeout(checkTimeout)
   }, [])
 
   const handleDismiss = () => {

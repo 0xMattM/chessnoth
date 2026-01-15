@@ -394,9 +394,15 @@ export function useCombatActions({
       if (combatState.selectedAction === 'attack') {
         const target = validTargets.find((t) => t.position?.row === row && t.position?.col === col)
         if (target) {
+          // Determine if attack is physical or magical based on character class
+          // Magic classes use MAG stat for basic attacks, physical classes use ATK
+          const magicClasses = ['mage', 'dark_mage', 'healer']
+          const classLower = current.class.toLowerCase().replace(/\s+/g, '_')
+          const isPhysicalAttack = !magicClasses.includes(classLower)
+          
           // Set animation states
           const attackingChar = { ...current, animationState: 'attacking' as AnimationState, hasActed: true }
-          const damage = calculateDamage(current, target, true)
+          const damage = calculateDamage(current, target, isPhysicalAttack)
           const newTargetHp = Math.max(0, target.stats.hp - damage)
 
           // Log attack

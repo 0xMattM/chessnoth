@@ -4,16 +4,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { cn } from '@/lib/utils'
-import { Sword, Users, Package, Zap, Home, Menu, X, TrendingUp, ShoppingCart, Coins } from 'lucide-react'
+import { Sword, Users, Package, Zap, Home, Menu, X, TrendingUp, ShoppingCart, Coins, UserCircle } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Users },
+  { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Marketplace', href: '/marketplace', icon: ShoppingCart },
   { name: 'Shop', href: '/shop', icon: Package },
   { name: 'Team', href: '/team', icon: Sword },
   { name: 'Battle', href: '/battle', icon: Zap },
+  { name: 'Social', href: '/social', icon: UserCircle },
 ]
 
 export function Navigation() {

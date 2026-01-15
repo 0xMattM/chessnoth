@@ -17,7 +17,7 @@ export const CHARACTER_NFT_ABI = [
     ],
     name: 'mintCharacter',
     outputs: [{ name: '', type: 'uint256' }],
-    stateMutability: 'nonpayable',
+    stateMutability: 'payable',
     type: 'function',
   },
   {
@@ -127,6 +127,13 @@ export const CHARACTER_NFT_ABI = [
     inputs: [],
     name: 'authorizedMinter',
     outputs: [{ name: '', type: 'address' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [],
+    name: 'mintPrice',
+    outputs: [{ name: '', type: 'uint256' }],
     stateMutability: 'view',
     type: 'function',
   },

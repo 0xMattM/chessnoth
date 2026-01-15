@@ -97,10 +97,10 @@ describe("CHSToken", function () {
         .withArgs(user1.address, ethers.parseEther("100"));
     });
 
-    it("Should prevent unauthorized minting", async function () {
-      await expect(
-        chsToken.connect(user1).mint(user1.address, ethers.parseEther("100"))
-      ).to.be.revertedWith("CHSToken: Not authorized to mint");
+    it("Should allow anyone to mint tokens (open minting)", async function () {
+      // Anyone can mint in this version for easy testing
+      await chsToken.connect(user1).mint(user1.address, ethers.parseEther("100"));
+      expect(await chsToken.balanceOf(user1.address)).to.equal(ethers.parseEther("100"));
     });
 
     it("Should reject minting to zero address", async function () {

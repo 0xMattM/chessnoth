@@ -1,568 +1,568 @@
 # Chessnoth - Development Roadmap
 
-## 📋 Tabla de Contenidos
+## 📋 Table of Contents
 
-1. [Visión General](#visión-general)
-2. [Trabajo Completado](#trabajo-completado)
-3. [Estado Actual](#estado-actual)
-4. [Roadmap Futuro](#roadmap-futuro)
-5. [Métricas y Objetivos](#métricas-y-objetivos)
+1. [Overview](#overview)
+2. [Completed Work](#completed-work)
+3. [Current Status](#current-status)
+4. [Future Roadmap](#future-roadmap)
+5. [Metrics and Objectives](#metrics-and-objectives)
 
 ---
 
-## 🎯 Visión General
+## 🎯 Overview
 
-**Chessnoth** es un juego RPG táctico NFT construido en Next.js 14 con integración Web3. Los jugadores pueden mintear NFTs de personajes, construir equipos y participar en batallas tácticas por turnos.
+**Chessnoth** is a tactical RPG NFT game built on Next.js 14 with Web3 integration. Players can mint character NFTs, build teams, and participate in turn-based tactical battles.
 
-### Objetivo del Proyecto
+### Project Objective
 
-Crear una experiencia de juego completa que combine:
-- **Gameplay táctico** con sistema de combate por turnos
-- **Propiedad real** de activos digitales mediante NFTs
-- **Economía tokenizada** con el token CHS
-- **Retención de usuarios** mediante sistemas de recompensas diarias, quests y leaderboards
-- **Comunidad** con marketplace y características sociales
+Create a complete gaming experience that combines:
+- **Tactical gameplay** with turn-based combat system
+- **True ownership** of digital assets through NFTs
+- **Tokenized economy** with CHS token
+- **User retention** through daily rewards, quests, and leaderboards systems
+- **Community** with marketplace and social features
 
-### Plataforma
+### Platform
 
-- **Blockchain**: Mantle Network (optimizado para gaming con bajas comisiones de gas)
+- **Blockchain**: Mantle Network (optimized for gaming with low gas fees)
 - **Framework**: Next.js 14 (App Router)
-- **Lenguaje**: TypeScript
+- **Language**: TypeScript
 - **Web3**: Wagmi, Viem, RainbowKit
 
 ---
 
-## ✅ Trabajo Completado
+## ✅ Completed Work
 
-### Fase 1: Fundación y Arquitectura (Completado)
+### Phase 1: Foundation and Architecture (Completed)
 
-#### 1.1 Configuración del Proyecto
-- [x] Configuración de Next.js 14 con App Router
-- [x] Configuración de TypeScript con modo estricto
-- [x] Integración de Tailwind CSS y Shadcn UI
-- [x] Configuración de ESLint y Prettier
-- [x] Estructura de carpetas modular
-- [x] Sistema de logging centralizado (`lib/logger.ts`)
-- [x] Validación de variables de entorno (`lib/env.ts`)
+#### 1.1 Project Setup
+- [x] Next.js 14 configuration with App Router
+- [x] TypeScript configuration with strict mode
+- [x] Tailwind CSS and Shadcn UI integration
+- [x] ESLint and Prettier configuration
+- [x] Modular folder structure
+- [x] Centralized logging system (`lib/logger.ts`)
+- [x] Environment variables validation (`lib/env.ts`)
 
-#### 1.2 Integración Web3
-- [x] Configuración de Wagmi y Viem
-- [x] Integración de RainbowKit para conexión de wallets
-- [x] Configuración de Mantle Network (Testnet y Mainnet)
-- [x] Handler para múltiples proveedores de wallet
-- [x] Error boundaries para manejo de errores de Web3
+#### 1.2 Web3 Integration
+- [x] Wagmi and Viem configuration
+- [x] RainbowKit integration for wallet connection
+- [x] Mantle Network configuration (Testnet and Mainnet)
+- [x] Handler for multiple wallet providers
+- [x] Error boundaries for Web3 error handling
 
-#### 1.3 Smart Contracts Base
-- [x] **CharacterNFT.sol** - Contrato ERC721 para personajes
-  - Minting de NFTs con metadata
-  - Sistema de niveles y experiencia
-  - Funciones para obtener clase, nivel, nombre
-  - Generación de personajes
-- [x] **CHSToken.sol** - Token ERC20 para economía del juego
-  - Minting controlado por direcciones autorizadas
-  - Funciones de burn
-  - Sistema de autorización de minters
-- [x] **Marketplace.sol** - Marketplace para trading de NFTs
-  - Listar NFTs para venta
-  - Comprar NFTs listados
-  - Cancelar listados
-  - Soporte para pago en CHS o MNT
+#### 1.3 Base Smart Contracts
+- [x] **CharacterNFT.sol** - ERC721 contract for characters
+  - NFT minting with metadata
+  - Level and experience system
+  - Functions to get class, level, name
+  - Character generation
+- [x] **CHSToken.sol** - ERC20 token for game economy
+  - Minting controlled by authorized addresses
+  - Burn functions
+  - Minter authorization system
+- [x] **Marketplace.sol** - Marketplace for NFT trading
+  - List NFTs for sale
+  - Buy listed NFTs
+  - Cancel listings
+  - Support for payment in CHS or MNT
 
-#### 1.4 Scripts de Deployment
-- [x] Scripts de deployment para testnet y mainnet
-- [x] Scripts para configurar minters autorizados
-- [x] Scripts de verificación de contratos
-- [x] Documentación de deployment
+#### 1.4 Deployment Scripts
+- [x] Deployment scripts for testnet and mainnet
+- [x] Scripts to configure authorized minters
+- [x] Contract verification scripts
+- [x] Deployment documentation
 
-### Fase 2: Sistema de Personajes y NFTs (Completado)
+### Phase 2: Character System and NFTs (Completed)
 
-#### 2.1 Minting de NFTs
-- [x] Interfaz de minting en Dashboard
-- [x] Selección de clase de personaje
-- [x] Nombrado personalizado de personajes
-- [x] Validación de inputs
-- [x] Integración con IPFS para metadata
-- [x] Visualización de NFTs minteados
+#### 2.1 NFT Minting
+- [x] Minting interface in Dashboard
+- [x] Character class selection
+- [x] Custom character naming
+- [x] Input validation
+- [x] IPFS integration for metadata
+- [x] Visualization of minted NFTs
 
-#### 2.2 Gestión de Personajes
-- [x] Dashboard consolidado con tabs:
-  - Lista de personajes
-  - Gestión de equipamiento
-  - Gestión de habilidades
-  - Sistema de level up
-- [x] Visualización de stats de personajes
-- [x] Sistema de equipamiento (6 slots: weapon, helmet, armor, pants, boots, accessory)
-- [x] Sistema de habilidades por clase
-- [x] Asignación de skill points
-- [x] Visualización de equipamiento equipado
+#### 2.2 Character Management
+- [x] Consolidated Dashboard with tabs:
+  - Character list
+  - Equipment management
+  - Skill management
+  - Level up system
+- [x] Character stats visualization
+- [x] Equipment system (6 slots: weapon, helmet, armor, pants, boots, accessory)
+- [x] Class-based skill system
+- [x] Skill points assignment
+- [x] Equipped equipment visualization
 
-#### 2.3 Sistema de Niveles y Experiencia
-- [x] Cálculo de stats basado en nivel
-- [x] Sistema de crecimiento por clase
-- [x] Distribución de EXP ganada en combate
-- [x] Upgrade on-chain de personajes
-- [x] Cálculo automático de nivel (EXP / 100 + 1)
-- [x] Visualización de progreso de nivel
+#### 2.3 Level and Experience System
+- [x] Level-based stats calculation
+- [x] Class growth system
+- [x] Combat EXP distribution
+- [x] On-chain character upgrade
+- [x] Automatic level calculation (EXP / 100 + 1)
+- [x] Level progress visualization
 
-### Fase 3: Sistema de Combate (Completado)
+### Phase 3: Combat System (Completed)
 
-#### 3.1 Sistema de Equipos
-- [x] Selección de hasta 4 personajes para el equipo
-- [x] Validación de equipo
-- [x] Persistencia de equipo en localStorage
-- [x] Limpieza automática de personajes inválidos
-- [x] Interfaz de gestión de equipo
+#### 3.1 Team System
+- [x] Selection of up to 4 characters for team
+- [x] Team validation
+- [x] Team persistence in localStorage
+- [x] Automatic cleanup of invalid characters
+- [x] Team management interface
 
-#### 3.2 Sistema de Batallas
-- [x] Selección de stage/batalla
-- [x] Sistema de desbloqueo progresivo de stages
-- [x] Diferentes tipos de enemigos por stage
-- [x] Sistema de bosses
-- [x] Visualización de información de batalla
+#### 3.2 Battle System
+- [x] Stage/battle selection
+- [x] Progressive stage unlock system
+- [x] Different enemy types per stage
+- [x] Boss system
+- [x] Battle information visualization
 
-#### 3.3 Combate Táctico
-- [x] Sistema de combate por turnos
-- [x] Tablero táctico con grid
-- [x] Movimiento de personajes
-- [x] Sistema de habilidades equipables (hasta 4)
-- [x] Sistema de items consumibles
-- [x] IA de enemigos
-- [x] Sistema de terreno
-- [x] Cálculo de daño y stats
-- [x] Sistema de efectos de estado
-- [x] Log de combate
-- [x] Pantalla de fin de combate (victoria/derrota)
+#### 3.3 Tactical Combat
+- [x] Turn-based combat system
+- [x] Tactical grid board
+- [x] Character movement
+- [x] Equippable skills system (up to 4)
+- [x] Consumable items system
+- [x] Enemy AI
+- [x] Terrain system
+- [x] Damage and stats calculation
+- [x] Status effects system
+- [x] Combat log
+- [x] Combat end screen (victory/defeat)
 
-#### 3.4 Sistema de Recompensas
-- [x] Cálculo de recompensas basado en stage y turnos
-- [x] Recompensas de CHS tokens
-- [x] Recompensas de EXP
-- [x] Sistema de recompensas pendientes
-- [x] Claim de CHS tokens
-- [x] Distribución de EXP a personajes
+#### 3.4 Rewards System
+- [x] Rewards calculation based on stage and turns
+- [x] CHS token rewards
+- [x] EXP rewards
+- [x] Pending rewards system
+- [x] CHS token claim
+- [x] EXP distribution to characters
 
-### Fase 4: Economía y Marketplace (Completado)
+### Phase 4: Economy and Marketplace (Completed)
 
-#### 4.1 Token CHS
-- [x] Integración con contrato CHSToken
-- [x] Visualización de balance de CHS
-- [x] Sistema de minting autorizado
-- [x] Claim de tokens ganados en combate
-- [x] Formateo y visualización de cantidades
+#### 4.1 CHS Token
+- [x] CHSToken contract integration
+- [x] CHS balance visualization
+- [x] Authorized minting system
+- [x] Token claim from combat rewards
+- [x] Amount formatting and visualization
 
 #### 4.2 Marketplace
-- [x] Interfaz de marketplace
-- [x] Listar NFTs para venta
-- [x] Comprar NFTs listados
-- [x] Cancelar listados propios
-- [x] Filtros y búsqueda
-- [x] Visualización de detalles de NFT
-- [x] Soporte para pago en CHS o MNT
+- [x] Marketplace interface
+- [x] List NFTs for sale
+- [x] Buy listed NFTs
+- [x] Cancel own listings
+- [x] Filters and search
+- [x] NFT details visualization
+- [x] Support for payment in CHS or MNT
 
-#### 4.3 Shop de Items
-- [x] Catálogo de items (equipamiento y consumibles)
-- [x] Compra de items con CHS
-- [x] Sistema de inventario
-- [x] Visualización de items por rareza
-- [x] Filtros por tipo y clase permitida
+#### 4.3 Item Shop
+- [x] Item catalog (equipment and consumables)
+- [x] Item purchase with CHS
+- [x] Inventory system
+- [x] Items visualization by rarity
+- [x] Filters by type and allowed class
 
-### Fase 5: Sistemas de Retención (Completado)
+### Phase 5: Retention Systems (Completed)
 
-#### 5.1 Recompensas Diarias
-- [x] Sistema de recompensas diarias con streak
-- [x] 7 días de recompensas progresivas
-- [x] Recompensas de CHS y items
-- [x] Persistencia de datos
-- [x] Visualización de recompensas disponibles
-- [x] Sistema de claim con validación
+#### 5.1 Daily Rewards
+- [x] Daily rewards system with streak
+- [x] 7 days of progressive rewards
+- [x] CHS and item rewards
+- [x] Data persistence
+- [x] Available rewards visualization
+- [x] Claim system with validation
 
-#### 5.2 Quests Diarias
-- [x] Sistema de quests diarias
-- [x] Múltiples tipos de quests:
-  - Ganar batallas
-  - Derrotar bosses
-  - Completar stages
-  - Comprar items
-  - Upgrade de personajes
-- [x] Tracking de progreso
-- [x] Recompensas por completar quests
-- [x] Reset diario automático
+#### 5.2 Daily Quests
+- [x] Daily quests system
+- [x] Multiple quest types:
+  - Win battles
+  - Defeat bosses
+  - Complete stages
+  - Buy items
+  - Upgrade characters
+- [x] Progress tracking
+- [x] Quest completion rewards
+- [x] Automatic daily reset
 
 #### 5.3 Leaderboard
-- [x] Sistema de leaderboard
-- [x] Tracking de estadísticas:
-  - Batallas ganadas
-  - Stages completados
-  - Bosses derrotados
-  - CHS ganados
-- [x] Rankings por diferentes métricas
-- [x] Persistencia de datos
+- [x] Leaderboard system
+- [x] Statistics tracking:
+  - Battles won
+  - Stages completed
+  - Bosses defeated
+  - CHS earned
+- [x] Rankings by different metrics
+- [x] Data persistence
 
-### Fase 6: Mejoras y Optimizaciones (Completado)
+### Phase 6: Improvements and Optimizations (Completed)
 
-#### 6.1 Limpieza de Código
-- [x] Eliminación de páginas duplicadas/obsoletas
-  - `/characters` (consolidado en Dashboard)
-  - `/claim` (integrado en Dashboard)
-  - `/upgrade` (integrado en Dashboard como tab)
-  - `/items` (integrado en Dashboard)
-- [x] Actualización de referencias de rutas
-- [x] Eliminación de código duplicado
-- [x] Optimización de imports
+#### 6.1 Code Cleanup
+- [x] Removal of duplicate/obsolete pages
+  - `/characters` (consolidated in Dashboard)
+  - `/claim` (integrated in Dashboard)
+  - `/upgrade` (integrated in Dashboard as tab)
+  - `/items` (integrated in Dashboard)
+- [x] Route references update
+- [x] Duplicate code removal
+- [x] Imports optimization
 
-#### 6.2 Mejoras de TypeScript
-- [x] Reemplazo de tipos `any` por interfaces apropiadas
-- [x] Creación de interfaz `ClassData`
-- [x] Mejora de tipos en componentes
-- [x] Mejora de tipos en handlers de wallet
+#### 6.2 TypeScript Improvements
+- [x] Replace `any` types with appropriate interfaces
+- [x] Create `ClassData` interface
+- [x] Type improvements in components
+- [x] Type improvements in wallet handlers
 
-#### 6.3 Mejoras de Logging
-- [x] Reemplazo de `console.error` por `logger` en archivos de aplicación
-- [x] Uso consistente del sistema de logging
+#### 6.3 Logging Improvements
+- [x] Replace `console.error` with `logger` in application files
+- [x] Consistent use of logging system
 
-#### 6.4 Documentación
-- [x] Documentación de arquitectura (PLANNING.md)
-- [x] Documentación de contratos (CONTRACTS_PLANNING.md)
-- [x] Guía de deployment (DEPLOYMENT_GUIDE.md)
-- [x] README actualizado
-- [x] Documentación de tareas (TASKS.md)
+#### 6.4 Documentation
+- [x] Architecture documentation (PLANNING.md)
+- [x] Contracts documentation (CONTRACTS_PLANNING.md)
+- [x] Deployment guide (DEPLOYMENT_GUIDE.md)
+- [x] Updated README
+- [x] Tasks documentation (TASKS.md)
 
 ---
 
-## 📊 Estado Actual
+## 📊 Current Status
 
-### Funcionalidades Implementadas
+### Implemented Features
 
-#### ✅ Completamente Funcional
-1. **Minting de NFTs** - Los usuarios pueden mintear personajes con nombre y clase personalizados
-2. **Gestión de Personajes** - Dashboard completo con equipamiento, habilidades y level up
-3. **Sistema de Equipos** - Selección y gestión de equipos de hasta 4 personajes
-4. **Sistema de Combate** - Combate táctico por turnos completamente funcional
-5. **Marketplace** - Trading de NFTs con pago en CHS o MNT
-6. **Shop** - Compra de items con tokens CHS
-7. **Recompensas Diarias** - Sistema de streak con recompensas progresivas
-8. **Quests Diarias** - Sistema de misiones diarias con tracking
-9. **Leaderboard** - Rankings y estadísticas de jugadores
+#### ✅ Fully Functional
+1. **NFT Minting** - Users can mint characters with custom name and class
+2. **Character Management** - Complete Dashboard with equipment, skills, and level up
+3. **Team System** - Selection and management of teams up to 4 characters
+4. **Combat System** - Fully functional turn-based tactical combat
+5. **Marketplace** - NFT trading with payment in CHS or MNT
+6. **Shop** - Item purchase with CHS tokens
+7. **Daily Rewards** - Streak system with progressive rewards
+8. **Daily Quests** - Daily missions system with tracking
+9. **Leaderboard** - Player rankings and statistics
 
-#### ⚠️ Parcialmente Implementado
-1. **Testing** - Tests unitarios básicos, falta cobertura completa
-2. **Optimizaciones de Rendimiento** - Implementadas básicas, faltan optimizaciones avanzadas
-3. **Documentación de API** - Falta documentación completa de contratos
+#### ⚠️ Partially Implemented
+1. **Testing** - Basic unit tests, complete coverage missing
+2. **Performance Optimizations** - Basic implementations, advanced optimizations missing
+3. **API Documentation** - Complete contract documentation missing
 
-### Métricas Técnicas
+### Technical Metrics
 
-- **Líneas de Código**: ~15,000+ líneas
-- **Componentes React**: 30+ componentes
-- **Smart Contracts**: 3 contratos (CharacterNFT, CHSToken, Marketplace)
-- **Páginas**: 6 páginas principales
-- **Hooks Personalizados**: 8+ hooks
-- **Utilidades**: 20+ módulos de utilidades
+- **Lines of Code**: ~15,000+ lines
+- **React Components**: 30+ components
+- **Smart Contracts**: 3 contracts (CharacterNFT, CHSToken, Marketplace)
+- **Pages**: 6 main pages
+- **Custom Hooks**: 8+ hooks
+- **Utilities**: 20+ utility modules
 
-### Arquitectura Actual
+### Current Architecture
 
 ```
 Chessnoth/
 ├── app/                    # Next.js App Router
-│   ├── page.tsx           # Dashboard principal
-│   ├── marketplace/       # Marketplace de NFTs
-│   ├── shop/              # Tienda de items
-│   ├── team/              # Gestión de equipos
-│   ├── battle/            # Selección de batallas
-│   └── combat/            # Sistema de combate
-├── components/            # Componentes React
-│   ├── ui/               # Componentes Shadcn UI
-│   └── *.tsx             # Componentes de features
-├── lib/                  # Lógica de negocio
-│   ├── contract.ts       # ABIs y utilidades Web3
-│   ├── combat.ts         # Lógica de combate
-│   ├── rewards.ts        # Sistema de recompensas
-│   ├── daily-rewards.ts  # Recompensas diarias
-│   ├── daily-quests.ts   # Quests diarias
+│   ├── page.tsx           # Main Dashboard
+│   ├── marketplace/       # NFT Marketplace
+│   ├── shop/              # Item store
+│   ├── team/              # Team management
+│   ├── battle/            # Battle selection
+│   └── combat/            # Combat system
+├── components/            # React Components
+│   ├── ui/               # Shadcn UI Components
+│   └── *.tsx             # Feature components
+├── lib/                  # Business logic
+│   ├── contract.ts       # ABIs and Web3 utilities
+│   ├── combat.ts         # Combat logic
+│   ├── rewards.ts        # Rewards system
+│   ├── daily-rewards.ts  # Daily rewards
+│   ├── daily-quests.ts   # Daily quests
 │   ├── leaderboard.ts    # Leaderboard
-│   └── *.ts              # Otras utilidades
+│   └── *.ts              # Other utilities
 ├── contracts/            # Smart Contracts
 │   ├── CharacterNFT.sol
 │   ├── CHSToken.sol
 │   └── Marketplace.sol
-└── data/                # Datos estáticos
-    ├── classes/         # Definiciones de clases
-    ├── skills/          # Definiciones de habilidades
-    └── items.json       # Definiciones de items
+└── data/                # Static data
+    ├── classes/         # Class definitions
+    ├── skills/          # Skill definitions
+    └── items.json       # Item definitions
 ```
 
 ---
 
-## 🗺️ Roadmap Futuro
+## 🗺️ Future Roadmap
 
-### Fase 7: Testing y Calidad (Q1 2025)
+### Phase 7: Testing and Quality (Q1 2026)
 
-#### 7.1 Testing de Contratos
-- [ ] Tests unitarios completos para CharacterNFT.sol
-  - [ ] Tests de minting
-  - [ ] Tests de upgrade y cálculo de nivel
-  - [ ] Tests de eventos
-  - [ ] Tests de seguridad
-- [ ] Tests unitarios completos para CHSToken.sol
-  - [ ] Tests de minting autorizado
-  - [ ] Tests de burn
-  - [ ] Tests de autorización
-  - [ ] Tests de límites de suministro
-- [ ] Tests unitarios completos para Marketplace.sol
-  - [ ] Tests de listar NFTs
-  - [ ] Tests de compra
-  - [ ] Tests de cancelación
-  - [ ] Tests de fees
-  - [ ] Tests de seguridad (reentrancy, etc.)
+#### 7.1 Contract Testing
+- [ ] Complete unit tests for CharacterNFT.sol
+  - [ ] Minting tests
+  - [ ] Upgrade and level calculation tests
+  - [ ] Event tests
+  - [ ] Security tests
+- [ ] Complete unit tests for CHSToken.sol
+  - [ ] Authorized minting tests
+  - [ ] Burn tests
+  - [ ] Authorization tests
+  - [ ] Supply limits tests
+- [ ] Complete unit tests for Marketplace.sol
+  - [ ] NFT listing tests
+  - [ ] Purchase tests
+  - [ ] Cancellation tests
+  - [ ] Fee tests
+  - [ ] Security tests (reentrancy, etc.)
 
-#### 7.2 Testing de Frontend
-- [ ] Tests para `lib/combat.ts`
-  - [ ] Cálculo de stats
-  - [ ] Sistema de daño
-  - [ ] Efectos de estado
-- [ ] Tests para `lib/contract.ts`
-  - [ ] Lectura de NFTs
-  - [ ] Operaciones de contrato
-- [ ] Tests para `lib/skills.ts`
-  - [ ] Carga de habilidades
-  - [ ] Validación de habilidades
-- [ ] Tests para componentes críticos
+#### 7.2 Frontend Testing
+- [ ] Tests for `lib/combat.ts`
+  - [ ] Stats calculation
+  - [ ] Damage system
+  - [ ] Status effects
+- [ ] Tests for `lib/contract.ts`
+  - [ ] NFT reading
+  - [ ] Contract operations
+- [ ] Tests for `lib/skills.ts`
+  - [ ] Skill loading
+  - [ ] Skill validation
+- [ ] Tests for critical components
   - [ ] `components/combat-board.tsx`
   - [ ] `components/character-inventory.tsx`
   - [ ] `components/character-skills.tsx`
-- [ ] Tests de integración end-to-end
-- [ ] Objetivo: 60-80% de cobertura de código
+- [ ] End-to-end integration tests
+- [ ] Goal: 60-80% code coverage
 
-#### 7.3 Auditoría de Seguridad
-- [ ] Auditoría de contratos con Slither
-- [ ] Revisión de seguridad de contratos
-- [ ] Revisión de seguridad de frontend
-- [ ] Tests de penetración básicos
-- [ ] Documentación de vulnerabilidades encontradas y correcciones
+#### 7.3 Security Audit
+- [ ] Contract audit with Slither
+- [ ] Contract security review
+- [ ] Frontend security review
+- [ ] Basic penetration tests
+- [ ] Documentation of found vulnerabilities and fixes
 
-### Fase 8: Optimizaciones y Mejoras (Q1-Q2 2025)
+### Phase 8: Optimizations and Improvements (Q1-Q2 2026)
 
-#### 8.1 Optimizaciones de Rendimiento
-- [ ] Implementar `useMemo` y `useCallback` en componentes pesados
-- [ ] Code splitting con dynamic imports
-- [ ] Análisis de bundle size con @next/bundle-analyzer
-- [ ] Optimización de imágenes (WebP, lazy loading)
-- [ ] Virtual scrolling para listas largas de NFTs
-- [ ] Optimización de re-renders innecesarios
-- [ ] Caching estratégico con React Query
+#### 8.1 Performance Optimizations
+- [ ] Implement `useMemo` and `useCallback` in heavy components
+- [ ] Code splitting with dynamic imports
+- [ ] Bundle size analysis with @next/bundle-analyzer
+- [ ] Image optimization (WebP, lazy loading)
+- [ ] Virtual scrolling for long NFT lists
+- [ ] Unnecessary re-renders optimization
+- [ ] Strategic caching with React Query
 
-#### 8.2 Optimizaciones de Contratos
-- [ ] Optimizar `Marketplace.sol` (evitar loops costosos)
-- [ ] Gas optimization en todas las funciones
-- [ ] Batch operations donde sea posible
-- [ ] Eventos optimizados
+#### 8.2 Contract Optimizations
+- [ ] Optimize `Marketplace.sol` (avoid expensive loops)
+- [ ] Gas optimization in all functions
+- [ ] Batch operations where possible
+- [ ] Optimized events
 
-#### 8.3 Mejoras de UX/UI
-- [ ] Animaciones mejoradas
-- [ ] Feedback visual mejorado
-- [ ] Loading states más informativos
-- [ ] Mejoras de accesibilidad (a11y)
-- [ ] Responsive design mejorado
-- [ ] Dark mode (si no está implementado)
+#### 8.3 UX/UI Improvements
+- [ ] Improved animations
+- [ ] Improved visual feedback
+- [ ] More informative loading states
+- [ ] Accessibility improvements (a11y)
+- [ ] Improved responsive design
+- [ ] Dark mode (if not implemented)
 
-### Fase 9: Features Adicionales (Q2 2025)
+### Phase 9: Additional Features (Q2-Q3 2026)
 
-#### 9.1 Sistema de Guilds
-- [ ] Creación de guilds
-- [ ] Unirse a guilds
-- [ ] Chat de guild
-- [ ] Eventos de guild
-- [ ] Rankings de guilds
-- [ ] Recompensas de guild
+#### 9.1 Guild System
+- [ ] Guild creation
+- [ ] Join guilds
+- [ ] Guild chat
+- [ ] Guild events
+- [ ] Guild rankings
+- [ ] Guild rewards
 
-#### 9.2 Sistema Social
-- [ ] Sistema de amigos
-- [ ] Perfiles de usuario
-- [ ] Historial de batallas
-- [ ] Replays de batallas
-- [ ] Compartir logros
-- [ ] Sistema de mensajería
+#### 9.2 Social System
+- [ ] Friend system
+- [ ] User profiles
+- [ ] Battle history
+- [ ] Battle replays
+- [ ] Share achievements
+- [ ] Messaging system
 
-#### 9.3 Sistema de Logros
-- [ ] Logros por diferentes acciones
-- [ ] Badges y títulos
-- [ ] Recompensas por logros
-- [ ] Visualización de logros
-- [ ] Estadísticas de logros
+#### 9.3 Achievement System
+- [ ] Achievements for different actions
+- [ ] Badges and titles
+- [ ] Achievement rewards
+- [ ] Achievement visualization
+- [ ] Achievement statistics
 
-#### 9.4 Mejoras de Combate
-- [ ] Más tipos de terreno
-- [ ] Más efectos de estado
-- [ ] Combos y sinergias
-- [ ] Modo PvP (Player vs Player)
-- [ ] Torneos
-- [ ] Modo cooperativo
+#### 9.4 Combat Improvements
+- [ ] More terrain types
+- [ ] More status effects
+- [ ] Combos and synergies
+- [ ] PvP mode (Player vs Player)
+- [ ] Tournaments
+- [ ] Cooperative mode
 
-### Fase 10: Hackathon Requirements (Q1 2025)
+### Phase 10: Advanced Economy Features (Q1 2026)
 
-#### 10.1 Integración RWA/Yield
-- [ ] Investigar mecanismos de yield
-- [ ] Diseñar sistema de staking
-- [ ] Implementar staking de NFTs
-- [ ] Recompensas por staking
-- [ ] Integración con protocolos DeFi (si aplica)
+#### 10.1 RWA/Yield Integration
+- [ ] Research yield mechanisms
+- [ ] Design staking system
+- [ ] Implement NFT staking
+- [ ] Staking rewards
+- [ ] DeFi protocols integration (if applicable)
 
-#### 10.2 Sistema de Incentivos de Tokens
-- [ ] Diseñar economía de tokens
-- [ ] Recompensas MNT por logros
-- [ ] Sistema de airdrops
-- [ ] Programa de referidos
-- [ ] Incentivos para retención
+#### 10.2 Token Incentive System
+- [ ] Design token economy
+- [ ] MNT rewards for achievements
+- [ ] Airdrop system
+- [ ] Referral program
+- [ ] Retention incentives
 
-#### 10.3 Herramientas de Retención
-- [x] Leaderboards (✅ Completado)
-- [x] Daily Quests (✅ Completado)
-- [x] Daily Rewards (✅ Completado)
-- [ ] Sistema de notificaciones
-- [ ] Recordatorios de login
-- [ ] Eventos especiales temporales
+#### 10.3 Retention Tools
+- [x] Leaderboards (✅ Completed)
+- [x] Daily Quests (✅ Completed)
+- [x] Daily Rewards (✅ Completed)
+- [ ] Notification system
+- [ ] Login reminders
+- [ ] Special temporary events
 
-#### 10.4 Materiales para Hackathon
-- [ ] Video demo (3-5 minutos)
-- [ ] One-pager pitch document
-- [ ] Actualización de GitHub con instrucciones
-- [ ] Bios del equipo
-- [ ] Información de contacto
-- [ ] Screenshots y GIFs
+#### 10.4 Marketing Materials
+- [ ] Demo video (3-5 minutes)
+- [ ] Project overview document
+- [ ] GitHub update with instructions
+- [ ] Team bios
+- [ ] Contact information
+- [ ] Screenshots and GIFs
 
-### Fase 11: Expansión y Escalabilidad (Q2-Q3 2025)
+### Phase 11: Expansion and Scalability (Q3-Q4 2026)
 
-#### 11.1 Nuevas Clases de Personajes
-- [ ] Diseñar nuevas clases
-- [ ] Balancear stats y habilidades
-- [ ] Implementar en contratos
-- [ ] Actualizar frontend
+#### 11.1 New Character Classes
+- [ ] Design new classes
+- [ ] Balance stats and skills
+- [ ] Implement in contracts
+- [ ] Update frontend
 
-#### 11.2 Nuevos Items y Equipamiento
-- [ ] Diseñar nuevos items
-- [ ] Implementar efectos especiales
-- [ ] Sistema de crafting (opcional)
-- [ ] Sistema de mejoras de items
+#### 11.2 New Items and Equipment
+- [ ] Design new items
+- [ ] Implement special effects
+- [ ] Crafting system (optional)
+- [ ] Item upgrade system
 
-#### 11.3 Nuevos Stages y Contenido
-- [ ] Diseñar nuevos stages
-- [ ] Nuevos tipos de enemigos
-- [ ] Nuevos bosses
-- [ ] Modo historia/campaña
+#### 11.3 New Stages and Content
+- [ ] Design new stages
+- [ ] New enemy types
+- [ ] New bosses
+- [ ] Story/campaign mode
 
 #### 11.4 Mobile App
-- [ ] Diseño de app móvil
-- [ ] Desarrollo con React Native o similar
-- [ ] Integración con wallets móviles
-- [ ] Optimización para móvil
+- [ ] Mobile app design
+- [ ] Development with React Native or similar
+- [ ] Mobile wallet integration
+- [ ] Mobile optimization
 
-### Fase 12: Mejoras Técnicas Continuas (Ongoing)
+### Phase 12: Continuous Technical Improvements (Ongoing)
 
 #### 12.1 CI/CD
-- [ ] Configurar GitHub Actions
-- [ ] Tests automáticos en PRs
-- [ ] Deployment automático
-- [ ] Linting y formatting automáticos
+- [ ] Configure GitHub Actions
+- [ ] Automatic tests in PRs
+- [ ] Automatic deployment
+- [ ] Automatic linting and formatting
 
-#### 12.2 Monitoreo y Analytics
-- [ ] Integración de Sentry para error tracking
-- [ ] Analytics de uso
-- [ ] Métricas de performance
-- [ ] Alertas automáticas
+#### 12.2 Monitoring and Analytics
+- [ ] Sentry integration for error tracking
+- [ ] Usage analytics
+- [ ] Performance metrics
+- [ ] Automatic alerts
 
-#### 12.3 Documentación
-- [ ] API.md con documentación de contratos
-- [ ] Documentación de hooks personalizados
-- [ ] Guía de contribución (CONTRIBUTING.md)
-- [ ] Ejemplos de uso en README
-- [ ] Documentación de arquitectura actualizada
+#### 12.3 Documentation
+- [ ] API.md with contract documentation
+- [ ] Custom hooks documentation
+- [ ] Contribution guide (CONTRIBUTING.md)
+- [ ] Usage examples in README
+- [ ] Updated architecture documentation
 
 ---
 
-## 📈 Métricas y Objetivos
+## 📈 Metrics and Objectives
 
-### Objetivos Técnicos
+### Technical Objectives
 
-#### Corto Plazo (Q1 2025)
-- ✅ Completar migración a Mantle Network
-- ✅ Implementar todas las features core
-- [ ] Alcanzar 60-80% de cobertura de tests
-- [ ] Completar auditoría de seguridad
-- [ ] Optimizar rendimiento (bundle size < 500KB)
+#### Short Term (Q1 2026)
+- ✅ Complete migration to Mantle Network
+- ✅ Implement all core features
+- [ ] Reach 60-80% test coverage
+- [ ] Complete security audit
+- [ ] Optimize performance (bundle size < 500KB)
 
-#### Mediano Plazo (Q2 2025)
-- [ ] Implementar sistema de guilds
-- [ ] Implementar características sociales
-- [ ] Lanzar mobile app (beta)
-- [ ] Alcanzar 10,000+ usuarios activos
+#### Medium Term (Q2-Q3 2026)
+- [ ] Launch PvP system
+- [ ] Enhanced token economy
+- [ ] Launch mobile app (beta)
+- [ ] Reach 10,000+ active users
 
-#### Largo Plazo (Q3-Q4 2025)
-- [ ] Sistema de staking implementado
-- [ ] Integración con DeFi protocols
-- [ ] Expansión a múltiples blockchains
-- [ ] Comunidad activa de 50,000+ usuarios
+#### Long Term (Q4 2026 - Q1 2027)
+- [ ] Implement staking system
+- [ ] DeFi protocols integration
+- [ ] Expansion to multiple blockchains
+- [ ] Active community of 50,000+ users
 
-### Métricas de Éxito
+### Success Metrics
 
-#### Técnicas
+#### Technical
 - **Uptime**: > 99.9%
-- **Tiempo de carga**: < 3 segundos
-- **Cobertura de tests**: > 70%
-- **Gas costs**: Optimizados para < $0.10 por transacción
+- **Load time**: < 3 seconds
+- **Test coverage**: > 70%
+- **Gas costs**: Optimized for < $0.10 per transaction
 
-#### Producto
-- **DAU (Daily Active Users)**: Objetivo 1,000+ en Q1
-- **Retención D7**: > 40%
-- **Retención D30**: > 20%
-- **Transacciones diarias**: > 5,000
+#### Product
+- **DAU (Daily Active Users)**: Goal 1,000+ in 2026
+- **D7 Retention**: > 40%
+- **D30 Retention**: > 20%
+- **Daily transactions**: > 5,000
 
-#### Comunidad
-- **Usuarios registrados**: Objetivo 10,000+ en Q2
-- **NFTs minteados**: > 50,000
-- **Volumen de trading**: > $100,000 mensual
-
----
-
-## 🎯 Prioridades Actuales
-
-### Alta Prioridad (Próximas 2-4 semanas)
-1. **Testing de Contratos** - Crítico para seguridad
-2. **Auditoría de Seguridad** - Antes de mainnet
-3. **Optimizaciones de Rendimiento** - Mejorar UX
-4. **Materiales para Hackathon** - Video demo y pitch
-
-### Media Prioridad (Próximos 1-2 meses)
-1. **Testing de Frontend** - Mejorar calidad
-2. **Sistema de Guilds** - Retención social
-3. **Mejoras de UX/UI** - Mejor experiencia
-4. **Documentación Completa** - Para desarrolladores
-
-### Baja Prioridad (Próximos 3-6 meses)
-1. **Mobile App** - Expansión de plataforma
-2. **Sistema de Staking** - Integración DeFi
-3. **Nuevas Clases y Contenido** - Expansión del juego
-4. **Multi-chain** - Expansión de blockchain
+#### Community
+- **Registered users**: Goal 10,000+ by mid-2026
+- **Minted NFTs**: > 50,000
+- **Trading volume**: > $100,000 monthly
 
 ---
 
-## 📝 Notas Adicionales
+## 🎯 Current Priorities
 
-### Decisiones Técnicas Importantes
+### High Priority (Immediate - Q1 2026)
+1. **Performance Optimizations** - Improve UX
+2. **Bug Fixes** - Address known issues
+3. **PvP Foundation** - Core PvP mechanics
+4. **Marketing Materials** - Demo video and project overview
 
-1. **Mantle Network**: Elegido por bajas comisiones y alta throughput, ideal para gaming
-2. **Next.js App Router**: Para mejor performance y SEO
-3. **TypeScript Strict Mode**: Para type safety y mejor DX
-4. **Modular Architecture**: Para mantenibilidad y escalabilidad
-5. **Off-chain + On-chain Hybrid**: Balance entre costos y funcionalidad
+### Medium Priority (Q2 2026)
+1. **Enhanced Token Economy** - Referrals, staking
+2. **PvP Launch** - Full competitive system
+3. **UX/UI Improvements** - Better experience
+4. **Mobile Optimization** - Responsive improvements
 
-### Lecciones Aprendidas
+### Long Term (Q3-Q4 2026)
+1. **Mobile App** - Platform expansion
+2. **Advanced Features** - Tournaments, guilds enhancement
+3. **New Classes and Content** - Game expansion
+4. **Multi-chain Research** - Blockchain expansion planning
 
-1. **Consolidación temprana**: Eliminar duplicación desde el inicio
-2. **Type Safety**: Usar interfaces en lugar de `any` desde el principio
-3. **Logging estructurado**: Usar logger en lugar de console.log
-4. **Testing temprano**: Implementar tests junto con features
-5. **Documentación continua**: Mantener documentación actualizada
+---
 
-### Recursos y Referencias
+## 📝 Additional Notes
+
+### Important Technical Decisions
+
+1. **Mantle Network**: Chosen for low fees and high throughput, ideal for gaming
+2. **Next.js App Router**: For better performance and SEO
+3. **TypeScript Strict Mode**: For type safety and better DX
+4. **Modular Architecture**: For maintainability and scalability
+5. **Off-chain + On-chain Hybrid**: Balance between costs and functionality
+
+### Lessons Learned
+
+1. **Early consolidation**: Eliminate duplication from the start
+2. **Type Safety**: Use interfaces instead of `any` from the beginning
+3. **Structured logging**: Use logger instead of console.log
+4. **Early testing**: Implement tests along with features
+5. **Continuous documentation**: Keep documentation updated
+
+### Resources and References
 
 - **Mantle Network Docs**: https://docs.mantle.xyz
 - **Next.js Docs**: https://nextjs.org/docs
@@ -571,15 +571,15 @@ Chessnoth/
 
 ---
 
-## 🔄 Actualización del Roadmap
+## 🔄 Roadmap Updates
 
-Este documento se actualiza regularmente. Última actualización: **2025-01-07**
+This document is updated regularly. Last update: **January 15, 2026**
 
-Para contribuir o sugerir cambios al roadmap, por favor:
-1. Revisa el estado actual del proyecto
-2. Propón cambios con justificación
-3. Actualiza las fechas y prioridades según corresponda
+To contribute or suggest changes to the roadmap, please:
+1. Review current project status
+2. Propose changes with justification
+3. Update dates and priorities accordingly
 
 ---
 
-**Chessnoth** - Construyendo el futuro del gaming NFT en Mantle Network 🎮⚔️
+**Chessnoth** - Building the future of NFT gaming on Mantle Network 🎮⚔️

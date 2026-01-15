@@ -59,11 +59,14 @@ export function useUpgradeCharacter() {
   })
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransaction({
-    hash,
+    hash: (hash && typeof hash === 'object' && 'hash' in hash ? hash.hash : hash) as `0x${string}` | undefined,
   })
 
-  const upgrade = async (tokenId: bigint, expAmount: bigint) => {
+  const upgrade = (tokenId: bigint, expAmount: bigint) => {
     try {
+      if (!write) {
+        throw new Error('Wallet not connected')
+      }
       write({
         args: [tokenId, expAmount],
       })
@@ -105,10 +108,10 @@ export function useMintCharacter() {
   })
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransaction({
-    hash,
+    hash: (hash && typeof hash === 'object' && 'hash' in hash ? hash.hash : hash) as `0x${string}` | undefined,
   })
 
-  const mint = async (
+  const mint = (
     to: string,
     ipfsHash: string,
     generation: bigint,
@@ -116,8 +119,14 @@ export function useMintCharacter() {
     name: string
   ) => {
     try {
+      if (!write) {
+        throw new Error('Wallet not connected')
+      }
+      // Mint price is 5 MNT (5 ether in wei)
+      const mintPrice = BigInt(5 * 10**18) // 5 MNT
       write({
         args: [to, ipfsHash, generation, characterClass, name],
+        value: mintPrice,
       })
     } catch (error) {
       logger.error('Error minting character', {

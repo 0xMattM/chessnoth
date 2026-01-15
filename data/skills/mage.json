@@ -2,7 +2,7 @@
   {
     "id": "fireball",
     "name": "Fireball",
-    "description": "Deals 1.2x magic damage, range 3",
+    "description": "Deals 1.5x magic damage, range 3",
     "classId": "mage",
     "levelReq": 1,
     "spCost": 1,
@@ -10,13 +10,13 @@
     "range": 3,
     "aoeType": "single",
     "damageType": "magical",
-    "damageMultiplier": 1.2,
+    "damageMultiplier": 1.5,
     "requiresTarget": true
   },
   {
     "id": "ice_bolt",
     "name": "Ice Bolt",
-    "description": "Deals 1.1x magic damage with chance to freeze",
+    "description": "Deals 1.4x magic damage with chance to freeze",
     "classId": "mage",
     "levelReq": 3,
     "spCost": 1,
@@ -24,7 +24,7 @@
     "range": 3,
     "aoeType": "single",
     "damageType": "magical",
-    "damageMultiplier": 1.1,
+    "damageMultiplier": 1.4,
     "effects": [
       {
         "type": "status",
@@ -38,7 +38,7 @@
   {
     "id": "lightning",
     "name": "Lightning",
-    "description": "Line attack dealing 1.3x magic damage",
+    "description": "Line attack dealing 1.6x magic damage",
     "classId": "mage",
     "levelReq": 5,
     "spCost": 1,
@@ -46,7 +46,7 @@
     "range": 3,
     "aoeType": "line",
     "damageType": "magical",
-    "damageMultiplier": 1.3,
+    "damageMultiplier": 1.6,
     "requiresTarget": true
   },
   {
@@ -74,7 +74,7 @@
   {
     "id": "chain_lightning",
     "name": "Chain Lightning",
-    "description": "Jumps to 3 targets, dealing 1.0x magic damage to each",
+    "description": "Jumps to 3 targets, dealing 1.3x magic damage to each",
     "classId": "mage",
     "levelReq": 10,
     "spCost": 2,
@@ -82,13 +82,13 @@
     "range": 3,
     "aoeType": "single",
     "damageType": "magical",
-    "damageMultiplier": 1.0,
+    "damageMultiplier": 1.3,
     "requiresTarget": true
   },
   {
     "id": "meteor",
     "name": "Meteor",
-    "description": "AoE attack dealing 1.5x magic damage in radius 2",
+    "description": "AoE attack dealing 1.8x magic damage in radius 2",
     "classId": "mage",
     "levelReq": 15,
     "spCost": 2,
@@ -97,13 +97,13 @@
     "aoeType": "radius",
     "aoeRadius": 2,
     "damageType": "magical",
-    "damageMultiplier": 1.5,
+    "damageMultiplier": 1.8,
     "requiresTarget": false
   },
   {
     "id": "blizzard",
     "name": "Blizzard",
-    "description": "AoE attack dealing 1.2x magic damage and freezing all targets in radius 1",
+    "description": "AoE attack dealing 1.5x magic damage and freezing all targets in radius 1",
     "classId": "mage",
     "levelReq": 20,
     "spCost": 3,
@@ -112,7 +112,7 @@
     "aoeType": "radius",
     "aoeRadius": 1,
     "damageType": "magical",
-    "damageMultiplier": 1.2,
+    "damageMultiplier": 1.5,
     "effects": [
       {
         "type": "status",
@@ -161,7 +161,7 @@
   {
     "id": "apocalypse",
     "name": "Apocalypse",
-    "description": "AoE attack dealing 2.0x magic damage to all enemies",
+    "description": "AoE attack dealing 2.5x magic damage to all enemies",
     "classId": "mage",
     "levelReq": 40,
     "spCost": 3,
@@ -169,7 +169,7 @@
     "range": 0,
     "aoeType": "all_enemies",
     "damageType": "magical",
-    "damageMultiplier": 2.0,
+    "damageMultiplier": 2.5,
     "requiresTarget": false
   }
 ]

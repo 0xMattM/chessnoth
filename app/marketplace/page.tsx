@@ -19,7 +19,7 @@ import { getAllActiveListings, enrichListingsWithNFTData, type MarketplaceListin
 import { useQuery } from '@tanstack/react-query'
 import { logger } from '@/lib/logger'
 import { isInTeam, removeFromTeam } from '@/lib/team'
-import { Loader2, ShoppingCart, List, X, Coins, Users, Sparkles, CheckCircle2 } from 'lucide-react'
+import { Loader2, ShoppingCart, List, X, Coins, Users, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
@@ -34,6 +34,7 @@ import { SectionTitle } from '@/components/section-title'
 
 /**
  * Listing Card Component - displays a single marketplace listing
+ * Client-side only to avoid hydration issues
  */
 function ListingCard({
   listing,
@@ -54,64 +55,25 @@ function ListingCard({
     setMounted(true)
   }, [])
 
-  // Get NFT class directly from contract if nftData is not available (only on client)
-  const { data: nftClass } = useContractRead({
-    address: CHARACTER_NFT_ADDRESS,
-    abi: CHARACTER_NFT_ABI,
-    functionName: 'getClass',
-    args: [listing.tokenId],
-    enabled: mounted && !listing.nftData?.class,
-  })
-
-  // Get NFT name if not available
-  const { data: nftName } = useContractRead({
-    address: CHARACTER_NFT_ADDRESS,
-    abi: CHARACTER_NFT_ABI,
-    functionName: 'getName',
-    args: [listing.tokenId],
-    enabled: mounted && !listing.nftData?.name,
-  })
-
-  // Get NFT level if not available
-  const { data: nftLevel } = useContractRead({
-    address: CHARACTER_NFT_ADDRESS,
-    abi: CHARACTER_NFT_ABI,
-    functionName: 'getLevel',
-    args: [listing.tokenId],
-    enabled: mounted && !listing.nftData?.level,
-  })
+  // REMOVED: Excessive contract reads that were causing MetaMask crashes
+  // NFT data is already enriched in the query, no need for additional calls
 
   const isNativePayment = listing.paymentToken === '0x0000000000000000000000000000000000000000'
   const priceDisplay = isNativePayment
     ? `${formatCHSAmount(listing.price)} MNT`
     : `${formatCHSAmount(listing.price)} CHS`
 
-  // Get class for image - use nftData if available, otherwise use contract data (only if mounted)
-  const classForImage = listing.nftData?.class || (mounted ? (nftClass as string | undefined) : undefined)
-  const imagePath = listing.nftData?.image || (mounted && classForImage ? getNFTCharacterImage(classForImage) : null)
+  // Use enriched nftData from the listing
+  const classForImage = listing.nftData?.class
+  const imagePath = listing.nftData?.image || (classForImage ? getNFTCharacterImage(classForImage) : null)
   
-  const displayName = listing.nftData?.name || (mounted ? (nftName as string | undefined) : undefined) || `NFT #${listing.tokenId}`
-  const displayClass = listing.nftData?.class || (mounted ? (nftClass as string | undefined) : undefined)
-  const displayLevel = listing.nftData?.level || (mounted ? (nftLevel as bigint | undefined) : undefined)
+  const displayName = listing.nftData?.name || `NFT #${listing.tokenId}`
+  const displayClass = listing.nftData?.class
+  const displayLevel = listing.nftData?.level
 
-  // Don't render until mounted to avoid hydration issues
+  // Don't render until mounted - return null to avoid hydration mismatch
   if (!mounted) {
-    return (
-      <Card
-        className="group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-2 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden"
-        style={{ animationDelay: `${index * 0.1}s` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:to-primary/10 transition-all duration-300" />
-        <CardHeader className="relative">
-          <div className="aspect-square w-full overflow-hidden rounded-xl bg-slate-800/50 border border-border/40 group-hover:border-primary/40 transition-all relative">
-            <div className="flex h-full items-center justify-center">
-              <div className="h-16 w-16 bg-slate-700/50 rounded" />
-            </div>
-          </div>
-          <CardTitle className="mt-4">Loading...</CardTitle>
-        </CardHeader>
-      </Card>
-    )
+    return null
   }
 
   return (
@@ -249,7 +211,9 @@ export default function MarketplacePage() {
         throw error
       }
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    // REMOVED: refetchInterval to prevent excessive MetaMask calls
+    // Manual refetch after successful transactions instead
+    staleTime: 60000, // Consider data fresh for 1 minute
     enabled: mounted && isMarketplaceAddressConfigured(),
   })
 
@@ -380,13 +344,15 @@ export default function MarketplacePage() {
     setListDialogOpen(true)
   }
 
-  // Check NFT approval status
+  // Check NFT approval status - optimized to prevent excessive calls
   const { data: nftApproval, refetch: refetchNFTApproval } = useContractRead({
     address: CHARACTER_NFT_ADDRESS,
     abi: CHARACTER_NFT_ABI,
     functionName: 'getApproved',
     args: selectedTokenId ? [BigInt(selectedTokenId)] : undefined,
-    enabled: !!selectedTokenId && !!isConnected,
+    enabled: !!selectedTokenId && !!isConnected && listDialogOpen, // Only when dialog is open
+    staleTime: 10000, // Consider fresh for 10 seconds
+    cacheTime: 30000, // Keep in cache for 30 seconds
   })
 
   // Handle list NFT
@@ -517,7 +483,7 @@ export default function MarketplacePage() {
     }
   }, [isApproveSuccess, selectedTokenId, refetchNFTApproval])
 
-  // List NFT after approval - simplified and more robust
+  // List NFT after approval - improved with proper cleanup
   useEffect(() => {
     // Only proceed if approval was successful (tracked by ref), we have a pending listing, and we haven't already attempted to list
     if (approvalSuccessRef.current && pendingListing && !isListing && !isConfirmingList && !listingAfterApprovalRef.current) {
@@ -528,11 +494,18 @@ export default function MarketplacePage() {
         approvalSuccessRef: approvalSuccessRef.current,
       })
 
+      // Flag to track if component is still mounted
+      let isMounted = true
+      
       // Wait a bit for the contract state to update and ensure approval is fully processed
       const timeoutId = setTimeout(async () => {
-        // Check again if pending listing still exists (it might have been cleared)
-        if (!pendingListing || !approvalSuccessRef.current) {
-          logger.warn('Pending listing or approval ref cleared before listing attempt', {})
+        // Check if component is still mounted and listing still pending
+        if (!isMounted || !pendingListing || !approvalSuccessRef.current) {
+          if (!isMounted) {
+            logger.warn('Component unmounted before listing attempt')
+          } else {
+            logger.warn('Pending listing or approval ref cleared before listing attempt', {})
+          }
           listingAfterApprovalRef.current = false
           return
         }
@@ -551,6 +524,13 @@ export default function MarketplacePage() {
           // Verify approval one more time before listing
           await refetchNFTApproval()
           
+          // Check again if still mounted
+          if (!isMounted) {
+            logger.warn('Component unmounted during approval refetch')
+            listingAfterApprovalRef.current = false
+            return
+          }
+          
           logger.info('Calling listNFT after approval', {
             tokenId,
             price: priceInWei.toString(),
@@ -568,6 +548,8 @@ export default function MarketplacePage() {
             description: 'Transaction has been sent. Wait for confirmation.',
           })
         } catch (error) {
+          if (!isMounted) return // Don't show errors if unmounted
+          
           logger.error('Error listing NFT after approval', error instanceof Error ? error : new Error(String(error)), { pendingListing })
           toast({
             title: 'Error Listing',
@@ -580,7 +562,12 @@ export default function MarketplacePage() {
         }
       }, 2000) // Wait 2 seconds for contract state to update
 
-      return () => clearTimeout(timeoutId)
+      // Cleanup function
+      return () => {
+        isMounted = false
+        clearTimeout(timeoutId)
+        logger.debug('Listing effect cleanup executed')
+      }
     }
   }, [isApproveSuccess, pendingListing, listNFT, toast, isListing, isConfirmingList, refetchNFTApproval])
 
@@ -721,7 +708,7 @@ export default function MarketplacePage() {
     }
   }, [listTxError, selectedTokenId, toast])
 
-  // Invalidate queries on success
+  // Invalidate queries on success - optimized to prevent excessive refetching
   useEffect(() => {
     if (isListSuccess) {
       logger.info('Listing successful, invalidating queries', { listHash, selectedTokenId })
@@ -733,11 +720,10 @@ export default function MarketplacePage() {
       }
       
       // Wait a bit before invalidating to ensure blockchain state is updated
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ['ownedCharacters'] })
         queryClient.invalidateQueries({ queryKey: ['chsBalance'] })
-        queryClient.invalidateQueries({ queryKey: ['activeListings'] })
-        refetchNFTApproval() // Also refresh approval status
+        refetchListings() // Manual refetch instead of automatic
       }, 2000)
       
       setSelectedTokenId('')
@@ -753,17 +739,51 @@ export default function MarketplacePage() {
         description: 'Your NFT has been listed on the marketplace.',
         variant: 'success',
       })
+
+      return () => clearTimeout(timeoutId)
     }
     
-    if (isBuySuccess || isCancelSuccess) {
-      queryClient.invalidateQueries({ queryKey: ['ownedCharacters'] })
-      queryClient.invalidateQueries({ queryKey: ['chsBalance'] })
-      queryClient.invalidateQueries({ queryKey: ['activeListings'] })
+    if (isBuySuccess) {
+      logger.info('Buy successful, invalidating queries')
+      const timeoutId = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['ownedCharacters'] })
+        queryClient.invalidateQueries({ queryKey: ['chsBalance'] })
+        refetchListings() // Manual refetch instead of automatic
+      }, 2000)
+      
       setSelectedTokenId('')
       setListPrice('')
       setListingId('')
+      
+      toast({
+        title: 'NFT Purchased Successfully',
+        description: 'The NFT has been transferred to your wallet.',
+        variant: 'success',
+      })
+
+      return () => clearTimeout(timeoutId)
     }
-  }, [isListSuccess, isBuySuccess, isCancelSuccess, queryClient, toast, listHash, selectedTokenId, refetchNFTApproval])
+    
+    if (isCancelSuccess) {
+      logger.info('Cancel successful, invalidating queries')
+      const timeoutId = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['ownedCharacters'] })
+        refetchListings() // Manual refetch instead of automatic
+      }, 2000)
+      
+      setSelectedTokenId('')
+      setListPrice('')
+      setListingId('')
+      
+      toast({
+        title: 'Listing Cancelled Successfully',
+        description: 'Your NFT has been returned to your wallet.',
+        variant: 'success',
+      })
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [isListSuccess, isBuySuccess, isCancelSuccess, queryClient, toast, listHash, selectedTokenId, refetchListings])
 
   // Prevent dialog from closing during approval/listing process
   useEffect(() => {
@@ -783,12 +803,28 @@ export default function MarketplacePage() {
     }
   }, [isApproveSuccess, selectedTokenId, queryClient])
 
+  // Cleanup on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      logger.debug('Marketplace component unmounting, cleaning up state')
+      // Cancel any pending queries to prevent memory leaks
+      queryClient.cancelQueries({ queryKey: ['activeListings'] })
+      queryClient.cancelQueries({ queryKey: ['ownedCharacters'] })
+    }
+  }, [queryClient])
+
   const feePercent = feeBasisPoints ? Number(feeBasisPoints) / 100 : 2.5
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen branding-background">
+      {/* Animated background elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
+      </div>
+
       <Navigation />
-      <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-6">
+      <main className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-6">
         <SectionTitle
           title="Marketplace"
           subtitle={
@@ -965,8 +1001,11 @@ export default function MarketplacePage() {
                     }
 
                     try {
+                      // Mint price is 5 MNT (5 ether in wei)
+                      const mintPrice = BigInt(5 * 10**18) // 5 MNT
                       mintNFT({
                         args: [address, PLACEHOLDER_IPFS_HASH, BigInt(1), characterClass, sanitizedName],
+                        value: mintPrice,
                       })
                     } catch (err) {
                       const error = err instanceof Error ? err : new Error('Unknown error')
@@ -1010,11 +1049,23 @@ export default function MarketplacePage() {
 
           {/* Browse/Buy Tab */}
           <TabsContent value="browse" className="space-y-4">
-            <div>
-              <h2 className="text-2xl font-bold mb-2 font-display">Available Listings</h2>
-              <p className="text-muted-foreground mb-6">
-                Explore and buy NFTs from other players
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold mb-2 font-display">Available Listings</h2>
+                <p className="text-muted-foreground mb-2">
+                  Explore and buy NFTs from other players
+                </p>
+              </div>
+              <Button
+                onClick={() => refetchListings()}
+                disabled={isLoadingListings}
+                variant="outline"
+                size="sm"
+                className="h-9"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${isLoadingListings ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             </div>
 
             {!isMarketplaceAddressConfigured() ? (
@@ -1053,8 +1104,8 @@ export default function MarketplacePage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {activeListings.map((listing, index) => (
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 pb-4">
+                {mounted && activeListings.map((listing, index) => (
                   <ListingCard
                     key={listing.listingId.toString()}
                     listing={listing}
@@ -1090,170 +1141,173 @@ export default function MarketplacePage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 pb-4">
                 {ownedCharacters.map((character, index) => {
                   const characterImage = getNFTCharacterImage(character.class)
                   return (
-                    <Card
-                      key={character.tokenId.toString()}
-                      className="group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:to-primary/10 transition-all duration-300" />
-                      <CardHeader className="relative p-3">
-                        <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-800/50 border border-border/40 group-hover:border-primary/40 transition-all">
-                          {characterImage ? (
-                            <Image
-                              src={characterImage}
-                              alt={character.name}
-                              fill
-                              className="object-cover transition-transform duration-300 group-hover:scale-110"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            />
-                          ) : (
-                            <div className="flex h-full items-center justify-center">
-                              <Users className="h-8 w-8 text-primary/50 group-hover:text-primary transition-colors" />
-                            </div>
-                          )}
-                        </div>
-                        <CardTitle className="mt-2 text-sm group-hover:text-primary transition-colors line-clamp-1">
-                          {character.name}
-                        </CardTitle>
-                        <CardDescription className="flex items-center gap-1 text-xs">
-                          <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30">
-                            {character.class}
-                          </span>
-                          <span className="text-muted-foreground text-xs">
-                            Lv.{Number(character.level)}
-                          </span>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="relative p-3 pt-0">
-                        {isInTeam(character.tokenId.toString()) ? (
-                          <div className="w-full h-8 flex items-center justify-center text-xs text-muted-foreground bg-muted/50 rounded-md border border-border/40">
-                            <span>In Team</span>
-                          </div>
-                        ) : (
-                          <Button
-                            className="w-full h-8 text-xs"
-                            onClick={() => handleOpenListDialog(character)}
-                            disabled={isListing || isConfirmingList}
-                          >
-                            <List className="h-3 w-3 mr-1" />
-                            List NFT
-                          </Button>
-                        )}
-                      </CardContent>
-                    </Card>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Cancel Listing */}
-            <div className="mt-8">
-              <h2 className="text-2xl font-bold mb-2 font-display">Your Active Listings</h2>
-              <p className="text-muted-foreground mb-6">
-                Cancel an active listing to recover your NFT
-              </p>
-
-              {isLoadingListings ? (
-                <div className="text-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-                  <p className="text-muted-foreground">Loading listings...</p>
-                </div>
-              ) : userListings.length === 0 ? (
-                <Card>
-                  <CardContent className="py-12 text-center">
-                    <X className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground">You have no active listings</p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                  {userListings.map((listing, index) => {
-                    const isNativePayment = listing.paymentToken === '0x0000000000000000000000000000000000000000'
-                    const priceDisplay = isNativePayment
-                      ? `${formatCHSAmount(listing.price)} MNT`
-                      : `${formatCHSAmount(listing.price)} CHS`
-                    
-                    return (
                       <Card
-                        key={listing.listingId.toString()}
-                        className="group transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden"
+                        key={character.tokenId.toString()}
+                        className="group transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden"
                         style={{ animationDelay: `${index * 0.1}s` }}
                       >
-                        <div className="absolute inset-0 bg-gradient-to-br from-destructive/0 via-destructive/0 to-destructive/0 group-hover:from-destructive/10 group-hover:to-destructive/10 transition-all duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/0 via-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:to-primary/10 transition-all duration-300" />
                         <CardHeader className="relative p-3">
-                          <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-800/50 border border-border/40 group-hover:border-destructive/40 transition-all">
-                            {listing.nftData?.image ? (
+                          <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-800/50 border border-border/40 group-hover:border-primary/40 transition-all">
+                            {characterImage ? (
                               <Image
-                                src={listing.nftData.image}
-                                alt={listing.nftData.name || `NFT #${listing.tokenId}`}
+                                src={characterImage}
+                                alt={character.name}
                                 fill
                                 className="object-cover transition-transform duration-300 group-hover:scale-110"
                                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               />
                             ) : (
                               <div className="flex h-full items-center justify-center">
-                                <Users className="h-8 w-8 text-destructive/50 group-hover:text-destructive transition-colors" />
+                                <Users className="h-8 w-8 text-primary/50 group-hover:text-primary transition-colors" />
                               </div>
                             )}
                           </div>
-                          <CardTitle className="mt-2 text-sm group-hover:text-destructive transition-colors line-clamp-1">
-                            {listing.nftData?.name || `NFT #${listing.tokenId}`}
+                          <CardTitle className="mt-2 text-sm group-hover:text-primary transition-colors line-clamp-1">
+                            {character.name}
                           </CardTitle>
                           <CardDescription className="flex items-center gap-1 text-xs">
-                            {listing.nftData?.class && (
-                              <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-destructive/20 text-destructive border border-destructive/30">
-                                {listing.nftData.class}
-                              </span>
-                            )}
-                            {listing.nftData?.level && (
-                              <span className="text-muted-foreground text-xs">
-                                Lv.{Number(listing.nftData.level)}
-                              </span>
-                            )}
+                            <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30">
+                              {character.class}
+                            </span>
+                            <span className="text-muted-foreground text-xs">
+                              Lv.{Number(character.level)}
+                            </span>
                           </CardDescription>
                         </CardHeader>
-                        <CardContent className="relative space-y-2 p-3 pt-0">
-                          <div className="space-y-1 text-xs">
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">Price:</span>
-                              <span className="font-bold text-sm">{priceDisplay}</span>
+                        <CardContent className="relative p-3 pt-0">
+                          {isInTeam(character.tokenId.toString()) ? (
+                            <div className="w-full h-8 flex items-center justify-center text-xs text-muted-foreground bg-muted/50 rounded-md border border-border/40">
+                              <span>In Team</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-muted-foreground">ID:</span>
-                              <span className="font-mono text-xs">#{listing.listingId.toString()}</span>
-                            </div>
-                          </div>
-                          <Button
-                            className="w-full h-8 text-xs"
-                            variant="destructive"
-                            onClick={() => handleCancelListing(listing.listingId.toString())}
-                            disabled={isCancelling || isConfirmingCancel}
-                          >
-                            {isCancelling || isConfirmingCancel ? (
-                              <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                Cancelando...
-                              </>
-                            ) : (
-                              <>
-                                <X className="h-3 w-3 mr-1" />
-                                Cancel
-                              </>
-                            )}
-                          </Button>
+                          ) : (
+                            <Button
+                              className="w-full h-8 text-xs"
+                              onClick={() => handleOpenListDialog(character)}
+                              disabled={isListing || isConfirmingList}
+                            >
+                              <List className="h-3 w-3 mr-1" />
+                              List NFT
+                            </Button>
+                          )}
                         </CardContent>
                       </Card>
                     )
                   })}
                 </div>
               )}
-            </div>
-          </TabsContent>
-        </Tabs>
+
+              {/* Cancel Listing */}
+              <div className="mt-8">
+                <h2 className="text-2xl font-bold mb-2 font-display">Your Active Listings</h2>
+                <p className="text-muted-foreground mb-6">
+                  Cancel an active listing to recover your NFT
+                </p>
+
+                {isLoadingListings ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading listings...</p>
+                  </div>
+                ) : userListings.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <X className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                      <p className="text-muted-foreground">You have no active listings</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 pb-4">
+                    {userListings.map((listing, index) => {
+                    const isNativePayment = listing.paymentToken === '0x0000000000000000000000000000000000000000'
+                    const priceDisplay = isNativePayment
+                      ? `${formatCHSAmount(listing.price)} MNT`
+                      : `${formatCHSAmount(listing.price)} CHS`
+                      
+                      return (
+                        <Card
+                          key={listing.listingId.toString()}
+                          className="group transition-all duration-300 hover:shadow-lg hover:shadow-destructive/20 hover:-translate-y-1 border-border/40 bg-slate-900/50 backdrop-blur-xl overflow-hidden"
+                          style={{ animationDelay: `${index * 0.1}s` }}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-br from-destructive/0 via-destructive/0 to-destructive/0 group-hover:from-destructive/10 group-hover:to-destructive/10 transition-all duration-300" />
+                          <CardHeader className="relative p-3">
+                            <div className="aspect-square w-full overflow-hidden rounded-lg bg-slate-800/50 border border-border/40 group-hover:border-destructive/40 transition-all">
+                              {listing.nftData?.image ? (
+                                <Image
+                                  src={listing.nftData.image}
+                                  alt={listing.nftData.name || `NFT #${listing.tokenId}`}
+                                  fill
+                                  className="object-cover transition-transform duration-300 group-hover:scale-110"
+                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                />
+                              ) : (
+                                <div className="flex h-full items-center justify-center">
+                                  <Users className="h-8 w-8 text-destructive/50 group-hover:text-destructive transition-colors" />
+                                </div>
+                              )}
+                            </div>
+                            <CardTitle className="mt-2 text-sm group-hover:text-destructive transition-colors line-clamp-1">
+                              {listing.nftData?.name || `NFT #${listing.tokenId}`}
+                            </CardTitle>
+                            <CardDescription className="flex items-center gap-1 text-xs">
+                              {listing.nftData?.class && (
+                                <span className="inline-block px-1.5 py-0.5 rounded-full text-xs font-medium bg-destructive/20 text-destructive border border-destructive/30">
+                                  {listing.nftData.class}
+                                </span>
+                              )}
+                              {listing.nftData?.level && (
+                                <span className="text-muted-foreground text-xs">
+                                  Lv.{Number(listing.nftData.level)}
+                                </span>
+                              )}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="relative space-y-2 p-3 pt-0">
+                            <div className="space-y-1 text-xs">
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Price:</span>
+                                <span className="font-bold text-sm">{priceDisplay}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">ID:</span>
+                                <span className="font-mono text-xs">#{listing.listingId.toString()}</span>
+                              </div>
+                            </div>
+                            <Button
+                              className="w-full h-8 text-xs"
+                              variant="destructive"
+                              onClick={() => handleCancelListing(listing.listingId.toString())}
+                              disabled={isCancelling || isConfirmingCancel}
+                            >
+                              {isCancelling || isConfirmingCancel ? (
+                                <>
+                                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                  Cancelando...
+                                </>
+                              ) : (
+                                <>
+                                  <X className="h-3 w-3 mr-1" />
+                                  Cancel
+                                </>
+                              )}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+
+        {/* Spacer to ensure scroll */}
+        <div className="h-96"></div>
 
         {/* List NFT Dialog */}
         <Dialog 
@@ -1391,7 +1445,7 @@ export default function MarketplacePage() {
         </Dialog>
           </>
         )}
-      </div>
+      </main>
     </div>
   )
 }

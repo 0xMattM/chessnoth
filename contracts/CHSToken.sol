@@ -25,6 +25,7 @@ contract CHSToken is ERC20, Ownable, ReentrancyGuard {
     event AuthorizedMinterRemoved(address indexed minter);
     event TokensMinted(address indexed to, uint256 amount);
     event TokensBurned(address indexed from, uint256 amount);
+    event MaxSupplyUpdated(uint256 oldMaxSupply, uint256 newMaxSupply);
     
     /**
      * @dev Constructor
@@ -112,11 +113,13 @@ contract CHSToken is ERC20, Ownable, ReentrancyGuard {
     
     /**
      * @dev Sets the maximum supply (owner only)
-     * @param _maxSupply New maximum supply (0 for unlimited)
+     * @param newMaxSupply New maximum supply (0 for unlimited)
      */
-    function setMaxSupply(uint256 _maxSupply) external onlyOwner {
-        require(_maxSupply == 0 || _maxSupply >= totalSupply(), "CHSToken: Max supply must be >= current supply");
-        maxSupply = _maxSupply;
+    function setMaxSupply(uint256 newMaxSupply) external onlyOwner {
+        require(newMaxSupply == 0 || newMaxSupply >= totalSupply(), "CHSToken: Max supply must be >= current supply");
+        uint256 oldMaxSupply = maxSupply;
+        maxSupply = newMaxSupply;
+        emit MaxSupplyUpdated(oldMaxSupply, newMaxSupply);
     }
 }
 

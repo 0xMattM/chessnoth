@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  */
 contract Marketplace is Ownable, ReentrancyGuard {
     // Reference to CharacterNFT contract
-    IERC721 public characterNFT;
+    IERC721 public immutable characterNFT;
     
     // Reference to CHSToken contract (can be address(0) if not set)
     IERC20 public chsToken;
@@ -218,32 +218,32 @@ contract Marketplace is Ownable, ReentrancyGuard {
     
     /**
      * @dev Sets marketplace fee (owner only)
-     * @param _feeBasisPoints New fee in basis points
+     * @param newFeeBasisPoints New fee in basis points
      */
-    function setFee(uint256 _feeBasisPoints) external onlyOwner {
-        require(_feeBasisPoints <= 1000, "Marketplace: Fee cannot exceed 10%");
+    function setFee(uint256 newFeeBasisPoints) external onlyOwner {
+        require(newFeeBasisPoints <= 1000, "Marketplace: Fee cannot exceed 10%");
         uint256 oldFee = feeBasisPoints;
-        feeBasisPoints = _feeBasisPoints;
-        emit FeeUpdated(oldFee, _feeBasisPoints);
+        feeBasisPoints = newFeeBasisPoints;
+        emit FeeUpdated(oldFee, newFeeBasisPoints);
     }
     
     /**
      * @dev Sets fee recipient address (owner only)
-     * @param _feeRecipient New fee recipient address
+     * @param newFeeRecipient New fee recipient address
      */
-    function setFeeRecipient(address _feeRecipient) external onlyOwner {
-        require(_feeRecipient != address(0), "Marketplace: Fee recipient cannot be zero address");
+    function setFeeRecipient(address newFeeRecipient) external onlyOwner {
+        require(newFeeRecipient != address(0), "Marketplace: Fee recipient cannot be zero address");
         address oldRecipient = feeRecipient;
-        feeRecipient = _feeRecipient;
-        emit FeeRecipientUpdated(oldRecipient, _feeRecipient);
+        feeRecipient = newFeeRecipient;
+        emit FeeRecipientUpdated(oldRecipient, newFeeRecipient);
     }
     
     /**
      * @dev Sets CHS token address (owner only)
-     * @param _chsToken New CHS token address
+     * @param newChsToken New CHS token address
      */
-    function setCHSToken(address _chsToken) external onlyOwner {
-        chsToken = IERC20(_chsToken);
+    function setCHSToken(address newChsToken) external onlyOwner {
+        chsToken = IERC20(newChsToken);
     }
     
     /**

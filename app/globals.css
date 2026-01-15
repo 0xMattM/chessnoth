@@ -120,8 +120,9 @@
     @apply border-border;
   }
   
-  /* Prevent body scroll when modal is open - handled by Dialog component via JavaScript */
-  /* CSS fallback for browsers that support :has() */
+  /* Prevent body scroll when modal is open - DISABLED to fix toast blocking scroll */
+  /* The class-based approach below is more selective */
+  /*
   @supports selector(:has(*)) {
     body:has([role="dialog"][data-state="open"]) {
       overflow: hidden !important;
@@ -131,19 +132,23 @@
       overflow: hidden !important;
     }
   }
+  */
   
   /* Additional class-based approach for better compatibility */
-  body.dialog-open {
+  /* Only block scroll when actual Radix dialogs are open (not Next.js error toasts) */
+  body:has([data-radix-dialog-overlay]) {
     overflow: hidden !important;
     padding-right: var(--scrollbar-width, 0px) !important;
   }
   
-  html.dialog-open {
+  html:has([data-radix-dialog-overlay]) {
     overflow: hidden !important;
   }
   
   body {
     @apply bg-background text-foreground;
+    /* FORCE SCROLL - Override any inline styles */
+    overflow-y: auto !important;
     /* Chessnoth Branding: Dark textured background with stone/metal texture */
     background: #020617;
     background-image: 
